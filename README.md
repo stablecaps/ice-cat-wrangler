@@ -32,3 +32,26 @@ We also will have the option to swap out the classification backend to something
 	c) get specific result
 	d) health -check
 7. would need database to store images. Perhaps dynamodb is cheaper for small projects? Maybe need a cleaner to keep size small. https://www.qa.com/resources/blog/amazon-rds-vs-dynamodb-12-differences/
+
+
+## Requirements
+
+1) python 3.?
+2) serverless
+    - needs nvm
+    - needs nodejs version ???
+
+### Install nvm, node & serverless framework
+```
+curl https://raw.githubusercontent.com/creationix/nvm/master/install.sh | bash
+source ~/.profile
+
+nvm ls-remote # find latest 18.x version of nodejs
+nvm install v18.20.8
+nvm use v18.20.8
+nvm alias default v18.20.8
+
+npm i serverless -g
+serverless
+serverless update
+```
