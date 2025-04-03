@@ -20,3 +20,5 @@ source venv/bin/activate
 pip install --upgrade pip
 # python -m pip install --editable .
 python -m pip install -U -r requirements-dev.txt
+
+echo -e "\nPlease ensure your virtual environemnt is activated with:\n 'source venv/bin/activate'source venv/bin/activate"

@@ -58,3 +58,5 @@ serverless update
 ### Install sl splugins with
 sls plugin install -n serverless-python-requirements
 ```
+
+### Add details of Makefile usage

@@ -11,8 +11,6 @@ mypy: $(MYPY_DIRS)
 
 .PHONY: develop
 develop:
-	# python -m pip install --editable .
-	# python -m pip install -U -r requirements-dev.txt
 	./.make/develop.sh
 
 .PHONY: build
@@ -33,3 +31,5 @@ package_layer: build build_layer
 
 .PHONY: build-ServerlessProjectLayer 
 build-ServerlessProjectLayer: build build_layer
+
+# https://dev.to/fwojciec/how-to-structure-a-python-aws-serverless-project-4ace
