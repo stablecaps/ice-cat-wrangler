@@ -8,7 +8,15 @@ if ! command -v pluralith &> /dev/null
     exit 42
 fi
 
-unique_tf_dirs=$(find ./ -not -path "*/\.*" -not -path "*venv/*" -not -path "*node_modules/*" -iname "*.tf" -exec dirname {} \; | grep init_points | grep -v deprecated_or_errored | grep -v 0_terraform_backend_setup_CAREFUL | grep -v local_modules| uniq)
+if ! command -v convert &> /dev/null
+    then
+    echo "!!! Plaese ensure you have convert installed & on your path !!!"
+    exit 42
+fi
+
+env="dev"
+
+unique_tf_dirs=$(find ./ -not -path "*/\.*" -not -path "*venv/*" -not -path "*node_modules/*" -iname "*.tf" -exec dirname {} \; | grep entrypoints | grep -v deprecated_or_errored | grep -v 0_terraform_backend_setup_CAREFUL | grep -v local_modules| uniq)
 
 for tf_dirs in $unique_tf_dirs; do
     echo -e "\nProcessing $tf_dirs"
@@ -16,7 +24,7 @@ for tf_dirs in $unique_tf_dirs; do
         mkdir -p images
         pluralith graph \
                     --author stablecaps.com \
-                    --var-file ../../envs/prod/prod.tfvars \
+                    --var-file ../../envs/${env}/${env}.tfvars \
                     --cost-mode total \
                     --cost-period month \
                     --local-only \

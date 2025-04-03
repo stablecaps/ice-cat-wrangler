@@ -45,3 +45,5 @@ envs/uat/uat.tfvars
 
 envs/prod/prod.backend.hcl
 envs/prod/prod.tfvars
+
+**/.pluralith

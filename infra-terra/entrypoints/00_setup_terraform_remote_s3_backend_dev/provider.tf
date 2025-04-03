@@ -7,13 +7,13 @@ terraform {
   }
   required_version = "= 1.11.3"
 
-  # IMPORTANT: Local tf file. we should probably delete to keep it safe
-  # once created we so not need the state file really - so uncomment below
-  # and run tf init to push to remote state we just created
-  # backend "s3" {
-  #   key     = "terraform-remotestate-stablecaps-dev/terraform.tfstate"
-  #   encrypt = "true"
-  # }
+  # IMPORTANT: On 1st run we create a local tfstate file. we should need to back it up to keep it safe
+  # After 1st run uncomment below
+  # and run `$terraform_exec init -backend-config ../../envs/${env}/${env}.backend.hcl -migrate-state` to push to remote state we just created
+  backend "s3" {
+    key     = "terraform-remotestate-stablecaps-dev/terraform.tfstate"
+    encrypt = "true"
+  }
 }
 
 provider "aws" {
