@@ -176,3 +176,6 @@ cython_debug/
 
 # serverless
 .serverless
+
+# custom
+images/archive*

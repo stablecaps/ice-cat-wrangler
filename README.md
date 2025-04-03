@@ -54,4 +54,7 @@ nvm alias default v18.20.8
 npm i serverless -g
 serverless
 serverless update
+
+### Install sl splugins with
+sls plugin install -n serverless-python-requirements
 ```

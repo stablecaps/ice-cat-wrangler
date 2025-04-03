@@ -1,0 +1,20 @@
+[project]
+authors = [
+  {name = "Darkpandarts", email = "14529342+darkpandarts@users.noreply.github.com"},
+]
+dependencies = []
+description = ""
+name = "ice-cat-wrangler"
+readme = "README.md"
+requires-python = ">=3.10"
+version = "0.1.0"
+
+[tool.poetry]
+packages = [{include = "coolnewservice", from = "src"}]
+
+[build-system]
+build-backend = "poetry.core.masonry.api"
+build-backend = "setuptools.build_meta"
+requires = ["poetry-core>=2.0.0,<3.0.0", "setuptools", "wheel"]
+
+# https://dev.to/fwojciec/how-to-structure-a-python-aws-serverless-project-4ace
