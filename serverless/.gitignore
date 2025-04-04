@@ -179,4 +179,3 @@ cython_debug/
 
 # custom
 images/archive*
-**/node_modules

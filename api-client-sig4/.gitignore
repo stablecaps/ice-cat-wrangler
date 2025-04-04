@@ -1,0 +1,4 @@
+.qodo
+config/dev_conf_secrets
+config/uat_conf_secrets
+config/prod_conf_secrets
