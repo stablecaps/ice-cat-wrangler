@@ -27,16 +27,15 @@ for tf_dirs in $unique_tf_dirs; do
         echo ""
         pwd
         # TODO: customise this further to enrich READMEs and create links to them from root directory
-        terraform-docs markdown table --output-file README.md --output-mode inject .
+        # rm -f README.md
+        terraform-docs markdown table --output-file README.md --output-mode replace .
+        
 
         IMAGE_FILE="./images/terraform_infra.png"
         if [ -f "$IMAGE_FILE" ]; then
             echo "Adding infra image"
-            ### rm previous additions
 
-            sed -i "s|images/terraform_infra.png||g" README.md
             mv -f README.md README.temp
-
 
             MDIMG_LINK="![terraform_infra](${IMAGE_FILE})"
             echo "$MDIMG_LINK" > README.md
