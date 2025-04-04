@@ -82,7 +82,7 @@ def check_env_variables(dotenv_path):
     passed = True
     for secret in secret_vars:
         if secret not in os.environ:
-            print("Environment secret not set: %s", secret)
+            print(f"Environment secret not set: {secret}")
             passed = False
 
     return passed
@@ -139,7 +139,7 @@ class AWSRequestSigner:
             str: The full path to the secrets file.
         """
         root_dir = os.path.dirname(os.path.abspath(__file__))
-        dotenv_path = root_dir + "/config/" + secret_filename
+        dotenv_path = f"{root_dir}/config/{secret_filename}"
         return dotenv_path
 
     def create_canonical_request(self):
@@ -171,7 +171,7 @@ class AWSRequestSigner:
         credential_scope = f"{self.datestamp}/{self.region}/{self.service}/aws4_request"
         string_to_sign = (
             f"{self.algorithm}\n{self.amzdate}\n{credential_scope}\n"
-            + hashlib.sha256(canonical_request.encode("utf-8")).hexdigest()
+            f"{hashlib.sha256(canonical_request.encode('utf-8')).hexdigest()}"
         )
         return string_to_sign, credential_scope
 
@@ -212,7 +212,7 @@ class AWSRequestSigner:
         """
         return (
             f"{self.algorithm} Credential={self.access_key}/{credential_scope}, "
-            + f"SignedHeaders={signed_headers}, Signature={signature}"
+            f"SignedHeaders={signed_headers}, Signature={signature}"
         )
 
     def make_request(self):
