@@ -27,6 +27,16 @@ provider:
   # deploymentBucket: ${self:custom.deploymentBucket}
   # role: ${self:custom.iamRoleArn}  
 
+  tags:
+    version: ${file(./config/${self:custom.currentStage}.yml):version}  
+  logs:
+    httpApi: true  
+
+  httpApi:
+    metrics: true
+    useProviderTags: true
+    # disableDefaultEndpoint: true #<----- enable after custom domain setup
+
 functions:
   hello:
     handler: handler.hello
@@ -34,3 +44,7 @@ functions:
       - httpApi:
           path: /hello
           method: get
+          authorizer:
+            type: aws_iam          
+
+# https://www.serverless.com/framework/docs/providers/aws/events/http-api

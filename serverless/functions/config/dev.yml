@@ -5,3 +5,4 @@ deployment_bucket: ???
 stage: dev
 iam_role_arn: ???
 ssm_root_prefix: /stablecaps/???
+version: 0.1.0

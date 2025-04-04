@@ -6,7 +6,6 @@ variable "region" {
 variable "env" {
   description = "Deployment environment. e.g. dev, uat, prod"
   type        = string
-  default     = "dev"
 }
 
 variable "unique_str" {
