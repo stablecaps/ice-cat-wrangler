@@ -72,7 +72,7 @@ def check_env_variables(dotenv_path):
     """
 
     if not os.path.isfile(dotenv_path):
-        print("No secret file found at dotenv_path: %s", dotenv_path)
+        print(f"No secret file found at dotenv_path: {dotenv_path}")
         sys.exit(1)
 
     # load env variables
