@@ -124,7 +124,7 @@ class AWSRequestSigner:
         self.secret_key = os.environ["AWS_SECRET_ACCESS_KEY"]
 
         self.algorithm = "AWS4-HMAC-SHA256"
-        self.datetime_obj = datetime.datetime.now(datetime.UTC)
+        self.datetime_obj = datetime.datetime.now(datetime.timezone.utc)
         self.amzdate = self.datetime_obj.strftime("%Y%m%dT%H%M%SZ")
         self.datestamp = self.datetime_obj.strftime("%Y%m%d")
 
