@@ -1,3 +1,5 @@
+#!/usr/bin/env python3.12
+
 import datetime
 import hashlib
 import hmac
@@ -7,6 +9,7 @@ import sys
 import requests
 from dotenv import load_dotenv
 from rich import print
+import argparse
 
 secret_vars = [
     "AWS_ACCESS_KEY_ID",
@@ -131,7 +134,18 @@ class AWSRequestSigner:
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="AWS Request Signer Client",
+        usage=".e.g: /client.py --secretsfile dev_conf_secrets",
+    )
+    parser.add_argument(
+        "--secretsfile",
+        type=str,
+        required=True,
+        help="Secrets file name to load environment variables from. Should be in config folder. e.g. dev_conf_secrets",
+    )
+    args = parser.parse_args()
 
-    signer = AWSRequestSigner(secretsfile="dev_conf_secrets")
+    signer = AWSRequestSigner(secretsfile=args.secretsfile)
     response_text = signer.make_request()
     print(response_text)
