@@ -1,6 +1,9 @@
 ![terraform_infra](./images/terraform_infra.png)
 
 
+![terraform_infra](./)
+
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
