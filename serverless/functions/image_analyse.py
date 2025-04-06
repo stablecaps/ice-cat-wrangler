@@ -1,6 +1,7 @@
 import base64
 import json
 import logging
+import sys
 
 import boto3
 from botocore.exceptions import ClientError
@@ -15,12 +16,19 @@ from botocore.exceptions import ClientError
 
 # Instantiate logger
 logger = logging.getLogger(__name__)
+logger.setLevel("INFO")
 
 # connect to the Rekognition client
 rekognition = boto3.client("rekognition")
 
 
-def image_submit(event, context):
+def image_analyse(event, context):
+
+    logger.info("Event: %s", event)
+    logger.info("Context: %s", context)
+    logger.info("Function ARN: %s", context.invoked_function_arn)
+    logger.info("Function name: %s", context.function_name)
+    logger.info("Function version: %s", context.function_version)
 
     try:
         image = None

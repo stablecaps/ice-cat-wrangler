@@ -61,7 +61,7 @@ class AWSRequestSigner:
         self.service = os.environ["SERVICE"]
         self.region = os.environ["AWS_REGION"]
         self.host = os.environ["API_HOST"]
-        self.endpoint = os.environ["API_ENDPOINT"]  # endpoint
+        self.endpoint = endpoint
         self.access_key = os.environ["AWS_ACCESS_KEY_ID"]
         self.secret_key = os.environ["AWS_SECRET_ACCESS_KEY"]
 

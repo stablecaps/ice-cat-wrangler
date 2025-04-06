@@ -7,3 +7,4 @@ isort
 pytest
 pylint
 pre-commit
+boto3

@@ -50,7 +50,7 @@ functions:
           authorizer:
             type: aws_iam
 
-  image_analyze:
+  image-analyse:
     handler: image_analyse.image_analyse
     description: "Submit images for categorisation & identification"
     events:
