@@ -8,7 +8,10 @@
 #   value       = module.s3_bucket_source.name
 # }
 
-# output "bucket_dest_name" {
-#   description = "exif-ripper s3 destination bucket name"
-#   value       = module.exif_buckets.bucket_dest_name
-# }
+output "bucket_dest_name" {
+  description = "exif-ripper s3 destination bucket name"
+  value = [
+    for storage in local.all_s3_buckets :
+    module.s3_buckets[storage].s3_bucket_id
+  ]
+}
