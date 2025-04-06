@@ -56,7 +56,7 @@ functions:
     events:
       - httpApi:
           path: /v1/imagecat/analyse
-          method: get
+          method: post
           authorizer:
             type: aws_iam
 
