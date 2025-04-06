@@ -17,8 +17,8 @@ custom:
   awsRegion: ${file(./config/${self:custom.currentStage}.yml):aws_region}
   # iamRoleArnFromFile: ${file(./config/${self:custom.currentStage}.yml):iam_role_arn}
   # iamRoleArn: ${param:rolearn, self:custom.iamRoleArnFromFile}
-  # deploymentBucketFromFile: ${file(./config/${self:custom.currentStage}.yml):deployment_bucket}
-  # deploymentBucket: ${param:dbuck, self:custom.deploymentBucketFromFile}
+  deploymentBucketFromFile: ${file(./config/${self:custom.currentStage}.yml):deployment_bucket}
+  deploymentBucket: ${param:dbuck, self:custom.deploymentBucketFromFile}
   pythonRequirements:
     dockerizePip: true
 provider:
@@ -26,7 +26,7 @@ provider:
   runtime: python3.12
   stage: ${self:custom.currentStage}
   region: ${self:custom.awsRegion}
-  # deploymentBucket: ${self:custom.deploymentBucket}
+  deploymentBucket: ${self:custom.deploymentBucket}
   # role: ${self:custom.iamRoleArn}
 
   tags:
