@@ -1,7 +1,9 @@
 # "org" ensures this Service is used with the correct Serverless Framework Access Key.
 org: stablecaps
+
 # "app" enables Serverless Framework Dashboard features and sharing them with other Services.
 app: ice-cat-wrangler
+
 # "service" is the name of this project. This will also be added to your AWS resource names.
 service: ice-cat-wrangler
 
@@ -11,26 +13,26 @@ plugins:
   # - serverless-ssm-fetch
 custom:
   defaultStage: dev
-  currentStage: ${opt:stage, self:custom.defaultStage}  
-  awsRegion: ${file(./config/${self:custom.currentStage}.yml):aws_region}  
+  currentStage: ${opt:stage, self:custom.defaultStage}
+  awsRegion: ${file(./config/${self:custom.currentStage}.yml):aws_region}
   # iamRoleArnFromFile: ${file(./config/${self:custom.currentStage}.yml):iam_role_arn}
-  # iamRoleArn: ${param:rolearn, self:custom.iamRoleArnFromFile}  
+  # iamRoleArn: ${param:rolearn, self:custom.iamRoleArnFromFile}
   # deploymentBucketFromFile: ${file(./config/${self:custom.currentStage}.yml):deployment_bucket}
   # deploymentBucket: ${param:dbuck, self:custom.deploymentBucketFromFile}
   pythonRequirements:
-    dockerizePip: true  
+    dockerizePip: true
 provider:
   name: aws
   runtime: python3.12
   stage: ${self:custom.currentStage}
   region: ${self:custom.awsRegion}
   # deploymentBucket: ${self:custom.deploymentBucket}
-  # role: ${self:custom.iamRoleArn}  
+  # role: ${self:custom.iamRoleArn}
 
   tags:
-    version: ${file(./config/${self:custom.currentStage}.yml):version}  
+    version: ${file(./config/${self:custom.currentStage}.yml):version}
   logs:
-    httpApi: true  
+    httpApi: true
 
   httpApi:
     metrics: true
@@ -38,13 +40,28 @@ provider:
     # disableDefaultEndpoint: true #<----- enable after custom domain setup
 
 functions:
-  hello:
-    handler: handler.hello
+  results:
+    handler: results.get_result
+    description: "Get results for a given uploaded image id"
     events:
       - httpApi:
-          path: /hello
+          path: /v1/imagecat/results/{imgid}
           method: get
           authorizer:
-            type: aws_iam          
+            type: aws_iam
+
+  image_analyze:
+    handler: image_analyse.image_analyse
+    description: "Submit images for categorisation & identification"
+    events:
+      - httpApi:
+          path: /v1/imagecat/analyse
+          method: get
+          authorizer:
+            type: aws_iam
 
 # https://www.serverless.com/framework/docs/providers/aws/events/http-api
+
+
+# serverless/functions/image_submit/image_submit.py
+# serverless/functions/results/results.py
