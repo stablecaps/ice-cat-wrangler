@@ -30,3 +30,19 @@ variable "unique_str" {
   description = "A unique string to avoid conflicts"
   type        = string
 }
+
+variable "s3bucket_source_name" {
+  description = "s3 bucket source name. Stores images to be processed"
+  type        = string
+}
+
+
+variable "s3bucket_dest_name" {
+  description = "s3 bucket destination name. Stores sucessfully processed images are stored"
+  type        = string
+}
+
+variable "s3bucket_fail_name" {
+  description = "s3 bucket fail name. Stores data from failed image processing"
+  type        = string
+}

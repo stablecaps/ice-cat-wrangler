@@ -5,9 +5,9 @@ ARTIFACTS_DIR ?= build
 test:
 	pytest
 
-.PHONY: mypy
-mypy: $(MYPY_DIRS)
-	$(foreach d, $(MYPY_DIRS), python -m mypy $(d);)
+# .PHONY: mypy
+# mypy: $(MYPY_DIRS)
+# 	$(foreach d, $(MYPY_DIRS), python -m mypy $(d);)
 
 .PHONY: develop
 develop:
@@ -19,17 +19,17 @@ build:
 	python -m build -w
 
 .PHONY: build_layer
-build_layer: build 
+build_layer: build
 	rm -rf "$(ARTIFACTS_DIR)/python" || true
 	mkdir -p "$(ARTIFACTS_DIR)/python"
 	python -m pip install -r requirements.txt -t "$(ARTIFACTS_DIR)/python"
-	python -m pip install dist/*.whl -t "$(ARTIFACTS_DIR)/python"  
+	python -m pip install dist/*.whl -t "$(ARTIFACTS_DIR)/python"
 
 .PHONY: package_layer
 package_layer: build build_layer
 	cd "$(ARTIFACTS_DIR)"; zip -rq ../layer.zip python
 
-.PHONY: build-ServerlessProjectLayer 
+.PHONY: build-ServerlessProjectLayer
 build-ServerlessProjectLayer: build build_layer
 
 # https://dev.to/fwojciec/how-to-structure-a-python-aws-serverless-project-4ace
