@@ -1,0 +1,57 @@
+name: Deploy ice-cat-wrangler to ECS
+
+# on:
+#   push:
+#     branches:
+#       - main
+
+on:
+    workflow_dispatch:
+      inputs:
+        vfdb_tag:
+          type: string
+          required: true
+
+# permission can be added at job level or workflow level
+permissions:
+  id-token: write   # This is required for requesting the JWT (oidc)
+  contents: read    # This is required for actions/checkout
+  pull-requests: write
+
+jobs:
+  build:
+    name: Deploy ice-cat-wrangler to ECS
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v2
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2 # More information on this action can be found below in the 'AWS Credentials' section
+      with:
+        aws-region: eu-west-1
+        # role arn is output from entrypoints/01b_github_actions_oidc/voutputs.tf
+        role-to-assume: arn:aws:iam::148842827623:role/github-actions-ecr-role20230807020310747200000002
+        role-session-name: GitHubActions985dtd968
+
+    - name: Install Terraform
+      uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_version: 1.11.3
+
+    - name: Deploy s3 buckets
+      run: |
+        #!/bin/bash
+
+        set -e
+
+        ./xxx_tfhelperv3.sh terraform_v1.11.3 entrypoints/02_cat_wrangler_s3_buckets yes dev full
+
+    - name: Deploy lambda permissions
+      run: |
+        #!/bin/bash
+
+        set -e
+
+        ./xxx_tfhelperv3.sh terraform_v1.11.3 entrypoints/03_create_lambda_permissions yes dev full
+
