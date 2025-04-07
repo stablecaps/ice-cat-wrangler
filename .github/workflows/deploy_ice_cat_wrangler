@@ -8,7 +8,7 @@ name: Deploy ice-cat-wrangler to ECS
 on:
   workflow_dispatch:
     inputs:
-      vfdb_tag:
+      icecat_tag:
         type: string
         required: true
 
