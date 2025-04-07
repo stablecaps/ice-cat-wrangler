@@ -1,5 +1,5 @@
 resource "aws_iam_role" "github_actions" {
-  name_prefix        = "github-actions-ecr-role-${var.env}"
+  name_prefix        = "github-actions-ice-cat-wrangler-role-${var.env}"
   assume_role_policy = data.aws_iam_policy_document.github_actions_oidc.json
 
   path = "/providers/${var.env}/${var.project}/"

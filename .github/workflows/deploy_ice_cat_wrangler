@@ -6,11 +6,11 @@ name: Deploy ice-cat-wrangler to ECS
 #       - main
 
 on:
-    workflow_dispatch:
-      inputs:
-        vfdb_tag:
-          type: string
-          required: true
+  workflow_dispatch:
+    inputs:
+      vfdb_tag:
+        type: string
+        required: true
 
 # permission can be added at job level or workflow level
 permissions:
@@ -54,4 +54,3 @@ jobs:
         set -e
 
         ./xxx_tfhelperv3.sh terraform_v1.11.3 entrypoints/03_create_lambda_permissions yes dev full
-

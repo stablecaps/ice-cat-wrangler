@@ -68,7 +68,6 @@ def upload_local_image_blocking(img_path, function_name):
         print("Image data (truncated):", data[:50], "...")
 
         lambda_payload = json.dumps({"image": data})
-        # return lambda_payload
 
         # Invoke the Lambda function with the event payload
         response = lambda_client.invoke(
