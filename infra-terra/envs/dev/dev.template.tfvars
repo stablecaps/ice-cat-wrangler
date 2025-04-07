@@ -1,4 +1,4 @@
-aws_acc_no           = "334406042632"
+aws_acc_no           = "123456789012"
 region               = "eu-west-1"
 env                  = "dev"
 unique_str           = "ice1"

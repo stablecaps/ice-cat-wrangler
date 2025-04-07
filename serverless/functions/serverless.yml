@@ -15,8 +15,8 @@ custom:
   defaultStage: dev
   currentStage: ${opt:stage, self:custom.defaultStage}
   awsRegion: ${file(./config/${self:custom.currentStage}.yml):aws_region}
-  # iamRoleArnFromFile: ${file(./config/${self:custom.currentStage}.yml):iam_role_arn}
-  # iamRoleArn: ${param:rolearn, self:custom.iamRoleArnFromFile}
+  iamRoleArnFromFile: ${file(./config/${self:custom.currentStage}.yml):iam_role_arn}
+  iamRoleArn: ${param:rolearn, self:custom.iamRoleArnFromFile}
   deploymentBucketFromFile: ${file(./config/${self:custom.currentStage}.yml):deployment_bucket}
   deploymentBucket: ${param:dbuck, self:custom.deploymentBucketFromFile}
   pythonRequirements:
@@ -27,7 +27,9 @@ provider:
   stage: ${self:custom.currentStage}
   region: ${self:custom.awsRegion}
   deploymentBucket: ${self:custom.deploymentBucket}
-  # role: ${self:custom.iamRoleArn}
+  iam:
+    role: ${self:custom.iamRoleArn}
+
 
   tags:
     version: ${file(./config/${self:custom.currentStage}.yml):version}

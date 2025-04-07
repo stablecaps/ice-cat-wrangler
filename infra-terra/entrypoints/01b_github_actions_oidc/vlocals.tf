@@ -12,9 +12,7 @@ locals {
 
   # TODO: tighten up these full perms
   managed_policy_arns = [
-    "arn:aws:iam::aws:policy/ElasticLoadBalancingFullAccess",
-    "arn:aws:iam::aws:policy/AmazonECS_FullAccess",
-    "arn:aws:iam::aws:policy/AWSCertificateManagerReadOnly",
+    "arn:aws:iam::aws:policy/AmazonRekognitionFullAccess",
     aws_iam_policy.iam_getpolicy.arn,
   ]
 }

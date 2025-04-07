@@ -3,6 +3,5 @@
 aws_region: eu-west-1
 deployment_bucket: serverless-deployment-holder-ice1-dev
 stage: dev
-iam_role_arn: ???
-ssm_root_prefix: /stablecaps/???
-version: 0.1.0
+iam_role_arn: arn:aws:iam::334406042632:role/lambda/dev/cat-wrangler/cat-wrangler-dev-eu-west-1-role20250407001437865800000001
+version: 0.2.0

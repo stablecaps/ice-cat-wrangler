@@ -82,6 +82,7 @@ def upload_local_image_blocking(img_path, function_name):
             print("\nrekog_decoded", rekog_decoded)
             sys.exit(42)
 
+        print("\nrekog_decoded", rekog_decoded["body"])
         print("\nrekog_decoded", rekog_decoded["statusCode"])
 
         return

@@ -15,14 +15,11 @@ locals {
             "s3:PutObjectAcl"
           ],
           "Resource" : [
-            "arn:aws:logs:eu-west-1:779934699932:log-group:/aws/lambda/exif-ripper-${var.env}-exif",
-            "arn:aws:logs:eu-west-1:779934699932:log-group:/aws/lambda/exif-ripper-${var.env}*:*",
-            # "arn:aws:s3:::${local.bucket_source}",
-            # "arn:aws:s3:::${local.bucket_dest}",
-            # "arn:aws:s3:::serverless-deployment-holder-658fi8r7",
-            # "arn:aws:s3:::serverless-deployment-holder-658fi8r7/*",
-            # "arn:aws:s3:::${local.bucket_source}/*",
-            # "arn:aws:s3:::${local.bucket_dest}/*"
+            "arn:aws:logs:eu-west-1:${var.aws_acc_no}:log-group:/aws/lambda/*",
+            "arn:aws:logs:eu-west-1:${var.aws_acc_no}:log-group:/aws/lambda/*",
+            "arn:aws:s3:::${var.s3bucket_source_name}",
+            "arn:aws:s3:::${var.s3bucket_dest_name}",
+            "arn:aws:s3:::${var.s3bucket_fail_name}",
           ]
         },
         {
@@ -32,11 +29,16 @@ locals {
             "logs:PutLogEvents"
           ],
           "Resource" : [
-            "arn:aws:logs:eu-west-1:779934699932:log-group:/aws/lambda/exif-ripper-${var.env}-exif:log-stream:*",
-            "arn:aws:logs:eu-west-1:779934699932:log-group:/aws/lambda/exif-ripper-${var.env}*:*:*"
+            "arn:aws:logs:eu-west-1:${var.aws_acc_no}:log-group:/aws/lambda/*:log-stream:*",
+            "arn:aws:logs:eu-west-1:${var.aws_acc_no}:log-group:/aws/lambda/*:*:*"
           ]
         }
       ]
     }
+  }
+
+  #
+  managed_policies = {
+
   }
 }

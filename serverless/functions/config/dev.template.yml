@@ -3,5 +3,5 @@
 aws_region: eu-west-1
 deployment_bucket: serverless-deployment-holder-ice1-dev
 stage: dev
-iam_role_arn: ???
+iam_role_arn: <enter arn>
 version: 0.2.0

@@ -7,5 +7,5 @@ locals {
     created_by  = var.created_by
     terraform   = "true"
   }
-  func_analyser_role_name = "${var.project}-${var.unique_str}-${var.env}-${var.region}"
+  func_analyser_role_name = "${var.project}-${var.env}-${var.region}"
 }
