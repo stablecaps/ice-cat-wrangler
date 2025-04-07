@@ -31,7 +31,7 @@ fi
 ALL_SECRETS=$(cat secrets.txt)
 
 for secret_path in $ALL_SECRETS; do
-  secret_enc_path="${secret_path}"
+  secret_enc_path="${secret_path}.enc"
   echo "Decrypting ${secret_enc_path}"
 
   if [ ! -f "${secret_enc_path}" ]; then
