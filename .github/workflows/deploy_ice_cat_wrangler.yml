@@ -48,7 +48,7 @@ jobs:
         ls -la
 
         cd infra-terra
-          ./xxx_tfhelperv3.sh terraform_v1.11.3 entrypoints/02_cat_wrangler_s3_buckets yes dev full
+          ./xxx_tfhelperv3.sh terraform entrypoints/02_cat_wrangler_s3_buckets yes dev full
         cd -
     - name: Deploy lambda permissions
       run: |
@@ -56,5 +56,5 @@ jobs:
 
         set -e
         cd infra-terra
-          ./xxx_tfhelperv3.sh terraform_v1.11.3 entrypoints/03_create_lambda_permissions yes dev full
+          ./xxx_tfhelperv3.sh terraform entrypoints/03_create_lambda_permissions yes dev full
         cd -
