@@ -51,7 +51,7 @@ class CatAPIClient:
     the Signature Version 4 signing process.
     """
 
-    def __init__(self, action, img_path=None, debug=False):
+    def __init__(self, action, img_path=None, result_id=None, debug=False):
         """Initializes the AWSRequestSigner with the specified secrets file.
 
         Args:
@@ -63,6 +63,7 @@ class CatAPIClient:
 
         self.host = os.getenv("API_HOST")
         self.img_path = img_path
+        self.result_id = result_id
         self.debug = debug
         self.func_image_analyser_name = os.getenv("FUNC_IMAGE_ANALYSER_NAME")
 
@@ -88,7 +89,12 @@ class CatAPIClient:
             requests.exceptions.RequestException: If the request fails.
         """
 
-        request_url = f"https://{self.host}{self.endpoint}"
+        # TODO: this may fail aws sig4 signing as signer also uses url - deal with later
+        request_url = (
+            f"https://{self.host}{self.endpoint}/{self.result_id}"
+            if self.method == "GET"
+            else f"https://{self.host}{self.endpoint}"
+        )
         print(f"\nMaking request to: {request_url}")
 
         if self.method == "POST":
@@ -113,11 +119,14 @@ class CLIArgs:
     """Setup arparse CLI options using dispatch pattern."""
 
     def __init__(self):
-        help_banner = "tets"
+        help_banner = (
+            "./cat_api_client.py --secretsfile dev_conf_secrets analyse --imgpath /path/to/image.jpg [--debug]\n"
+            "./cat_api_client.py --secretsfile dev_conf_secrets results --resultid 120 [--debug]\n"
+        )
 
         parser = argparse.ArgumentParser(
             description="Cat API Client",
-            usage=".e.g: ./cat_api_client.py --secretsfile dev_conf_secrets [analyse, results] <command args>",
+            usage=".e.g: ./cat_api_client.py {analyse|results} [<args>]",
         )
 
         parser.add_argument("command", choices=["analyse", "results"], help=help_banner)
@@ -219,41 +228,3 @@ if __name__ == "__main__":
     CLIArgs()
 
     print("\nFinished")
-
-    # parser = argparse.ArgumentParser(
-    #     description="Cat API Client",
-    #     usage=".e.g: ./cat_api_client.py --secretsfile dev_conf_secrets --action [analyse, results]",
-    # )
-    # parser.add_argument(
-    #     "--secretsfile",
-    #     "-s",
-    #     type=str,
-    #     required=True,
-    #     help="Secrets file name to load environment variables from. Should be in config folder. e.g. dev_conf_secrets",
-    # )
-
-    # parser.add_argument(
-    #     "--debug",
-    #     "-d",
-    #     action="store_true",
-    #     required=False,
-    #     default=False,
-    #     help="Debug mode. Set to True to enable debug output.",
-    # )
-
-    # parser.add_argument(
-    #     "--action",
-    #     "-a",
-    #     type=str,
-    #     required=True,
-    #     choices=["analyse", "results"],
-    #     help="Action to perform. Choose from: 'analyse' or 'results'.",
-    # )
-    # args = parser.parse_args()
-
-    # client = CatAPIClient(
-    #     secretsfile=args.secretsfile, action=args.action, debug=args.debug
-    # )
-    # client.make_request()
-
-    # print("\nFinished request")
