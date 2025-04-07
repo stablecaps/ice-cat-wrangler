@@ -7,7 +7,5 @@ locals {
     created_by  = var.created_by
     terraform   = "true"
   }
-
-  base_name = "terraform-remotestate-stablecaps-${var.unique_str}-${var.env}"
-
+  func_analyser_role_name = "${var.project}-${var.env}-${var.region}"
 }

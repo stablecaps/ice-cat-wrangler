@@ -1,3 +1,8 @@
+variable "aws_acc_no" {
+  description = "AWS account number"
+  type        = string
+}
+
 variable "project" {
   description = "Project name"
   type        = string

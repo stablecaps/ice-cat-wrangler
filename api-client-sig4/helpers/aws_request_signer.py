@@ -1,5 +1,3 @@
-#!/usr/bin/env python3.12
-
 """
 AWS Request Signer Client
 
@@ -40,53 +38,6 @@ import requests
 from dotenv import load_dotenv
 from rich import print
 
-secret_vars = [
-    "AWS_ACCESS_KEY_ID",
-    "AWS_SECRET_ACCESS_KEY",
-    "AWS_REGION",
-    "METHOD",
-    "SERVICE",
-    "API_HOST",
-    "API_ENDPOINT",
-]
-
-
-def check_env_variables(dotenv_path):
-    """Check whether environment variables have been correctly loaded.
-
-    This function verifies if the specified dotenv file exists and loads
-    the environment variables from it. It then checks if all required
-    secrets are set in the environment.
-
-    Args:
-        dotenv_path (str): The path to the dotenv file.
-
-    Returns:
-        bool: True if all required environment variables are set, False otherwise.
-
-    Raises:
-        SystemExit: If the dotenv file does not exist.
-
-    Example:
-        >>> check_env_variables("/path/to/.env")
-    """
-
-    if not os.path.isfile(dotenv_path):
-        print(f"No secret file found at dotenv_path: {dotenv_path}")
-        sys.exit(1)
-
-    # load env variables
-    load_dotenv(dotenv_path, override=True)
-
-    # check to see if env variables are available to app
-    passed = True
-    for secret in secret_vars:
-        if secret not in os.environ:
-            print(f"Environment secret not set: {secret}")
-            passed = False
-
-    return passed
-
 
 class AWSRequestSigner:
     """
@@ -96,7 +47,7 @@ class AWSRequestSigner:
     the Signature Version 4 signing process.
     """
 
-    def __init__(self, secretsfile):
+    def __init__(self, method, endpoint, debug=False):
         """Initializes the AWSRequestSigner with the specified secrets file.
 
         Args:
@@ -105,21 +56,12 @@ class AWSRequestSigner:
         Raises:
             SystemExit: If the environment variables are not set up properly.
         """
-        dotenv_path = AWSRequestSigner.construct_secrets_path(
-            secret_filename=secretsfile
-        )
-        has_env_vars = check_env_variables(dotenv_path=dotenv_path)
-        if not has_env_vars:
-            print("\nEnv variables not set up properly. Exiting...")
-            sys.exit(1)
 
-        print("All environment secrets set correctly")
-
-        self.method = os.environ["METHOD"]
+        self.method = method
         self.service = os.environ["SERVICE"]
         self.region = os.environ["AWS_REGION"]
         self.host = os.environ["API_HOST"]
-        self.endpoint = os.environ["API_ENDPOINT"]
+        self.endpoint = endpoint
         self.access_key = os.environ["AWS_ACCESS_KEY_ID"]
         self.secret_key = os.environ["AWS_SECRET_ACCESS_KEY"]
 
@@ -127,20 +69,20 @@ class AWSRequestSigner:
         self.datetime_obj = datetime.datetime.now(datetime.timezone.utc)
         self.amzdate = self.datetime_obj.strftime("%Y%m%dT%H%M%SZ")
         self.datestamp = self.datetime_obj.strftime("%Y%m%d")
+        #
+        self.debug = debug
 
-    @staticmethod
-    def construct_secrets_path(secret_filename):
-        """Constructs the full path to the secrets file.
-
-        Args:
-            secret_filename (str): The name of the secrets file.
-
-        Returns:
-            str: The full path to the secrets file.
-        """
-        root_dir = os.path.dirname(os.path.abspath(__file__))
-        dotenv_path = f"{root_dir}/config/{secret_filename}"
-        return dotenv_path
+        if self.debug:
+            print("self.method", self.method)
+            print("self.endpoint", self.endpoint)
+            print("self.service", self.service)
+            print("self.region", self.region)
+            print("self.host", self.host)
+            print("self.access_key", self.access_key)
+            print("self.secret_key", self.secret_key)
+            print("self.algorithm", self.algorithm)
+            print("self.amzdate", self.amzdate)
+            print("self.datestamp", self.datestamp)
 
     def create_canonical_request(self):
         """Creates the canonical request for AWS Signature Version 4.
@@ -215,7 +157,7 @@ class AWSRequestSigner:
             f"SignedHeaders={signed_headers}, Signature={signature}"
         )
 
-    def make_request(self):
+    def get_auth_headers(self):
         """Makes a signed request to the AWS API.
 
         Returns:
@@ -239,26 +181,12 @@ class AWSRequestSigner:
             "x-amz-date": self.amzdate,
             "Authorization": authorization_header,
         }
+        if self.debug:
+            print("Canonical Request:", canonical_request)
+            print("String to Sign:", string_to_sign)
+            print("Signature Key:", signing_key)
+            print("Signature:", signature)
+            print("Authorization Header:", authorization_header)
+            print("Headers:", headers)
 
-        request_url = f"https://{self.host}{self.endpoint}"
-        response = requests.get(request_url, headers=headers, timeout=5)
-        response.raise_for_status()
-        return response.text
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="AWS Request Signer Client",
-        usage=".e.g: /client.py --secretsfile dev_conf_secrets",
-    )
-    parser.add_argument(
-        "--secretsfile",
-        type=str,
-        required=True,
-        help="Secrets file name to load environment variables from. Should be in config folder. e.g. dev_conf_secrets",
-    )
-    args = parser.parse_args()
-
-    signer = AWSRequestSigner(secretsfile=args.secretsfile)
-    response_text = signer.make_request()
-    print(response_text)
+        return headers

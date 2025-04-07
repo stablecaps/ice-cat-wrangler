@@ -1,4 +1,6 @@
+
 locals {
+
   tags = {
     environment = var.env
     unique_str  = var.unique_str
@@ -8,6 +10,9 @@ locals {
     terraform   = "true"
   }
 
-  base_name = "terraform-remotestate-stablecaps-${var.unique_str}-${var.env}"
-
+  # TODO: tighten up these full perms
+  managed_policy_arns = [
+    "arn:aws:iam::aws:policy/AmazonRekognitionFullAccess",
+    aws_iam_policy.iam_getpolicy.arn,
+  ]
 }

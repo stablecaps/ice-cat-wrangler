@@ -178,5 +178,15 @@ cython_debug/
 .serverless
 
 # custom
-images/archive*
+**/images/archive*
 **/node_modules
+
+**/.vscode/
+
+**/config/dev_conf_secrets
+**/config/uat_conf_secrets
+**/config/prod_conf_secrets
+#
+**/config/dev.yml
+**/config/uat.yml
+**/config/prod.yml

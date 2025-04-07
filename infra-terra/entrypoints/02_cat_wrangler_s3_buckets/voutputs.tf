@@ -1,0 +1,17 @@
+# output "iam_role_arn" {
+#   description = "Lambda IAM role arn used for serverless function"
+#   value       = module.lambda_role_and_policies.iam_role_arn
+# }
+
+# output "bucket_source_name" {
+#   description = "exif-ripper s3 source bucket name"
+#   value       = module.s3_bucket_source.name
+# }
+
+output "bucket_dest_name" {
+  description = "exif-ripper s3 destination bucket name"
+  value = [
+    for storage in local.all_s3_buckets :
+    module.s3_buckets[storage].s3_bucket_id
+  ]
+}
