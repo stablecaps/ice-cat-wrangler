@@ -17,5 +17,6 @@ locals {
     "arn:aws:iam::aws:policy/AmazonS3FullAccess",
     "arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess",
     aws_iam_policy.get_iampolicies.arn,
+    data.terraform_remote_state.ice_tf_remote_backend.outputs.terraform_iam_policy.arn
   ]
 }

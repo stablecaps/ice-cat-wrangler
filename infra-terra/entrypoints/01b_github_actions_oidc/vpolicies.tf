@@ -41,6 +41,7 @@ data "aws_iam_policy_document" "get_iampolicy_docs" {
       "iam:GetPolicyVersion",
       "iam:ListRolePolicies"
     ]
+    # TODO: tighten up resource paths
     resources = [
       # "arn:aws:iam::${var.aws_acc_no}:policy/${var.project}*",
       # "arn:aws:iam::${var.aws_acc_no}:role/${var.project}*",
