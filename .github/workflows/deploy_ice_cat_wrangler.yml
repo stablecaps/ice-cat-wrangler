@@ -27,7 +27,7 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v2 # More information on this action can be found below in the 'AWS Credentials' section
+      uses: aws-actions/configure-aws-credentials@v4 # More information on this action can be found below in the 'AWS Credentials' section
       with:
         aws-region: eu-west-1
         # role arn is output from entrypoints/01b_github_actions_oidc/voutputs.tf
@@ -35,22 +35,44 @@ jobs:
         role-session-name: GitHubActions985dtd968
 
     - name: Install Terraform
-      uses: hashicorp/setup-terraform@v2
+      uses: hashicorp/setup-terraform@v3
       with:
         terraform_version: 1.11.3
+
+    - name: Decrypt secrets
+      run: |
+        #!/bin/bash
+
+        ./secrets_decryptor.sh ${{ secrets.iccat_decryptor_key }}
 
     - name: Deploy s3 buckets
       run: |
         #!/bin/bash
 
-        set -e
-
-        ./xxx_tfhelperv3.sh terraform_v1.11.3 entrypoints/02_cat_wrangler_s3_buckets yes dev full
-
+        cd infra-terra
+          ./xxx_tfhelperv3.sh terraform entrypoints/02_cat_wrangler_s3_buckets yes dev full
+        cd -
     - name: Deploy lambda permissions
       run: |
         #!/bin/bash
 
         set -e
+        cd infra-terra
+          ./xxx_tfhelperv3.sh terraform entrypoints/03_create_lambda_permissions yes dev full
+        cd -
 
-        ./xxx_tfhelperv3.sh terraform_v1.11.3 entrypoints/03_create_lambda_permissions yes dev full
+    - name: Delete unecrypted secrets from build agent
+      if: always()
+      run: |
+        #!/bin/bash
+
+        set -e
+
+        ALL_SECRETS=$(cat secrets.txt)
+
+        for secret_path in $ALL_SECRETS; do
+          echo "Deleting secret $secret_path"
+          rm -f $secret_path
+        done
+
+        echo -e "\nAll secrets deleted from build agent"

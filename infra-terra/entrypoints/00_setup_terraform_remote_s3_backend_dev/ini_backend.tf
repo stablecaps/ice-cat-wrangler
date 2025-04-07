@@ -30,4 +30,6 @@ module "remote_state" {
     aws         = aws
     aws.replica = aws.replica # not used but required
   }
+
+  tags = local.tags
 }
