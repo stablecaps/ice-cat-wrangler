@@ -13,6 +13,9 @@ locals {
   # TODO: tighten up these full perms
   managed_policy_arns = [
     "arn:aws:iam::aws:policy/AmazonRekognitionFullAccess",
-    aws_iam_policy.iam_getpolicy.arn,
+    "arn:aws:iam::aws:policy/AWSLambda_FullAccess",
+    "arn:aws:iam::aws:policy/AmazonS3FullAccess",
+    "arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess",
+    aws_iam_policy.get_iampolicies.arn,
   ]
 }

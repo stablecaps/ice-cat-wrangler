@@ -1,27 +1,26 @@
-resource "aws_iam_role" "github_actions" {
-  name_prefix        = "github-actions-ice-cat-wrangler-role-${var.env}"
-  assume_role_policy = data.aws_iam_policy_document.github_actions_oidc.json
 
-  path = "/providers/${var.env}/${var.project}/"
+### uses a custom written remote module written by me
+module "lambda_role_and_policies" {
 
-  # inline_policy {
-  #   name   = "github-action-ecr"
-  #   policy = data.aws_iam_policy_document.github_actions_ecr.json
-  # }
+  source = "github.com/stablecaps/terraform-aws-iam-policies-stablecaps" #?ref=v2.1.0"
 
+  role_name = "github-actions-ice-cat-${var.env}"
+  role_desc = "github actions role for ice-cat ${var.env}"
+  role_path = "/stablecaps/${var.env}/${var.project}/"
 
-  lifecycle {
-    create_before_destroy = true
+  trusted_entity_principals = {
+    Service = "lambda.amazonaws.com"
   }
 
+  custom_policies = {}
+
+  # TODO: tighten up these full perms
+  managed_policies = local.managed_policy_arns
+
   tags = local.tags
+
+  depends_on = [aws_iam_policy.get_iampolicies]
 }
 
-# TODO: tighten up these full perms
-resource "aws_iam_role_policy_attachment" "attach" {
-  count      = length(local.managed_policy_arns)
-  role       = aws_iam_role.github_actions.name
-  policy_arn = local.managed_policy_arns[count.index]
-}
 
 # https://mahendranp.medium.com/configure-github-openid-connect-oidc-provider-in-aws-b7af1bca97dd

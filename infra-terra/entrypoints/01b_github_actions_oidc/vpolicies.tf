@@ -20,42 +20,19 @@ data "aws_iam_policy_document" "github_actions_oidc" {
   }
 }
 
-data "aws_iam_policy_document" "github_actions_ecr" {
-  statement {
-    sid = "RepoReadWriteAccess"
-    actions = [
-      "ecr:BatchGetImage",
-      "ecr:BatchCheckLayerAvailability",
-      "ecr:CompleteLayerUpload",
-      "ecr:GetDownloadUrlForLayer",
-      "ecr:InitiateLayerUpload",
-      "ecr:PutImage",
-      "ecr:UploadLayerPart",
-    ]
-    resources = [
-      "arn:aws:ecr:eu-west-1:${var.aws_acc_no}:repository/*"
-    ]
-  }
-
-  statement {
-    sid       = "GetAuthorizationToken"
-    actions   = ["ecr:GetAuthorizationToken"]
-    resources = ["*"]
-  }
-}
 
 ############################################
-resource "aws_iam_policy" "iam_getpolicy" {
+resource "aws_iam_policy" "get_iampolicies" {
   name_prefix = "githubactions_getiam"
   path        = "/"
-  policy      = data.aws_iam_policy_document.iam_get_poldoc.json
+  policy      = data.aws_iam_policy_document.get_iampolicy_docs.json
 
   lifecycle {
     create_before_destroy = true
   }
 }
 
-data "aws_iam_policy_document" "iam_get_poldoc" {
+data "aws_iam_policy_document" "get_iampolicy_docs" {
   statement {
     sid = "iamGetPassRole"
     actions = [

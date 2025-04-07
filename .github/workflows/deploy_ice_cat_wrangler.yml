@@ -31,7 +31,7 @@ jobs:
       with:
         aws-region: eu-west-1
         # role arn is output from entrypoints/01b_github_actions_oidc/voutputs.tf
-        role-to-assume: arn:aws:iam::148842827623:role/github-actions-ecr-role20230807020310747200000002
+        role-to-assume: ${{ secrets.AWS_GHA_ASSUME_ROLE_ARN }}
         role-session-name: GitHubActions985dtd968
 
     - name: Install Terraform
