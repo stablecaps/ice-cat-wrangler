@@ -39,13 +39,15 @@ jobs:
       with:
         terraform_version: 1.11.3
 
-    - name: Deploy s3 buckets
+    - name: Decrypt secrets
       run: |
         #!/bin/bash
 
-        set -e
-        pwd
-        ls -la
+        ./secrets_decryptor.sh ${{ secrets.iccat_decryptor_key }}
+
+    - name: Deploy s3 buckets
+      run: |
+        #!/bin/bash
 
         cd infra-terra
           ./xxx_tfhelperv3.sh terraform entrypoints/02_cat_wrangler_s3_buckets yes dev full
@@ -58,3 +60,18 @@ jobs:
         cd infra-terra
           ./xxx_tfhelperv3.sh terraform entrypoints/03_create_lambda_permissions yes dev full
         cd -
+
+    - name: Delete unecrypted secrets from build agent
+      run: |
+        #!/bin/bash
+
+        set -e
+
+        ALL_SECRETS=$(cat secrets.txt)
+
+        for secret_path in $ALL_SECRETS; do
+          echo "Deleting secret $secret_path"
+          rm -f $secret_path
+        done
+
+        echo -e "\nAll secrets deleted from build agent"
