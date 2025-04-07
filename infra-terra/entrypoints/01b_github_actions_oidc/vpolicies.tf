@@ -15,7 +15,7 @@ data "aws_iam_policy_document" "github_actions_oidc" {
       test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
 
-      values = ["repo:ice-cat-wrangler/*"]
+      values = ["repo:stablecaps/ice-cat-wrangler:*"]
     }
   }
 }
@@ -42,8 +42,10 @@ data "aws_iam_policy_document" "get_iampolicy_docs" {
       "iam:ListRolePolicies"
     ]
     resources = [
-      "arn:aws:iam::${var.aws_acc_no}:policy/${var.project}*",
-      "arn:aws:iam::${var.aws_acc_no}:role/${var.project}*",
+      # "arn:aws:iam::${var.aws_acc_no}:policy/${var.project}*",
+      # "arn:aws:iam::${var.aws_acc_no}:role/${var.project}*",
+      "arn:aws:iam::${var.aws_acc_no}:policy/*",
+      "arn:aws:iam::${var.aws_acc_no}:role/*",
     ]
   }
 }

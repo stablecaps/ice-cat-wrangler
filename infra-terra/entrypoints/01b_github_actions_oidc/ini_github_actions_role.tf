@@ -1,25 +1,19 @@
+resource "aws_iam_role" "github_action_role" {
+  name_prefix = "github-actions-ice-cat-${var.env}"
+  description = "github actions role for ice-cat ${var.env}"
+  path        = "/stablecaps/${var.env}/${var.project}/"
 
-### uses a custom written remote module written by me
-module "lambda_role_and_policies" {
+  assume_role_policy = data.aws_iam_policy_document.github_actions_oidc.json
 
-  source = "github.com/stablecaps/terraform-aws-iam-policies-stablecaps" #?ref=v2.1.0"
+}
 
-  role_name = "github-actions-ice-cat-${var.env}"
-  role_desc = "github actions role for ice-cat ${var.env}"
-  role_path = "/stablecaps/${var.env}/${var.project}/"
+### Loop & attach AWS managed policies
+resource "aws_iam_role_policy_attachment" "this" {
 
-  trusted_entity_principals = {
-    Service = "lambda.amazonaws.com"
-  }
+  count = length(local.managed_policy_arns)
 
-  custom_policies = {}
-
-  # TODO: tighten up these full perms
-  managed_policies = local.managed_policy_arns
-
-  tags = local.tags
-
-  depends_on = [aws_iam_policy.get_iampolicies]
+  role       = aws_iam_role.github_action_role.name
+  policy_arn = local.managed_policy_arns[count.index]
 }
 
 
