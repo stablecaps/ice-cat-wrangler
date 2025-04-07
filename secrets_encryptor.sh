@@ -1,23 +1,31 @@
 #!/bin/bash
 
-set -euo pipefail
+set -eo pipefail
 
-echo -e "usage:\nsupply_path e.g: ./secrets_encryptor.sh \$secrets_path"
-echo -e "stdin e.g: ./secrets_encryptor.sh\n"
+echo -e "Usage:\n"
+echo -e "1. Provide a file path containing the password: $0 /path/to/password_file"
+echo -e "2. Provide a text password directly: $0 '\$password'\n"
+
 
 if ! command -v openssl &>/dev/null ; then
   echo "openssl is not installed. Please install it and try again."
   exit 1
 fi
 
-path=$1
-
 if [ $# -lt 1 ]; then
-  echo "enter password for secrets"
-  read -s password
-else
-  password=$(cat $path)
+  echo "Error: No argument provided."
+  echo "Usage: $0 <password_file_path or text_password>"
+  exit 1
 fi
+
+
+input=$1
+if [ -f "$input" ]; then
+  password=$(cat "$input")
+else
+  password="$input"
+fi
+
 
 ##############################
 
@@ -34,8 +42,9 @@ for secret_path in $ALL_SECRETS; do
   rm -f "${secret_path}.enc"
   openssl enc -aes-256-cbc -salt -in "${secret_path}" -out "${secret_path}.enc" -k "$password" -pbkdf2
   if [ $? -ne 0 ]; then
+    # TODO: this does not catch error
     echo "Encryption failed. Exiting.."
-  exit 42
+    exit 42
   fi
 
 done
