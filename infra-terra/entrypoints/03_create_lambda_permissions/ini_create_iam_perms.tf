@@ -13,7 +13,10 @@ module "lambda_role_and_policies" {
 
   custom_policies = local.func_analyser_custom_policy
 
-  managed_policies = ["arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole", "arn:aws:iam::aws:policy/AmazonRekognitionFullAccess"]
+  managed_policies = [
+    "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+    "arn:aws:iam::aws:policy/AmazonRekognitionFullAccess"
+  ]
 
   tags = local.tags
 }

@@ -37,8 +37,4 @@ locals {
     }
   }
 
-  #
-  managed_policies = {
-
-  }
 }
