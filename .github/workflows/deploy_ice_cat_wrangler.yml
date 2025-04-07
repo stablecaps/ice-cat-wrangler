@@ -44,6 +44,8 @@ jobs:
         #!/bin/bash
 
         set -e
+        pwd
+        ls -la
 
         cd infra-terra
           ./xxx_tfhelperv3.sh terraform_v1.11.3 entrypoints/02_cat_wrangler_s3_buckets yes dev full
