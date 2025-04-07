@@ -31,15 +31,16 @@ fi
 ALL_SECRETS=$(cat secrets.txt)
 
 for secret_path in $ALL_SECRETS; do
-  echo "Decrypting $secret_path"
+  secret_enc_path="${secret_path}"
+  echo "Decrypting ${secret_enc_path}"
 
-  if [ ! -f "$secret_path" ]; then
-    echo "$secret_path does not exist, exiting..."
+  if [ ! -f "${secret_enc_path}" ]; then
+    echo "${secret_enc_path} does not exist, exiting..."
     exit 42
   fi
 
 
-  openssl enc -aes-256-cbc -d -in "${secret_path}.enc" -out "${secret_path}" -k "$password" -pbkdf2
+  openssl enc -aes-256-cbc -d -in "${secret_enc_path}" -out "${secret_path}" -k "$password" -pbkdf2
   if [ $? -ne 0 ]; then
     # TODO: this does not catch error
     echo "Decryption failed. Exiting.."
