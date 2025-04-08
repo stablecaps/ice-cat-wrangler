@@ -50,11 +50,11 @@ provider:
 
 functions:
   results:
-    handler: func_results.get_result
+    handler: func_results.run
     description: "Get results for a given uploaded image id"
     events:
       - httpApi:
-          path: /v1/imagecat/results/{imgid}
+          path: /v1/imagecat/results/{resultid}
           method: get
           authorizer:
             type: aws_iam

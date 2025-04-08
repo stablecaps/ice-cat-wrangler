@@ -124,17 +124,18 @@ class CLIArgs:
 
     def __init__(self):
         help_banner = (
-            "./cat_api_client.py --secretsfile dev_conf_secrets analyse --imgpath /path/to/image.jpg [--debug]\n"
-            "./cat_api_client.py --secretsfile dev_conf_secrets results --resultid 120 [--debug]\n"
-            "./cat_api_client.py --secretsfile ssm analyse --imgpath /path/to/image.jpg [--debug]\n"
+            "./cat_api_client.py --secretsfile dev_conf_secrets --debug analyse --imgpath /path/to/image.jpg\n"
+            "./cat_api_client.py --secretsfile dev_conf_secrets --debug results --resultid 120\n"
+            "./cat_api_client.py --secretsfile ssm --debug analyse --imgpath /path/to/image.jpg\n"
         )
 
         parser = argparse.ArgumentParser(
-            description="Cat API Client",
-            usage=".e.g: ./cat_api_client.py {analyse|results} [<args>]",
+            description="ICE Cat API Client",
+            usage=".e.g: ./cat_api_client.py {--secretsfile [ssm|dev_conf_secrets]} [--debug] {analyse|results} [<args>]\n"
+            + help_banner,
         )
 
-        parser.add_argument("command", choices=["analyse", "results"], help=help_banner)
+        # Global args
         parser.add_argument(
             "--secretsfile",
             "-s",
@@ -143,30 +144,23 @@ class CLIArgs:
             help="Secrets file name located in config folder to load environment variables from, or 'ssm' to fetch from AWS SSM Parameter Store.",
         )
 
-        # parse_args defaults to [1:] for args, but you need to
-        # exclude the rest of the args too, or validation will fail
-        args = parser.parse_args(sys.argv[1:4])
-
-        if not hasattr(CLIArgs, args.command):
-            print("Unrecognized command")
-            parser.print_help()
-            sys.exit(42)
-
-        # Load environment variables
-        load_environment_variables(secretsfile=args.secretsfile)
-
-        print("All environment secrets set correctly")
-
-        getattr(self, args.command)()
-
-    @staticmethod
-    def analyse():
-
-        parser = argparse.ArgumentParser(
-            description="Upload local image to AWS Lambda analyse function",
+        parser.add_argument(
+            "--debug",
+            "-d",
+            action="store_true",
+            required=False,
+            default=False,
+            help="Debug mode. Set to True to enable debug output.",
         )
 
-        parser.add_argument(
+        # Subparsers for commands
+        subparsers = parser.add_subparsers(dest="command", required=True)
+
+        # Subparser for "analyse"
+        analyse_parser = subparsers.add_parser(
+            "analyse", help="Upload local image to AWS Lambda analyse function"
+        )
+        analyse_parser.add_argument(
             "--imgpath",
             "-i",
             dest="img_path",
@@ -175,30 +169,11 @@ class CLIArgs:
             help="Path to the local image to upload. e.g. /path/to/image.jpg",
         )
 
-        parser.add_argument(
-            "--debug",
-            "-d",
-            action="store_true",
-            required=False,
-            default=False,
-            help="Debug mode. Set to True to enable debug output.",
+        # Subparser for "results"
+        results_parser = subparsers.add_parser(
+            "results", help="Get results from AWS Lambda results function"
         )
-
-        args = parser.parse_args(sys.argv[4:])
-
-        client = CatAPIClient(
-            action="analyse", img_path=args.img_path, debug=args.debug
-        )
-        client.make_request()
-
-    @staticmethod
-    def results():
-
-        parser = argparse.ArgumentParser(
-            description="Get results from AWS Lambda results function",
-        )
-
-        parser.add_argument(
+        results_parser.add_argument(
             "--resultid",
             "-r",
             dest="result_id",
@@ -207,19 +182,35 @@ class CLIArgs:
             help="Result ID to get results for. e.g. 1234567890",
         )
 
-        parser.add_argument(
-            "--debug",
-            "-d",
-            action="store_true",
-            required=False,
-            default=False,
-            help="Debug mode. Set to True to enable debug output.",
-        )
+        args = parser.parse_args()
 
-        args = parser.parse_args(sys.argv[4:])
+        if not hasattr(CLIArgs, args.command):
+            print("Unrecognized command")
+            parser.print_help()
+            sys.exit(42)
+
+        # Load environment variables
+        load_environment_variables(secretsfile=args.secretsfile, debug=args.debug)
+
+        print("All environment secrets set correctly")
+
+        # Dispatch to the appropriate subcommand
+        if args.command == "analyse":
+            self.analyse(args.img_path, args.debug)
+        elif args.command == "results":
+            self.results(args.result_id, args.debug)
+
+    @staticmethod
+    def analyse(img_path, debug):
+
+        client = CatAPIClient(action="analyse", img_path=img_path, debug=debug)
+        client.make_request()
+
+    @staticmethod
+    def results(result_id, debug):
 
         client = CatAPIClient(
-            action="results", img_path=None, result_id=args.result_id, debug=args.debug
+            action="results", img_path=None, result_id=result_id, debug=debug
         )
         client.make_request()
 

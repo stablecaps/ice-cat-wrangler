@@ -43,10 +43,10 @@ secret_vars = [
     "RESULTS_ENDPOINT",
 ]
 
-ssm_excluded_leys = ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"]
+ssm_excluded_keys = ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"]
 ssm_prefix = "/stablecaps/dev/cat-wrangler"
 ssm_keys = [
-    f"{ssm_prefix}/{key}" for key in secret_vars if key not in ssm_excluded_leys
+    f"{ssm_prefix}/{key}" for key in secret_vars if key not in ssm_excluded_keys
 ]
 
 
@@ -107,7 +107,7 @@ def check_env_variables(dotenv_path):
     return passed
 
 
-def load_environment_variables(secretsfile):
+def load_environment_variables(secretsfile, debug=False):
     """
     Loads environment variables from a dotenv file or AWS SSM Parameter Store.
 
@@ -141,4 +141,9 @@ def load_environment_variables(secretsfile):
             print("\nEnv variables not set up properly. Exiting...")
             sys.exit(1)
 
-    print("Environment variables loaded successfully.")
+    if debug:
+        print("\n Retrieved env vars")
+        for key in secret_vars:
+            print("**{key}**: ", os.environ[key])
+
+    print("\nEnvironment variables loaded successfully.")
