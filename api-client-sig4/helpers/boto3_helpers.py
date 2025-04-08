@@ -10,7 +10,7 @@ from botocore.exceptions import ClientError
 from rich import print
 
 
-def get_boto3_session():
+def gen_boto3_session():
     """Creates and returns a Boto3 session using environment variables.
 
     Returns:
@@ -24,7 +24,7 @@ def get_boto3_session():
     )
 
 
-def create_boto3_client(service_name, aws_region="eu-west-1"):
+def gen_boto3_client(service_name, aws_region="eu-west-1"):
     """Creates and returns a Boto3 client for a specified AWS service.
 
     Args:
@@ -33,12 +33,12 @@ def create_boto3_client(service_name, aws_region="eu-west-1"):
     Returns:
         boto3.Client: A Boto3 client object for the specified service.
     """
-    session = get_boto3_session()
+    session = gen_boto3_session()
     return session.client(service_name, aws_region)
 
 
-session = get_boto3_session()
-lambda_client = create_boto3_client("lambda", "eu-west-1")
+session = gen_boto3_session()
+lambda_client = gen_boto3_client("lambda", "eu-west-1")
 
 
 # def check_bucket_exists(bucket_name):

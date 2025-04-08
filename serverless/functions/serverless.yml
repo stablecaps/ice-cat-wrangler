@@ -9,8 +9,9 @@ service: ice-cat-wrangler
 
 plugins:
   - serverless-python-requirements
-  # - serverless-stack-output
-  # - serverless-ssm-fetch
+  - serverless-stack-output
+  - serverless-ssm-fetch
+
 custom:
   defaultStage: dev
   currentStage: ${opt:stage, self:custom.defaultStage}
@@ -19,20 +20,26 @@ custom:
   iamRoleArn: ${param:rolearn, self:custom.iamRoleArnFromFile}
   deploymentBucketFromFile: ${file(./config/${self:custom.currentStage}.yml):deployment_bucket}
   deploymentBucket: ${param:dbuck, self:custom.deploymentBucketFromFile}
+  serverlessSsmFetch:
+    s3bucketSource: "/stablecaps/dev/cat-wrangler/s3bucket_source"
+    s3bucketDest: "/stablecaps/dev/cat-wrangler/s3bucket_dest"
+    s3bucketFail: "/stablecaps/dev/cat-wrangler/s3bucket_fail"
   pythonRequirements:
     dockerizePip: true
+
 provider:
   name: aws
   runtime: python3.12
   stage: ${self:custom.currentStage}
   region: ${self:custom.awsRegion}
   deploymentBucket: ${self:custom.deploymentBucket}
+
   iam:
     role: ${self:custom.iamRoleArn}
 
-
   tags:
     version: ${file(./config/${self:custom.currentStage}.yml):version}
+
   logs:
     httpApi: true
 
@@ -53,7 +60,7 @@ functions:
             type: aws_iam
 
   image-analyse:
-    handler: image_analyse.image_analyse
+    handler: image_analyse.run
     description: "Submit images for categorisation & identification"
     events:
       - httpApi:
@@ -61,6 +68,30 @@ functions:
           method: post
           authorizer:
             type: aws_iam
+
+  exif:
+    handler: s3_bulk_image_analyser.run
+    ssmToEnvironment:
+      - bucketSource
+      - bucketDest
+    package:
+      individually: true
+      exclude:
+        - "*/**"
+      # include:
+      #   - handler.py
+      #   - boto3_helpers.py
+      #   - secrets_manager.py
+      #   - requirements.txt
+      #   - __init__.py
+    events:
+      - s3:
+          bucket: ${ssm:${self:custom.bucketSourceSsmKey}}
+          event: s3:ObjectCreated:*
+          rules:
+            - prefix: incoming
+            - suffix: .jpg, .png
+          existing: true
 
 # https://www.serverless.com/framework/docs/providers/aws/events/http-api
 

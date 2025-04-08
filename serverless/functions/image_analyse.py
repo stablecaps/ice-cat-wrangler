@@ -22,7 +22,7 @@ logger.setLevel("INFO")
 rekognition = boto3.client("rekognition")
 
 
-def image_analyse(event, context):
+def run(event, context):
 
     logger.info("Event: %s", event)
     logger.info("Context: %s", context)
@@ -30,6 +30,7 @@ def image_analyse(event, context):
     logger.info("Function name: %s", context.function_name)
     logger.info("Function version: %s", context.function_version)
 
+    # TODO: check if image is png or jpeg. fail if not
     try:
         image = None
         if "S3Bucket" in event and "S3Object" in event:

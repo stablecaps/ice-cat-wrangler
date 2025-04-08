@@ -1,5 +1,7 @@
 {
   "devDependencies": {
-    "serverless-python-requirements": "^6.1.2"
+    "serverless-python-requirements": "^6.1.2",
+    "serverless-ssm-fetch": "^2.0.0",
+    "serverless-stack-output": "^0.2.3"
   }
 }

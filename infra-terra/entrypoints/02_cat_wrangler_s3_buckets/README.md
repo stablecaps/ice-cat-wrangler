@@ -11,7 +11,9 @@
 
 ## Providers
 
-No providers.
+| Name | Version |
+|------|---------|
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.94.1 |
 
 ## Modules
 
@@ -21,7 +23,9 @@ No providers.
 
 ## Resources
 
-No resources.
+| Name | Type |
+|------|------|
+| [aws_ssm_parameter.s3buckets](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ssm_parameter) | resource |
 
 ## Inputs
 
@@ -41,5 +45,7 @@ No resources.
 
 | Name | Description |
 |------|-------------|
-| <a name="output_bucket_dest_name"></a> [bucket\_dest\_name](#output\_bucket\_dest\_name) | exif-ripper s3 destination bucket name |
+| <a name="output_s3bucket_dest_name"></a> [s3bucket\_dest\_name](#output\_s3bucket\_dest\_name) | S3 bucket name for the destination bucket |
+| <a name="output_s3bucket_fail_name"></a> [s3bucket\_fail\_name](#output\_s3bucket\_fail\_name) | S3 bucket name for the fail bucket |
+| <a name="output_s3bucket_source_name"></a> [s3bucket\_source\_name](#output\_s3bucket\_source\_name) | S3 bucket name for the source bucket |
 <!-- END_TF_DOCS -->

@@ -8,13 +8,12 @@ locals {
     terraform   = "true"
   }
 
-  s3bucket_source_name = "${var.s3bucket_source_name}.${var.unique_str}-${var.env}"
-  s3bucket_dest_name   = "${var.s3bucket_dest_name}.${var.unique_str}-${var.env}"
-  s3bucket_fail_name   = "${var.s3bucket_fail_name}.${var.unique_str}-${var.env}"
+  ssm_root_prefix = "/stablecaps/${var.env}/${var.project}"
 
-  all_s3_buckets = [
-    local.s3bucket_source_name,
-    local.s3bucket_dest_name,
-    local.s3bucket_fail_name
-  ]
+  s3bucket_map = {
+    s3bucket_source = "${var.s3bucket_source_name}-${var.unique_str}-${var.env}"
+    s3bucket_dest   = "${var.s3bucket_dest_name}-${var.unique_str}-${var.env}"
+    s3bucket_fail   = "${var.s3bucket_fail_name}-${var.unique_str}-${var.env}"
+  }
+
 }
