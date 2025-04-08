@@ -67,7 +67,7 @@ class CatAPIClient:
             self.endpoint = os.getenv("ANALYSE_ENDPOINT")
         elif action == "results":
             self.method = "GET"
-            self.endpoint = os.getenv("RESULTS_ENDPOINT")
+            self.endpoint = f"{os.getenv('RESULTS_ENDPOINT')}/{self.result_id}"
         else:
             raise ValueError("Invalid action. Choose 'analyse' or 'results'.")
 
@@ -86,7 +86,7 @@ class CatAPIClient:
 
         # TODO: this may fail aws sig4 signing as signer also uses url - deal with later
         request_url = (
-            f"https://{self.host}{self.endpoint}/{self.result_id}"
+            f"https://{self.host}{self.endpoint}"
             if self.method == "GET"
             else f"https://{self.host}{self.endpoint}"
         )

@@ -35,7 +35,6 @@ import os
 import sys
 
 import boto3
-import requests
 from botocore.exceptions import ClientError
 from rich import print
 
