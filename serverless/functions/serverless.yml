@@ -9,9 +9,7 @@ service: ice-cat-wrangler
 
 plugins:
   - serverless-python-requirements
-  - serverless-stack-output
   - serverless-ssm-fetch
-
 custom:
   defaultStage: dev
   currentStage: ${opt:stage, self:custom.defaultStage}
@@ -20,10 +18,12 @@ custom:
   iamRoleArn: ${param:rolearn, self:custom.iamRoleArnFromFile}
   deploymentBucketFromFile: ${file(./config/${self:custom.currentStage}.yml):deployment_bucket}
   deploymentBucket: ${param:dbuck, self:custom.deploymentBucketFromFile}
+
+  sourcebucketSsmKey: ${self:custom.serverlessSsmFetch.s3bucketSource}
   serverlessSsmFetch:
-    s3bucketSource: "/stablecaps/dev/cat-wrangler/s3bucket_source"
-    s3bucketDest: "/stablecaps/dev/cat-wrangler/s3bucket_dest"
-    s3bucketFail: "/stablecaps/dev/cat-wrangler/s3bucket_fail"
+    s3bucketSource: /stablecaps/dev/cat-wrangler/s3bucket_source
+    s3bucketDest: /stablecaps/dev/cat-wrangler/s3bucket_dest
+    s3bucketFail: /stablecaps/dev/cat-wrangler/s3bucket_fail
   pythonRequirements:
     dockerizePip: true
 
@@ -50,7 +50,7 @@ provider:
 
 functions:
   results:
-    handler: results.get_result
+    handler: func_results.get_result
     description: "Get results for a given uploaded image id"
     events:
       - httpApi:
@@ -60,7 +60,7 @@ functions:
             type: aws_iam
 
   image-analyse:
-    handler: image_analyse.run
+    handler: func_image_analyse.run
     description: "Submit images for categorisation & identification"
     events:
       - httpApi:
@@ -69,11 +69,13 @@ functions:
           authorizer:
             type: aws_iam
 
-  exif:
-    handler: s3_bulk_image_analyser.run
+  s3_bulkimg_analyser:
+    handler: func_s3_bulkimg_analyser.run
+    description: "Bulk submit images from s3 for categorisation & identification"
     ssmToEnvironment:
-      - bucketSource
-      - bucketDest
+      - s3bucketSource
+      - s3bucketDest
+      - s3bucketFail
     package:
       individually: true
       exclude:
@@ -86,15 +88,23 @@ functions:
       #   - __init__.py
     events:
       - s3:
-          bucket: ${ssm:${self:custom.bucketSourceSsmKey}}
+          bucket: ${ssm:${self:custom.sourcebucketSsmKey}}
           event: s3:ObjectCreated:*
           rules:
             - prefix: incoming
-            - suffix: .jpg, .png
+            - suffix: .jpg,.jpeg,.png
           existing: true
 
+resources:
+  Resources:
+    ApiGatewaySSMParameterEndPointName:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: /stablecaps/cat-wrangler/${self:custom.currentStage}/http-api-endpoint
+        Type: String
+        Value:
+          Fn::Sub: https://${HttpApi.ApiEndpoint}
+        Tags:
+          Environment: ${self:custom.currentStage}
+
 # https://www.serverless.com/framework/docs/providers/aws/events/http-api
-
-
-# serverless/functions/image_submit/image_submit.py
-# serverless/functions/results/results.py

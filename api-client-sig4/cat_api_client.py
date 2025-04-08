@@ -199,7 +199,7 @@ class CLIArgs:
 
         parser.add_argument(
             "--resultid",
-            "-i",
+            "-r",
             dest="result_id",
             type=str,
             required=True,
