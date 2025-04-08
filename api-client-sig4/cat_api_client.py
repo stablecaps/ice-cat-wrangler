@@ -39,7 +39,11 @@ import sys
 import requests
 from helpers.aws_request_signer import AWSRequestSigner
 from helpers.boto3_helpers import upload_local_image_blocking
-from helpers.config import check_env_variables, construct_secrets_path
+from helpers.config import (
+    check_env_variables,
+    construct_secrets_path,
+    load_environment_variables,
+)
 from rich import print
 
 
@@ -122,6 +126,7 @@ class CLIArgs:
         help_banner = (
             "./cat_api_client.py --secretsfile dev_conf_secrets analyse --imgpath /path/to/image.jpg [--debug]\n"
             "./cat_api_client.py --secretsfile dev_conf_secrets results --resultid 120 [--debug]\n"
+            "./cat_api_client.py --secretsfile ssm analyse --imgpath /path/to/image.jpg [--debug]\n"
         )
 
         parser = argparse.ArgumentParser(
@@ -135,7 +140,7 @@ class CLIArgs:
             "-s",
             type=str,
             required=True,
-            help="Secrets file name to load environment variables from. Should be in config folder. e.g. dev_conf_secrets",
+            help="Secrets file name located in config folder to load environment variables from, or 'ssm' to fetch from AWS SSM Parameter Store.",
         )
 
         # parse_args defaults to [1:] for args, but you need to
@@ -147,12 +152,8 @@ class CLIArgs:
             parser.print_help()
             sys.exit(42)
 
-        print("Loading environment variables from the specified secrets file")
-        dotenv_path = construct_secrets_path(secret_filename=args.secretsfile)
-        has_env_vars = check_env_variables(dotenv_path=dotenv_path)
-        if not has_env_vars:
-            print("\nEnv variables not set up properly. Exiting...")
-            sys.exit(1)
+        # Load environment variables
+        load_environment_variables(secretsfile=args.secretsfile)
 
         print("All environment secrets set correctly")
 

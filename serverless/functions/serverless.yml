@@ -97,14 +97,68 @@ functions:
 
 resources:
   Resources:
-    ApiGatewaySSMParameterEndPointName:
+    SSMService:
       Type: AWS::SSM::Parameter
       Properties:
-        Name: /stablecaps/cat-wrangler/${self:custom.currentStage}/http-api-endpoint
+        Name: /stablecaps/${self:custom.currentStage}/cat-wrangler/SERVICE
         Type: String
-        Value:
-          Fn::Sub: https://${HttpApi.ApiEndpoint}
+        Value: "execute-api"
         Tags:
           Environment: ${self:custom.currentStage}
+
+    SSMAWSRegion:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: /stablecaps/${self:custom.currentStage}/cat-wrangler/AWS_REGION
+        Type: String
+        Value: "eu-west-1"
+        Tags:
+          Environment: ${self:custom.currentStage}
+
+    SSMApiHost:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: /stablecaps/${self:custom.currentStage}/cat-wrangler/API_HOST
+        Type: String
+        Value: "pdg876zkd7.execute-api.eu-west-1.amazonaws.com"
+        Tags:
+          Environment: ${self:custom.currentStage}
+
+    SSMFuncImageAnalyserName:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: /stablecaps/${self:custom.currentStage}/cat-wrangler/FUNC_IMAGE_ANALYSER_NAME
+        Type: String
+        Value: "ice-cat-wrangler-dev-image-analyse"
+        Tags:
+          Environment: ${self:custom.currentStage}
+
+    SSMFuncImageResultsName:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: /stablecaps/${self:custom.currentStage}/cat-wrangler/FUNC_IMAGE_RESULTS_NAME
+        Type: String
+        Value: "ice-cat-wrangler-dev-image-results"
+        Tags:
+          Environment: ${self:custom.currentStage}
+
+    SSMAnalyseEndpoint:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: /stablecaps/${self:custom.currentStage}/cat-wrangler/ANALYSE_ENDPOINT
+        Type: String
+        Value: "/v1/imagecat/analyse"
+        Tags:
+          Environment: ${self:custom.currentStage}
+
+    SSMResultsEndpoint:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: /stablecaps/${self:custom.currentStage}/cat-wrangler/RESULTS_ENDPOINT
+        Type: String
+        Value: "/v1/imagecat/results"
+        Tags:
+          Environment: ${self:custom.currentStage}
+
 
 # https://www.serverless.com/framework/docs/providers/aws/events/http-api
