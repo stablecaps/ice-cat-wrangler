@@ -2,10 +2,10 @@
 org: stablecaps
 
 # "app" enables Serverless Framework Dashboard features and sharing them with other Services.
-app: ice-cat-wrangler
+app: ice-cat-wrangler5
 
 # "service" is the name of this project. This will also be added to your AWS resource names.
-service: ice-cat-wrangler
+service: ice-cat-wrangler5
 
 plugins:
   - serverless-python-requirements
@@ -14,16 +14,18 @@ custom:
   defaultStage: dev
   currentStage: ${opt:stage, self:custom.defaultStage}
   awsRegion: ${file(./config/${self:custom.currentStage}.yml):aws_region}
-  iamRoleArnFromFile: ${file(./config/${self:custom.currentStage}.yml):iam_role_arn}
-  iamRoleArn: ${param:rolearn, self:custom.iamRoleArnFromFile}
   deploymentBucketFromFile: ${file(./config/${self:custom.currentStage}.yml):deployment_bucket}
   deploymentBucket: ${param:dbuck, self:custom.deploymentBucketFromFile}
 
+  iamRoleArnFromFile: ${file(./config/${self:custom.currentStage}.yml):iam_role_arn}
+  # iamRoleArn: ${self:custom.serverlessSsmFetch.lambdaRoleArn} #${param:rolearn, self:custom.iamRoleArnFromFile}
+  iamRoleArn: ${param:rolearn, self:custom.iamRoleArnFromFile}
   sourcebucketSsmKey: ${self:custom.serverlessSsmFetch.s3bucketSource}
   serverlessSsmFetch:
     s3bucketSource: /stablecaps/dev/cat-wrangler/s3bucket_source
     s3bucketDest: /stablecaps/dev/cat-wrangler/s3bucket_dest
     s3bucketFail: /stablecaps/dev/cat-wrangler/s3bucket_fail
+    lambdaRoleArn: '/stablecaps/dev/cat-wrangler/lambda_role_arn'
   pythonRequirements:
     dockerizePip: true
 
@@ -51,6 +53,7 @@ provider:
 functions:
   results:
     handler: func_results.run
+    name: ${self:service}-${self:custom.currentStage}-func_results
     description: "Get results for a given uploaded image id"
     events:
       - httpApi:
@@ -60,6 +63,7 @@ functions:
             type: aws_iam
 
   image-analyse:
+    name: ${self:service}-${self:custom.currentStage}-image_analyse
     handler: func_image_analyse.run
     description: "Submit images for categorisation & identification"
     events:
@@ -69,8 +73,9 @@ functions:
           authorizer:
             type: aws_iam
 
-  s3_bulkimg_analyser:
-    handler: func_s3_bulkimg_analyser.run
+  s3_bulkimg_analyse:
+    name: ${self:service}-${self:custom.currentStage}-s3-bulkimg-analyse
+    handler: func_s3_bulkimg_analyse.run
     description: "Bulk submit images from s3 for categorisation & identification"
     ssmToEnvironment:
       - s3bucketSource
@@ -90,10 +95,10 @@ functions:
       - s3:
           bucket: ${ssm:${self:custom.sourcebucketSsmKey}}
           event: s3:ObjectCreated:*
-          rules:
-            - prefix: incoming
-            - suffix: .jpg,.jpeg,.png
+          # rules:
+          #   - prefix: incoming/
           existing: true
+          forceDeploy: true
 
 resources:
   Resources:

@@ -1,6 +1,6 @@
 locals {
-  func_analyser_custom_policy = {
-    "${local.func_analyser_role_name}-pol" = {
+  lambda_cat_wrangler_app_custom_policy = {
+    "${local.lambda_cat_wrangler_app_role_name}-pol" = {
       Version = "2012-10-17"
       Statement = [
         {
@@ -17,9 +17,9 @@ locals {
           "Resource" : [
             "arn:aws:logs:eu-west-1:${var.aws_acc_no}:log-group:/aws/lambda/*",
             "arn:aws:logs:eu-west-1:${var.aws_acc_no}:log-group:/aws/lambda/*",
-            "arn:aws:s3:::${var.s3bucket_source_name}",
-            "arn:aws:s3:::${var.s3bucket_dest_name}",
-            "arn:aws:s3:::${var.s3bucket_fail_name}",
+            "arn:aws:s3:::${local.s3bucket_source_fullname}",
+            "arn:aws:s3:::${local.s3bucket_dest_fullname}",
+            "arn:aws:s3:::${local.s3bucket_fail_fullname}",
           ]
         },
         {
