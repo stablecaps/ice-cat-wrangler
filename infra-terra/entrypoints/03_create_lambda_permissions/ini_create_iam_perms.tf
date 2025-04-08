@@ -22,9 +22,9 @@ module "lambda_role_and_policies" {
 }
 
 
-resource "aws_ssm_parameter" "lambda_role_arn" {
+resource "aws_ssm_parameter" "lambda_role_cat_arn" {
 
-  name      = "${local.ssm_root_prefix}/lambda_role_arn"
+  name      = "${local.ssm_root_prefix}/lambda_role_cat_arn"
   type      = "String"
   value     = module.lambda_role_and_policies.iam_role_arn
   overwrite = true

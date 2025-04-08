@@ -74,98 +74,101 @@ def check_bucket_exists(bucket_name):
 
 
 #############################################################
-def run(event, context):
-    body = {"message": "Go Serverless v4.0! Your function executed successfully!"}
-
-    LOG.info("s3bucketSource: %s", os.getenv("s3bucketSource"))
-    LOG.info("s3bucketDest: %s", os.getenv("s3bucketDest"))
-    LOG.info("s3bucketFail: %s", os.getenv("s3bucketFail"))
-    LOG.info("event: <%s> - <%s>", type(event), event)
-
-    return {"statusCode": 200, "body": json.dumps(body)}
-
-
 # def run(event, context):
-#     """
-#     Main lambda entrypoint & logic.
-#     """
+#     body = {"message": "Go Serverless v4.0! Your function executed successfully!"}
 
+#     LOG.info("s3bucketSource: %s", os.getenv("s3bucketSource"))
+#     LOG.info("s3bucketDest: %s", os.getenv("s3bucketDest"))
+#     LOG.info("s3bucketFail: %s", os.getenv("s3bucketFail"))
 #     LOG.info("event: <%s> - <%s>", type(event), event)
 
-#     ### Setup boto3
-#     s3_client = gen_boto3_client("s3", "eu-west-1")
+#     return {"statusCode": 200, "body": json.dumps(body)}
 
-#     ### read env vars
-#     s3bucket_env_list = (
-#         os.getenv("s3bucket_source"),
-#         os.getenv("s3bucket_dest"),
-#         os.getenv("s3bucket_fail"),
-#     )
-#     s3bucket_source, s3bucket_dest, s3bucket_fail = s3bucket_env_list
 
-#     ### Sanity check
-#     if None in s3bucket_env_list:
-#         LOG.critical("env vars are unset in bucket_env_list: <%s>", s3bucket_env_list)
-#         sys.exit(42)
+def run(event, context):
+    """
+    Main lambda entrypoint & logic.
+    """
 
-#     for s3bucket in s3bucket_env_list:
-#         check_bucket_exists(bucket_name=s3bucket)
+    LOG.info("event: <%s> - <%s>", type(event), event)
 
-#     # TODO: sort out if record_list is None
-#     record_list = event.get("Records")
-#     object_key = safeget(record_list[0], "s3", "object", "key")
-#     LOG.info("object_key: <%s>", object_key)
-#     if object_key is None:
-#         LOG.critical("object_key not set. Exiting")
-#         sys.exit(42)
+    ### Setup boto3
+    s3_client = gen_boto3_client("s3", "eu-west-1")
 
-#     ### Process new uploaded image file
-#     response = s3_client.get_object(Bucket=s3bucket_source, Key=object_key)
+    ### read env vars
+    s3bucket_env_list = (
+        os.getenv("s3bucketSource"),
+        os.getenv("s3bucketDest"),
+        os.getenv("s3bucketFail"),
 
-#     LOG.info("response: %s", response)
+    )
+    s3bucket_source, s3bucket_dest, s3bucket_fail = s3bucket_env_list
 
-#     # my_image = read_img_2memory(get_obj_resp=response)
-#     # log_image_data(img=my_image, label="exif data pass0")
+    print(f"lambaRoleArn: {os.getenv('lambaRoleArn')}")
 
-#     # ### initial exif data delete
-#     # my_image.delete_all()
+    ### Sanity check
+    if None in s3bucket_env_list:
+        LOG.critical("env vars are unset in bucket_env_list: <%s>", s3bucket_env_list)
+        sys.exit(42)
 
-#     # exif_data_list = log_image_data(img=my_image, label="exif data pass1")
+    for s3bucket in s3bucket_env_list:
+        check_bucket_exists(bucket_name=s3bucket)
 
-#     # ### Mop any exif data that failed to delete with delete_all
-#     # if len(exif_data_list) > 0:
-#     #     for exif_tag in exif_data_list:
-#     #         my_image.delete(exif_tag)
-#     #     log_image_data(img=my_image, label="exif data pass2")
+    # TODO: sort out if record_list is None
+    record_list = event.get("Records")
+    object_key = safeget(record_list[0], "s3", "object", "key")
+    LOG.info("object_key: <%s>", object_key)
+    if object_key is None:
+        LOG.critical("object_key not set. Exiting")
+        sys.exit(42)
 
-#     ### Copy image with sanitised exif data to destination bucket
-#     # s3_client.put_object(
-#     #     ACL="bucket-owner-full-control",
-#     #     Body=my_image.get_file(),
-#     #     Bucket=s3bucket_dest,
-#     #     Key=object_key,
-#     # )
+    ### Process new uploaded image file
+    response = s3_client.get_object(Bucket=s3bucket_source, Key=object_key)
 
-#     try:
-#         copy_source = {"Bucket": s3bucket_source, "Key": object_key}
-#         s3_client.copy_object(
-#             CopySource=copy_source,
-#             Bucket=s3bucket_dest,
-#             Key=object_key,
-#             ACL="bucket-owner-full-control",
-#         )
-#         print(f"Object {object_key} copied from {s3bucket_source} to {s3bucket_dest}")
+    LOG.info("response: %s", response)
 
-#         s3_client.delete_object(Bucket=s3bucket_source, Key=object_key)
-#         print(f"Object {object_key} deleted from {s3bucket_source}")
+    # my_image = read_img_2memory(get_obj_resp=response)
+    # log_image_data(img=my_image, label="exif data pass0")
 
-#     except ClientError as e:
-#         print(f"Error moving object {object_key}: {e}")
-#         raise
+    # ### initial exif data delete
+    # my_image.delete_all()
 
-#     LOG.info(
-#         "SUCCESS Copying s3 object <%s> from <%s> to <%s>",
-#         object_key,
-#         s3bucket_source,
-#         s3bucket_dest,
-#     )
+    # exif_data_list = log_image_data(img=my_image, label="exif data pass1")
+
+    # ### Mop any exif data that failed to delete with delete_all
+    # if len(exif_data_list) > 0:
+    #     for exif_tag in exif_data_list:
+    #         my_image.delete(exif_tag)
+    #     log_image_data(img=my_image, label="exif data pass2")
+
+    ### Copy image with sanitised exif data to destination bucket
+    # s3_client.put_object(
+    #     ACL="bucket-owner-full-control",
+    #     Body=my_image.get_file(),
+    #     Bucket=s3bucket_dest,
+    #     Key=object_key,
+    # )
+
+    try:
+        copy_source = {"Bucket": s3bucket_source, "Key": object_key}
+        s3_client.copy_object(
+            CopySource=copy_source,
+            Bucket=s3bucket_dest,
+            Key=object_key,
+            ACL="bucket-owner-full-control",
+        )
+        print(f"Object {object_key} copied from {s3bucket_source} to {s3bucket_dest}")
+
+        s3_client.delete_object(Bucket=s3bucket_source, Key=object_key)
+        print(f"Object {object_key} deleted from {s3bucket_source}")
+
+    except ClientError as e:
+        print(f"Error moving object {object_key}: {e}")
+        raise
+
+    LOG.info(
+        "SUCCESS Copying s3 object <%s> from <%s> to <%s>",
+        object_key,
+        s3bucket_source,
+        s3bucket_dest,
+    )

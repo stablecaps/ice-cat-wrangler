@@ -18,14 +18,15 @@ custom:
   deploymentBucket: ${param:dbuck, self:custom.deploymentBucketFromFile}
 
   iamRoleArnFromFile: ${file(./config/${self:custom.currentStage}.yml):iam_role_arn}
-  # iamRoleArn: ${self:custom.serverlessSsmFetch.lambdaRoleArn} #${param:rolearn, self:custom.iamRoleArnFromFile}
   iamRoleArn: ${param:rolearn, self:custom.iamRoleArnFromFile}
+  # iamRoleArn: ${self:custom.serverlessSsmFetch.lambaRoleArn}
   sourcebucketSsmKey: ${self:custom.serverlessSsmFetch.s3bucketSource}
   serverlessSsmFetch:
-    s3bucketSource: /stablecaps/dev/cat-wrangler/s3bucket_source
-    s3bucketDest: /stablecaps/dev/cat-wrangler/s3bucket_dest
-    s3bucketFail: /stablecaps/dev/cat-wrangler/s3bucket_fail
-    lambdaRoleArn: '/stablecaps/dev/cat-wrangler/lambda_role_arn'
+    s3bucketSource: '/stablecaps/dev/cat-wrangler/s3bucket_source'
+    s3bucketDest: '/stablecaps/dev/cat-wrangler/s3bucket_dest'
+    s3bucketFail: '/stablecaps/dev/cat-wrangler/s3bucket_fail'
+    # for some reason we cannot assign this to provider.iam.role
+    lambaRoleArn: '/stablecaps/dev/cat-wrangler/lambda_role_cat_arn'
   pythonRequirements:
     dockerizePip: true
 
@@ -81,6 +82,7 @@ functions:
       - s3bucketSource
       - s3bucketDest
       - s3bucketFail
+      # - lambaRoleArn
     package:
       individually: true
       exclude:
