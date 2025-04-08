@@ -88,6 +88,24 @@ def check_bucket_exists(bucket_name):
 def run(event, context):
     """
     Main lambda entrypoint & logic.
+
+    user -> uploads image to s3bucketSource -> this.lambda
+        1. submits image to rekognition (write DynDB record)
+        2. gets rekognition response (update DynDB)
+        3. success -> moves image to s3bucketDest (update DynDB)
+        4. failure -> moves image to s3bucketFail (update DynDB)
+
+    Additional notes:
+        1. Save hash of file to avoid reprocessing
+        2. uniquely rename file to prevent filename clashes in s3 (use hash)
+
+    DynamoDB entries:
+        1. image hash
+        2. image filename in bucket location
+        3. operation status (pending, success, fail)
+        4. rekognition response as json
+        5. rekognition is image a cat?
+
     """
 
     LOG.info("event: <%s> - <%s>", type(event), event)

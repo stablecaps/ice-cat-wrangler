@@ -136,7 +136,16 @@ resources:
       Properties:
         Name: /stablecaps/${self:custom.currentStage}/cat-wrangler/FUNC_IMAGE_ANALYSER_NAME
         Type: String
-        Value: "ice-cat-wrangler-dev-image-analyse"
+        Value: "${self:service}-${self:custom.currentStage}-image_analyse"
+        Tags:
+          Environment: ${self:custom.currentStage}
+
+    SSMFuncBulkImgAnalyserName:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: /stablecaps/${self:custom.currentStage}/cat-wrangler/FUNC_BULKIMG_ANALYSER_NAME
+        Type: String
+        Value: "${self:service}-${self:custom.currentStage}-s3-bulkimg-analyse"
         Tags:
           Environment: ${self:custom.currentStage}
 
@@ -145,7 +154,7 @@ resources:
       Properties:
         Name: /stablecaps/${self:custom.currentStage}/cat-wrangler/FUNC_IMAGE_RESULTS_NAME
         Type: String
-        Value: "ice-cat-wrangler-dev-image-results"
+        Value: "${self:service}-${self:custom.currentStage}-func_results"
         Tags:
           Environment: ${self:custom.currentStage}
 
