@@ -36,7 +36,7 @@ import sys
 import requests
 from helpers.aws_request_signer import AWSRequestSigner
 from helpers.boto3_bulk_s3_uploader import BulkS3Uploader
-from helpers.boto3_helpers import upload_local_image_blocking
+from helpers.boto3_helpers import upload_local_image_2rekog_blocking
 from rich import print
 
 
@@ -109,7 +109,7 @@ class CatAPIClient:
         print(f"\nMaking request to: {request_url}")
 
         if self.method == "POST":
-            upload_local_image_blocking(
+            upload_local_image_2rekog_blocking(
                 img_path=self.img_path, function_name=self.func_image_analyser_name
             )
             return

@@ -4,9 +4,10 @@ import time
 from datetime import datetime, timezone
 
 from botocore.exceptions import ClientError
-from helpers.boto3_helpers import gen_boto3_client
 from helpers.general import calculate_file_hash
 from rich import print
+
+from shared_helpers.boto3_helpers import gen_boto3_client
 
 
 class BulkS3Uploader:

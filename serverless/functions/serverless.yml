@@ -127,7 +127,7 @@ resources:
       Properties:
         Name: /stablecaps/${self:custom.currentStage}/cat-wrangler/API_HOST
         Type: String
-        Value: "pdg876zkd7.execute-api.eu-west-1.amazonaws.com"
+        Value: ${cf:ice-cat-wrangler5-${self:custom.currentStage}.HttpApiUrl}
         Tags:
           Environment: ${self:custom.currentStage}
 

@@ -1,3 +1,4 @@
+import base64
 import json
 import logging
 import os
@@ -72,14 +73,92 @@ def check_bucket_exists(bucket_name):
             print(f"Failed to verify S3 bucket {bucket_name}: {err}")
         sys.exit(1)
 
+    def upload_image(self, file_path, batch_id):
+        """
+        Processes a single file by uploading it to S3 and generating metadata.
+
+        Args:
+            file_path (str): The path to the file to upload.
+            batch_id (str): The unique batch ID for the upload session.
+
+        Returns:
+            dict: Metadata for the uploaded file, or None if the upload failed.
+        """
+
+        try:
+            print(f"Uploading {file_path} to s3://{self.s3bucket_source}/{s3_key}")
+            self.s3_client.upload_file(file_path, self.s3bucket_source, s3_key)
+
+            return
+            # # uploaded file metadata
+            # return {
+            #     "client_id": self.client_id,
+            #     "batch_id": batch_id,
+            #     "s3bucket_source": self.s3bucket_source,
+            #     "s3_key": s3_key,
+            #     "original_file_name": file_name,
+            #     "upload_time": current_date,
+            #     "file_image_hash": file_hash,
+            #     "epoch_timestamp": epoch_timestamp,
+            # }
+        except ClientError as err:
+            print(f"Error uploading {file_path} to S3: {err}")
+            return None
+
 
 #############################################################
+
+
+def process_image_from_s3(bucket_name, object_key):
+    """
+    Retrieve an image from S3, encode it in base64, and submit it to Rekognition.
+
+    Args:
+        bucket_name (str): The name of the S3 bucket.
+        object_key (str): The key of the object in the S3 bucket.
+
+    Returns:
+        dict: The response from Rekognition.
+    """
+    # Initialize S3 and Rekognition clients
+    s3_client = boto3.client("s3")
+    rekognition_client = boto3.client("rekognition")
+
+    try:
+        # Step 1: Retrieve the image from S3
+        response = s3_client.get_object(Bucket=bucket_name, Key=object_key)
+        image_content = response["Body"].read()
+
+        # Step 2: Base64 encode the image
+        base64_image = base64.b64encode(image_content).decode("utf-8")
+
+        # Step 3: Submit the image to Rekognition
+        rekognition_response = rekognition_client.detect_labels(
+            Image={"Bytes": image_content},
+            MaxLabels=10,  # Adjust the number of labels as needed
+            MinConfidence=75,  # Adjust the confidence threshold as needed
+        )
+
+        # Print the labels detected
+        labels = [label["Name"] for label in rekognition_response["Labels"]]
+        print("Labels detected:", labels)
+
+        return rekognition_response
+
+    except Exception as e:
+        print(f"Error processing image from S3: {e}")
+        raise
 
 
 def run(event, context):
     """
     Main lambda entrypoint & logic
 
+    0. user -> uploads image to s3bucketSource -> this.lambda
+        1. submits image to rekognition (write DynDB record)
+        2. gets rekognition response (update DynDB)
+        3. success -> moves image to s3bucketDest (update DynDB)
+        4. failure -> moves image to s3bucketFail (update DynDB)
     """
 
     LOG.info("event: <%s> - <%s>", type(event), event)
@@ -113,10 +192,17 @@ def run(event, context):
         LOG.critical("object_key not set. Exiting")
         sys.exit(42)
 
-    ### Process new uploaded image file
+    ### Process image file from s3
     response = s3_client.get_object(Bucket=s3bucket_source, Key=object_key)
 
     LOG.info("response: %s", response)
+
+    # 1. submit image to rekognition
+    rekog_resp = rekognition.detect_labels(Image={"Bytes": image})
+    lambda_response = {"statusCode": 200, "body": json.dumps(response)}
+    labels = [label["Name"] for label in response["Labels"]]
+    print("Labels found:")
+    print(labels)
 
     # my_image = read_img_2memory(get_obj_resp=response)
     # log_image_data(img=my_image, label="exif data pass0")

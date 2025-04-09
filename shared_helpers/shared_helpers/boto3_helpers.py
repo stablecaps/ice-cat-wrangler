@@ -34,14 +34,81 @@ import json
 import os
 import sys
 
-# import boto3
-# from botocore.exceptions import ClientError
+import boto3
+from botocore.exceptions import ClientError
 from rich import print
 
-from shared_helpers.boto3_helpers import gen_boto3_client, gen_boto3_session
+
+def gen_boto3_session():
+    """
+    Creates and returns a Boto3 session using environment variables.
+
+    Returns:
+        boto3.Session: A Boto3 session object initialized with AWS credentials
+        and region from environment variables.
+    """
+    return boto3.Session(
+        aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+        aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+        aws_session_token=os.getenv("AWS_SESSION_TOKEN"),
+        region_name=os.getenv("AWS_REGION"),
+    )
+
+
+def gen_boto3_client(service_name, aws_region="eu-west-1"):
+    """
+    Creates and returns a Boto3 client for a specified AWS service.
+
+    Args:
+        service_name (str): The name of the AWS service (e.g., 's3', 'lambda').
+        aws_region (str, optional): The AWS region to use. Defaults to "eu-west-1".
+
+    Returns:
+        boto3.Client: A Boto3 client object for the specified service.
+    """
+    session = gen_boto3_session()
+    return session.client(service_name, aws_region)
+
 
 session = gen_boto3_session()
 lambda_client = gen_boto3_client("lambda", "eu-west-1")
+
+
+def fetch_env_from_ssm(ssm_keys):
+    """
+    Fetches environment variables from AWS SSM Parameter Store.
+
+    Args:
+        ssm_keys (list): A list of SSM parameter keys to fetch.
+
+    Returns:
+        dict: A dictionary containing the fetched environment variables.
+
+    Raises:
+        SystemExit: If any of the specified SSM keys are missing or invalid,
+        or if there is an error fetching parameters from SSM.
+    """
+    ssm_client = gen_boto3_client("ssm", "eu-west-1")
+    env_vars = {}
+
+    try:
+        response = ssm_client.get_parameters(Names=ssm_keys, WithDecryption=True)
+        # Store successfully fetched parameters
+        for param in response["Parameters"]:
+            env_vars[param["Name"]] = param["Value"]
+
+        missing_keys = response.get("InvalidParameters", [])
+        if missing_keys:
+            print(
+                f"Warning: The following SSM keys are missing or invalid: {missing_keys}"
+            )
+            sys.exit(42)
+
+    except ClientError as err:
+        print(f"Error fetching parameters from SSM: {err}")
+        sys.exit(1)
+
+    return env_vars
 
 
 def upload_local_image_2rekog_blocking(img_path, function_name):

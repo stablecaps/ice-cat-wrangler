@@ -7,7 +7,7 @@ description = "API client that makes calls to ice-cat-wrangler API"
 name = "ice-cat-wrangler-api-client-sig4"
 readme = "README.md"
 requires-python = ">=3.12"
-version = "0.2.0"
+version = "0.3.0"
 
 [tool.poetry]
 packages = [{include = "", from = "helpers"}]
