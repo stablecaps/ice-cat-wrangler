@@ -25,7 +25,6 @@ line_length = 88
 [build-system]
 # build-backend = "poetry.core.masonry.api"
 build-backend = "setuptools.build_meta"
-requires = ["setuptools", "wheel"]
 requires = ["poetry-core>=2.0.0,<3.0.0", "setuptools", "wheel"]
 
 # https://dev.to/fwojciec/how-to-structure-a-python-aws-serverless-project-4ace

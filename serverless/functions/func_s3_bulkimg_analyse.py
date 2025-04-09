@@ -99,12 +99,26 @@ def run(event, context):
         1. Save hash of file to avoid reprocessing
         2. uniquely rename file to prevent filename clashes in s3 (use hash)
 
+    DDB use cases (can be single or batch):
+        1. track image processing status
+        2. track rekognition response (is a cat?)
+        3. track image location/filename (source, dest, fail)
+        4. track image hash (to avoid reprocessing) (is the main key)
+        5. track logs associated with each submission
+
+        * So retrive a single entry
+        * Or retrive a batch of entries
+
     DynamoDB entries:
-        1. image hash
-        2. image filename in bucket location
-        3. operation status (pending, success, fail)
-        4. rekognition response as json
-        5. rekognition is image a cat?
+        1. [str] image hash
+        2. [int] upload batch id - to group images batch uploaded (for batch retrieval)
+        3. [str] image filename in bucket location (will be updated with any renaming process)
+        4. [str] operation status (pending, success, fail)
+        5. [json] rekognition response as json
+        6. [bool] rekognition: is image a cat?
+        7. [json] logs for debug retrieval?
+        8. [datetime] upload timestamp
+        9. [datetime] rekognition timestamp
 
     """
 
@@ -118,7 +132,6 @@ def run(event, context):
         os.getenv("s3bucketSource"),
         os.getenv("s3bucketDest"),
         os.getenv("s3bucketFail"),
-
     )
     s3bucket_source, s3bucket_dest, s3bucket_fail = s3bucket_env_list
 
