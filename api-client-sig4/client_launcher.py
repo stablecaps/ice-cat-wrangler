@@ -164,9 +164,8 @@ class CLIArgs:
     def bulkanalyse(folder, client_id, debug):
 
         client = CatAPIClient(
-            action="bulkanalyse", folder=folder, client_id=client_id, debug=debug
+            action="bulkanalyse", folder_path=folder, client_id=client_id, debug=debug
         )
-        client.make_request()
 
     @staticmethod
     def results(result_id, debug):

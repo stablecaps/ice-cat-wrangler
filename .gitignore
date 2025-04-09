@@ -196,3 +196,4 @@ api-client-sig4/bulk_uploads/*.jpg
 api-client-sig4/bulk_uploads/*.jpeg
 #
 api-client-sig4/config/client_id
+api-client-sig4/logs/*.json

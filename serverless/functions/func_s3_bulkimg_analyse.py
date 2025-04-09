@@ -139,7 +139,7 @@ def run(event, context):
     #     Bucket=s3bucket_dest,
     #     Key=object_key,
     # )
-
+    sys.exit(42)
     try:
         copy_source = {"Bucket": s3bucket_source, "Key": object_key}
         s3_client.copy_object(

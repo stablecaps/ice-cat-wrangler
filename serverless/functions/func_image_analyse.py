@@ -6,14 +6,6 @@ import sys
 import boto3
 from botocore.exceptions import ClientError
 
-# def image_analyse(event, context):
-#     body = {
-#         "message": "Go Serverless v4.0! Your function executed successfully!"
-#     }
-
-#     return {"statusCode": 200, "body": json.dumps(body)}
-
-
 # Instantiate logger
 logger = logging.getLogger(__name__)
 logger.setLevel("INFO")

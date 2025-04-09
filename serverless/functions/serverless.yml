@@ -22,9 +22,9 @@ custom:
   # iamRoleArn: ${self:custom.serverlessSsmFetch.lambaRoleArn}
   sourcebucketSsmKey: ${self:custom.serverlessSsmFetch.s3bucketSource}
   serverlessSsmFetch:
-    s3bucketSource: '/stablecaps/dev/cat-wrangler/s3bucket_source'
-    s3bucketDest: '/stablecaps/dev/cat-wrangler/s3bucket_dest'
-    s3bucketFail: '/stablecaps/dev/cat-wrangler/s3bucket_fail'
+    s3bucketSource: '/stablecaps/dev/cat-wrangler/S3BUCKET_SOURCE'
+    s3bucketDest: '/stablecaps/dev/cat-wrangler/S3BUCKET_DEST'
+    s3bucketFail: '/stablecaps/dev/cat-wrangler/S3BUCKET_FAIL'
     # for some reason we cannot assign this to provider.iam.role
     lambaRoleArn: '/stablecaps/dev/cat-wrangler/lambda_role_cat_arn'
   pythonRequirements:

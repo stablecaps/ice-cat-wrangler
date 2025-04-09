@@ -11,9 +11,9 @@ locals {
   ssm_root_prefix = "/stablecaps/${var.env}/${var.project}"
 
   s3bucket_map = {
-    s3bucket_source = "${var.s3bucket_source_name}-${var.unique_str}-${var.env}"
-    s3bucket_dest   = "${var.s3bucket_dest_name}-${var.unique_str}-${var.env}"
-    s3bucket_fail   = "${var.s3bucket_fail_name}-${var.unique_str}-${var.env}"
+    S3BUCKET_SOURCE = "${var.s3bucket_source_name}-${var.unique_str}-${var.env}"
+    S3BUCKET_DEST   = "${var.s3bucket_dest_name}-${var.unique_str}-${var.env}"
+    S3BUCKET_FAIL   = "${var.s3bucket_fail_name}-${var.unique_str}-${var.env}"
   }
 
 }

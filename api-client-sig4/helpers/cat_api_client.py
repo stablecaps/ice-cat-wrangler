@@ -35,6 +35,7 @@ import sys
 
 import requests
 from helpers.aws_request_signer import AWSRequestSigner
+from helpers.boto3_bulk_s3_uploader import BulkS3Uploader
 from helpers.boto3_helpers import upload_local_image_blocking
 from rich import print
 
@@ -51,7 +52,7 @@ class CatAPIClient:
         self,
         action,
         img_path=None,
-        folder=None,
+        folder_path=None,
         result_id=None,
         client_id=None,
         debug=False,
@@ -67,9 +68,12 @@ class CatAPIClient:
 
         self.host = os.getenv("API_HOST")
         self.img_path = img_path
+        self.folder_path = folder_path
         self.result_id = result_id
+        self.client_id = client_id
         self.debug = debug
         self.func_image_analyser_name = os.getenv("FUNC_IMAGE_ANALYSER_NAME")
+        self.s3bucket_source = os.getenv("S3BUCKET_SOURCE")
 
         if action == "analyse":
             self.method = "POST"
@@ -78,11 +82,8 @@ class CatAPIClient:
             self.method = "GET"
             self.endpoint = f"{os.getenv('RESULTS_ENDPOINT')}/{self.result_id}"
         elif action == "bulkanalyse":
-            print(f"Bulk analyse not implemented yet")
-
-            sys.exit(0)
-            # self.method = "POST"
-            # self.endpoint = os.getenv("BULK_ANALYSE_ENDPOINT")
+            self.bulkanalyse()
+            return
         else:
             raise ValueError("Invalid action. Choose 'analyse' or 'results'.")
 
@@ -123,3 +124,13 @@ class CatAPIClient:
         print("\nresponse.status_code", response.status_code)
 
         return
+
+    def bulkanalyse(self):
+        """Uploads images in a folder to S3 and logs metadata for each upload."""
+        s3_uploader = BulkS3Uploader(
+            folder_path=self.folder_path,
+            s3bucket_source=self.s3bucket_source,
+            client_id=self.client_id,
+            debug=self.debug,
+        )
+        s3_uploader.process_files()

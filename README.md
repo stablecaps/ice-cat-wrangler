@@ -18,7 +18,12 @@ handle delete item from bucket - dlete from DDB as well
 3. user can check result of image scanning
     - assume that this check can be performed at anytime
     - therefore upload_id should be stored with timestamp in client
-    - client should also store image hash and filename
+    - the client stores a record of:
+        * batch_id
+        * original_file_name
+        * upload_time="YYYY-MM-DD-HH"
+        * file_image_hash
+        * epoch_timestamp
     - for the db: as there could be multiple clients/customers - it would probably be better for each client to have a unique id to assist searching
 
 

@@ -41,6 +41,7 @@ secret_vars = [
     "FUNC_IMAGE_RESULTS_NAME",
     "ANALYSE_ENDPOINT",
     "RESULTS_ENDPOINT",
+    "S3BUCKET_SOURCE",
 ]
 
 ssm_excluded_keys = ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"]

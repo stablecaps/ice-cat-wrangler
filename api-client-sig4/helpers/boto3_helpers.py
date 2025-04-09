@@ -30,12 +30,9 @@ Dependencies:
 """
 
 import base64
-import hashlib
 import json
 import os
 import sys
-import time
-from datetime import datetime
 
 import boto3
 from botocore.exceptions import ClientError
@@ -77,19 +74,6 @@ session = gen_boto3_session()
 lambda_client = gen_boto3_client("lambda", "eu-west-1")
 
 
-# def check_bucket_exists(bucket_name):
-#     """Sanity check whether s3 bucket exists."""
-
-#     s3_client = boto3.resource("s3")
-
-#     try:
-#         s3_client.meta.client.head_bucket(Bucket=bucket_name)
-#         print("Verified bucket %s exists", bucket_name)
-#     except ClientError:
-#         print("s3 bucket %s does not exist or access denied", bucket_name)
-#         sys.exit(1)
-
-
 def fetch_env_from_ssm(ssm_keys):
     """
     Fetches environment variables from AWS SSM Parameter Store.
@@ -113,7 +97,6 @@ def fetch_env_from_ssm(ssm_keys):
         for param in response["Parameters"]:
             env_vars[param["Name"]] = param["Value"]
 
-        # Check for missing parameters
         missing_keys = response.get("InvalidParameters", [])
         if missing_keys:
             print(
@@ -169,64 +152,3 @@ def upload_local_image_blocking(img_path, function_name):
         print("\nrekog_decoded", rekog_decoded["statusCode"])
 
         return
-
-
-def calculate_file_hash(file_path):
-    """
-    Calculates the SHA256 hash of a file.
-
-    Args:
-        file_path (str): The path to the file.
-
-    Returns:
-        str: The SHA256 hash of the file as a hexadecimal string.
-    """
-    sha256_hash = hashlib.sha256()
-    with open(file_path, "rb") as f:
-        for byte_block in iter(lambda: f.read(4096), b""):
-            sha256_hash.update(byte_block)
-    return sha256_hash.hexdigest()
-
-
-def upload_images_to_s3(folder_path, bucket_name, client_id, s3_prefix="", debug=False):
-    """
-    Uploads all images from a local folder to a specified S3 bucket.
-
-    Args:
-        folder_path (str): The path to the local folder containing images.
-        bucket_name (str): The name of the S3 bucket.
-        s3_prefix (str, optional): The prefix (folder path) in the S3 bucket. Defaults to "".
-        debug (bool, optional): If True, enables debug output. Defaults to False.
-
-    Returns:
-        None
-    """
-    s3_client = gen_boto3_client("s3", "eu-west-1")
-
-    for root, _, files in os.walk(folder_path):
-        for file in files:
-            file_path = os.path.join(root, file)
-
-            if not file.lower().endswith((".png", ".jpg", ".jpeg")):
-                if debug:
-                    print(f"Skipping non-image file: {file_path}")
-                continue
-
-            # Calculate file hash
-            file_hash = calculate_file_hash(file_path)
-
-            # Get current date and epoch timestamp
-            current_date = datetime.utcnow().strftime("%Y-%m-%d")
-            epoch_timestamp = int(time.time())
-
-            # Construct the S3 key
-            s3_key = f"{file_hash}/{client_id}/{current_date}/{epoch_timestamp}.png"
-
-            try:
-                print(f"Uploading {file_path} to s3://{bucket_name}/{s3_key}")
-                s3_client.upload_file(file_path, bucket_name, s3_key)
-            except ClientError as err:
-                print(f"Error uploading {file_path} to S3: {err}")
-                continue
-
-    print("\nAll eligible images have been uploaded successfully.")
