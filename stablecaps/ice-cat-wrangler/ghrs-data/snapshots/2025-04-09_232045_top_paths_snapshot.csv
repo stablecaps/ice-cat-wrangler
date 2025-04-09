@@ -1,0 +1,10 @@
+url_path,views_total,views_unique
+/stablecaps/ice-cat-wrangler,7,2
+/stablecaps/ice-cat-wrangler/actions,6,1
+/stablecaps/ice-cat-wrangler/branches,4,1
+/stablecaps/ice-cat-wrangler/actions/caches,1,1
+/stablecaps/ice-cat-wrangler/actions/workflows/deploy_ice_cat_wrangler.yml,1,1
+/stablecaps/ice-cat-wrangler/branches/active,1,1
+/stablecaps/ice-cat-wrangler/branches/all,1,1
+/stablecaps/ice-cat-wrangler/branches/stale,1,1
+/stablecaps/ice-cat-wrangler/pulls,1,1
