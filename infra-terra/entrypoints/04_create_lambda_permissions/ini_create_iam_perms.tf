@@ -15,7 +15,8 @@ module "lambda_role_and_policies" {
 
   managed_policies = [
     "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
-    "arn:aws:iam::aws:policy/AmazonRekognitionFullAccess"
+    "arn:aws:iam::aws:policy/AmazonRekognitionFullAccess",
+    "arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess"
   ]
 
   tags = local.tags

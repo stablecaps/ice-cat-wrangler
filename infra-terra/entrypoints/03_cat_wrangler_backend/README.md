@@ -17,21 +17,18 @@
 
 ## Modules
 
-| Name | Source | Version |
-|------|--------|---------|
-| <a name="module_lambda_role_and_policies"></a> [lambda\_role\_and\_policies](#module\_lambda\_role\_and\_policies) | github.com/stablecaps/terraform-aws-iam-policies-stablecaps | v2.1.0 |
+No modules.
 
 ## Resources
 
 | Name | Type |
 |------|------|
-| [aws_ssm_parameter.lambda_role_cat_arn](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ssm_parameter) | resource |
+| [aws_dynamodb_table.image_cat](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/dynamodb_table) | resource |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_aws_acc_no"></a> [aws\_acc\_no](#input\_aws\_acc\_no) | AWS account number | `string` | n/a | yes |
 | <a name="input_created_by"></a> [created\_by](#input\_created\_by) | Created by | `string` | `"terraform"` | no |
 | <a name="input_env"></a> [env](#input\_env) | Deployment environment. e.g. dev, uat, prod | `string` | n/a | yes |
 | <a name="input_owner"></a> [owner](#input\_owner) | Owner of the project | `string` | `"DevOps"` | no |
@@ -44,7 +41,5 @@
 
 ## Outputs
 
-| Name | Description |
-|------|-------------|
-| <a name="output_iam_role_arn"></a> [iam\_role\_arn](#output\_iam\_role\_arn) | Lambda IAM role arn used for serverless function |
+No outputs.
 <!-- END_TF_DOCS -->

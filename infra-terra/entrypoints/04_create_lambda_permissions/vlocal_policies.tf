@@ -7,11 +7,7 @@ locals {
           "Sid" : "VisualEditor0",
           "Effect" : "Allow",
           "Action" : [
-            # "s3:PutObject",
-            # "s3:GetObject",
             "s3:ListBucket",
-            # "s3:PutObjectAcl",
-            # "s3:DeleteObject",
             "logs:CreateLogStream",
             "logs:CreateLogGroup"
           ],
@@ -21,9 +17,6 @@ locals {
             "arn:aws:s3:::${local.s3bucket_source_fullname}",
             "arn:aws:s3:::${local.s3bucket_dest_fullname}",
             "arn:aws:s3:::${local.s3bucket_fail_fullname}",
-            # "arn:aws:s3:::${local.s3bucket_source_fullname}/*",
-            # "arn:aws:s3:::${local.s3bucket_dest_fullname}/*",
-            # "arn:aws:s3:::${local.s3bucket_fail_fullname}/*",
           ]
         },
         {
