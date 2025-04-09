@@ -74,15 +74,6 @@ def check_bucket_exists(bucket_name):
 
 
 #############################################################
-# def run(event, context):
-#     body = {"message": "Go Serverless v4.0! Your function executed successfully!"}
-
-#     LOG.info("s3bucketSource: %s", os.getenv("s3bucketSource"))
-#     LOG.info("s3bucketDest: %s", os.getenv("s3bucketDest"))
-#     LOG.info("s3bucketFail: %s", os.getenv("s3bucketFail"))
-#     LOG.info("event: <%s> - <%s>", type(event), event)
-
-#     return {"statusCode": 200, "body": json.dumps(body)}
 
 
 def run(event, context):

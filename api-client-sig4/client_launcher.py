@@ -2,6 +2,8 @@
 
 
 import argparse
+import os
+import random
 import sys
 
 from helpers.cat_api_client import CatAPIClient
@@ -23,7 +25,7 @@ class CLIArgs:
 
         parser = argparse.ArgumentParser(
             description="ICE Cat API Client",
-            usage=".e.g: ./client_launcher.py {--secretsfile [ssm|dev_conf_secrets]} [--debug] {analyse|results} [<args>]\n"
+            usage=".e.g: ./client_launcher.py {--secretsfile [ssm|dev_conf_secrets]} [--debug] {analyse|bulkanalyse|results} [<args>]\n"
             + help_banner,
         )
 
@@ -48,6 +50,7 @@ class CLIArgs:
         # Subparsers for commands
         subparsers = parser.add_subparsers(dest="command", required=True)
 
+        ########################################
         # Subparser for "analyse"
         analyse_parser = subparsers.add_parser(
             "analyse", help="Upload local image to AWS Lambda analyse function"
@@ -61,6 +64,22 @@ class CLIArgs:
             help="Path to the local image to upload. e.g. /path/to/image.jpg",
         )
 
+        ########################################
+        # Subparser for "bulk_analyse"
+        bulk_analyse_parser = subparsers.add_parser(
+            "bulkanalyse",
+            help="Bulk upload images from local directory to AWS S3 bucket",
+        )
+        bulk_analyse_parser.add_argument(
+            "--folder",
+            "-f",
+            type=str,
+            required=True,
+            default="./bulk_images",
+            help="Path to the local folder containing images to upload.",
+        )
+
+        ########################################
         # Subparser for "results"
         results_parser = subparsers.add_parser(
             "results", help="Get results from AWS Lambda results function"
@@ -74,6 +93,7 @@ class CLIArgs:
             help="Result ID to get results for. e.g. 1234567890",
         )
 
+        ########################################
         args = parser.parse_args()
 
         if not hasattr(CLIArgs, args.command):
@@ -86,16 +106,66 @@ class CLIArgs:
 
         print("All environment secrets set correctly")
 
+        # Get the client ID
+        client_id = CLIArgs.get_client_id()
+
         # Dispatch to the appropriate subcommand
         if args.command == "analyse":
-            self.analyse(args.img_path, args.debug)
+            CLIArgs.analyse(args.img_path, args.debug)
+        elif args.command == "bulkanalyse":
+            CLIArgs.bulkanalyse(args.folder, client_id, args.debug)
         elif args.command == "results":
-            self.results(args.result_id, args.debug)
+            CLIArgs.results(args.result_id, args.debug)
+
+    @staticmethod
+    def get_client_id():
+        """
+        Searches for a file named 'client_id' in the 'config' folder.
+        If found, reads and returns the client ID from the file.
+
+        Returns:
+            str: The client ID read from the file.
+
+        Raises:
+            SystemExit: If the file is not found or is empty.
+        """
+        config_folder = os.path.join(os.getcwd(), "config")
+        client_id_file = os.path.join(config_folder, "client_id")
+
+        if not os.path.isfile(client_id_file):
+            print(
+                f"\nError: 'client_id' file not found in the 'config' folder: {config_folder}"
+            )
+            print("Dev helper automatically creating file")
+
+            client_id = f"stablecaps{random.randint(100, 999)}"
+            with open(client_id_file, "w") as file:
+                file.write(client_id)
+            print(f"'client_id' file created with ID: {client_id}")
+
+        else:
+            with open(client_id_file, "r") as file:
+                client_id = file.read().strip()
+
+        if not client_id:
+            print(f"Error: 'client_id' not found. Exiting...")
+            sys.exit(42)
+
+        print(f"Client ID loaded successfully: {client_id}\n")
+        return client_id
 
     @staticmethod
     def analyse(img_path, debug):
 
         client = CatAPIClient(action="analyse", img_path=img_path, debug=debug)
+        client.make_request()
+
+    @staticmethod
+    def bulkanalyse(folder, client_id, debug):
+
+        client = CatAPIClient(
+            action="bulkanalyse", folder=folder, client_id=client_id, debug=debug
+        )
         client.make_request()
 
     @staticmethod

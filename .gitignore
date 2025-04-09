@@ -190,3 +190,9 @@ cython_debug/
 **/config/dev.yml
 **/config/uat.yml
 **/config/prod.yml
+#
+api-client-sig4/bulk_uploads/*.png
+api-client-sig4/bulk_uploads/*.jpg
+api-client-sig4/bulk_uploads/*.jpeg
+#
+api-client-sig4/config/client_id

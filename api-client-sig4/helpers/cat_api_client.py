@@ -29,8 +29,9 @@ Dependencies:
     - `rich` library for enhanced console output
 """
 
-
 import os
+import random
+import sys
 
 import requests
 from helpers.aws_request_signer import AWSRequestSigner
@@ -46,7 +47,15 @@ class CatAPIClient:
     the Signature Version 4 signing process.
     """
 
-    def __init__(self, action, img_path=None, result_id=None, debug=False):
+    def __init__(
+        self,
+        action,
+        img_path=None,
+        folder=None,
+        result_id=None,
+        client_id=None,
+        debug=False,
+    ):
         """Initializes the AWSRequestSigner with the specified secrets file.
 
         Args:
@@ -68,11 +77,17 @@ class CatAPIClient:
         elif action == "results":
             self.method = "GET"
             self.endpoint = f"{os.getenv('RESULTS_ENDPOINT')}/{self.result_id}"
+        elif action == "bulkanalyse":
+            print(f"Bulk analyse not implemented yet")
+
+            sys.exit(0)
+            # self.method = "POST"
+            # self.endpoint = os.getenv("BULK_ANALYSE_ENDPOINT")
         else:
             raise ValueError("Invalid action. Choose 'analyse' or 'results'.")
 
-        ars = AWSRequestSigner(method=self.method, endpoint=self.endpoint)
-        self.headers = ars.get_auth_headers()
+        args = AWSRequestSigner(method=self.method, endpoint=self.endpoint)
+        self.headers = args.get_auth_headers()
 
     def make_request(self):
         """Makes a signed request to the AWS API.
