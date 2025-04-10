@@ -4,7 +4,8 @@ import sys
 
 import boto3
 from botocore.exceptions import ClientError
-from general import safeget
+
+# from general import safeget
 
 LOG = logging.getLogger(__name__)
 
@@ -38,6 +39,20 @@ def gen_boto3_client(service_name, aws_region="eu-west-1"):
     """
     session = gen_boto3_session()
     return session.client(service_name, aws_region)
+
+
+def safeget(dct, *keys):
+    """
+    Recover value safely from nested dictionary
+
+    safeget(example_dict, 'key1', 'key2')
+    """
+    for key in keys:
+        try:
+            dct = dct[key]
+        except KeyError:
+            return None
+    return dct
 
 
 ################################################################################
@@ -154,7 +169,7 @@ def move_s3_object_based_on_rekog_response(
             copy_source = {"Bucket": s3bucket_source, "Key": object_key}
             copy_s3_object(
                 s3_client,
-                source_bucket=copy_source,
+                source_bucket=s3bucket_source,
                 dest_bucket=s3bucket_dest,
                 object_key=object_key,
                 acl="bucket-owner-full-control",
@@ -173,7 +188,7 @@ def move_s3_object_based_on_rekog_response(
             copy_source = {"Bucket": s3bucket_source, "Key": object_key}
             copy_s3_object(
                 s3_client,
-                source_bucket=copy_source,
+                source_bucket=s3bucket_source,
                 dest_bucket=s3bucket_fail,
                 object_key=object_key,
                 acl="bucket-owner-full-control",

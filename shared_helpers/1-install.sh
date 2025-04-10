@@ -3,7 +3,7 @@
 set -euo pipefail
 
 # Create a virtual environment for the layer
-rm -rf create_layer python
+rm -rf create_layer python layer_content.zip
 python3.12 -m venv create_layer
 source create_layer/bin/activate
 

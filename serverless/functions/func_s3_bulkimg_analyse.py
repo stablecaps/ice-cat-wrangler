@@ -12,14 +12,17 @@ from shared_helpers.boto3_helpers import (
     get_filebytes_from_s3,
     move_s3_object_based_on_rekog_response,
     rekog_image_categorise,
+    safeget,
 )
-from shared_helpers.general import safeget
 
 LOG = logging.getLogger()
 LOG.setLevel(logging.INFO)
 
 
-# TODO: add these functions into shared lib
+# for path in sys.path:
+#     LOG.info("sys paths: %s", path)
+
+# LOG.info("sys shared_helpers: <%s>", "/opt/python/lib/python3.12/site-packages/shared_helpers")
 
 
 # create boto3 session clients
@@ -90,13 +93,14 @@ def run(event, context):
         sys.exit(42)
 
     for s3bucket in s3bucket_env_list:
-        check_bucket_exists(bucket_name=s3bucket)
+        check_bucket_exists(s3_client=s3_client, bucket_name=s3bucket)
 
     # 1. get object key from event
     record_list = event.get("Records")
     if record_list is None:
         LOG.critical("record_list not set. Exiting")
         sys.exit(42)
+
     object_key = safeget(record_list[0], "s3", "object", "key")
     LOG.info("object_key: <%s>", object_key)
     if object_key is None:
@@ -105,6 +109,7 @@ def run(event, context):
 
     ### 2.  Process image file from s3
     file_bytes = get_filebytes_from_s3(
+        s3_client=s3_client,
         bucket_name=s3bucket_source,
         object_key=object_key,
     )
@@ -129,35 +134,3 @@ def run(event, context):
     # labels = [label["Name"] for label in s3_resp["Labels"]]
     # print("Labels found:")
     # print(labels)
-
-    ### Copy image with sanitised exif data to destination bucket
-    # s3_client.put_object(
-    #     ACL="bucket-owner-full-control",
-    #     Body=my_image.get_file(),
-    #     Bucket=s3bucket_dest,
-    #     Key=object_key,
-    # )
-    sys.exit(42)
-    try:
-        copy_source = {"Bucket": s3bucket_source, "Key": object_key}
-        s3_client.copy_object(
-            CopySource=copy_source,
-            Bucket=s3bucket_dest,
-            Key=object_key,
-            ACL="bucket-owner-full-control",
-        )
-        print("Object {object_key} copied from {s3bucket_source} to {s3bucket_dest}")
-
-        s3_client.delete_object(Bucket=s3bucket_source, Key=object_key)
-        print("Object {object_key} deleted from {s3bucket_source}")
-
-    except ClientError as err:
-        print("Error moving object {object_key}: {e}")
-        raise
-
-    LOG.info(
-        "SUCCESS Copying s3 object <%s> from <%s> to <%s>",
-        object_key,
-        s3bucket_source,
-        s3bucket_dest,
-    )

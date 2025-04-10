@@ -2,10 +2,10 @@
 org: stablecaps
 
 # "app" enables Serverless Framework Dashboard features and sharing them with other Services.
-app: ice-cat-wrangler5
+app: ice-cat-wrangler6
 
 # "service" is the name of this project. This will also be added to your AWS resource names.
-service: ice-cat-wrangler5
+service: ice-cat-wrangler6
 
 plugins:
   - serverless-python-requirements
@@ -58,15 +58,6 @@ provider:
     version: ${file(./config/${self:custom.currentStage}.yml):version}
     environment: ${self:custom.currentStage}
 
-# layers:
-#   shared_helpers:
-#     name: ${self:service}-${self:custom.currentStage}-shared-helpers
-#     description: Library that contains common dependencies for all lambdas
-#     package:
-#       artifact: layer/shared/layer_content.zip
-#     compatibleRuntimes:
-#       - python3.12
-
 functions:
   s3_bulkimganalyse:
     name: ${self:service}-${self:custom.currentStage}-s3-bulkimg-analyse
@@ -74,7 +65,6 @@ functions:
     description: "Bulk submit images from s3 for categorisation & identification"
     layers:
       - ${self:stages.default.params.helpersarn}
-      # - ${self:custom.helpersarn}
     environment:
       s3bucketSource: ${ssm:${self:custom.serverlessSsmFetch.s3bucketSource}}
       s3bucketDest: ${ssm:${self:custom.serverlessSsmFetch.s3bucketDest}}
