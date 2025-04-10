@@ -30,37 +30,12 @@ def safeget(dct, *keys):
     return dct
 
 
-# def gen_boto3_session():
-#     """Creates and returns a Boto3 session using environment variables.
-
-#     Returns:
-#         boto3.Session: A Boto3 session object.
-#     """
-#     return boto3.Session(
-#         aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
-#         aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
-#         aws_session_token=os.getenv("AWS_SESSION_TOKEN"),
-#         region_name=os.getenv("AWS_REGION"),
-#     )
-
-
-# def gen_boto3_client(service_name, aws_region="eu-west-1"):
-#     """Creates and returns a Boto3 client for a specified AWS service.
-
-#     Args:
-#         service_name (str): The name of the AWS service (e.g., 's3', 'lambda').
-
-#     Returns:
-#         boto3.Client: A Boto3 client object for the specified service.
-#     """
-#     session = gen_boto3_session()
-#     return session.client(service_name, aws_region)
+# boto3 clients
+s3_client = gen_boto3_client("s3", "eu-west-1")
 
 
 def check_bucket_exists(bucket_name):
     """Sanity check whether S3 bucket exists using a Boto3 client."""
-
-    s3_client = gen_boto3_client("s3", "eu-west-1")
 
     try:
         s3_client.head_bucket(Bucket=bucket_name)
@@ -75,37 +50,38 @@ def check_bucket_exists(bucket_name):
             print(f"Failed to verify S3 bucket {bucket_name}: {err}")
         sys.exit(1)
 
-    def upload_image(self, file_path, batch_id):
-        """
-        Processes a single file by uploading it to S3 and generating metadata.
 
-        Args:
-            file_path (str): The path to the file to upload.
-            batch_id (str): The unique batch ID for the upload session.
+def upload_image(self, file_path, batch_id):
+    """
+    Processes a single file by uploading it to S3 and generating metadata.
 
-        Returns:
-            dict: Metadata for the uploaded file, or None if the upload failed.
-        """
+    Args:
+        file_path (str): The path to the file to upload.
+        batch_id (str): The unique batch ID for the upload session.
 
-        try:
-            print(f"Uploading {file_path} to s3://{self.s3bucket_source}/{s3_key}")
-            self.s3_client.upload_file(file_path, self.s3bucket_source, s3_key)
+    Returns:
+        dict: Metadata for the uploaded file, or None if the upload failed.
+    """
 
-            return
-            # # uploaded file metadata
-            # return {
-            #     "client_id": self.client_id,
-            #     "batch_id": batch_id,
-            #     "s3bucket_source": self.s3bucket_source,
-            #     "s3_key": s3_key,
-            #     "original_file_name": file_name,
-            #     "upload_time": current_date,
-            #     "file_image_hash": file_hash,
-            #     "epoch_timestamp": epoch_timestamp,
-            # }
-        except ClientError as err:
-            print(f"Error uploading {file_path} to S3: {err}")
-            return None
+    try:
+        print(f"Uploading {file_path} to s3://{self.s3bucket_source}/{s3_key}")
+        self.s3_client.upload_file(file_path, self.s3bucket_source, s3_key)
+
+        return
+        # # uploaded file metadata
+        # return {
+        #     "client_id": self.client_id,
+        #     "batch_id": batch_id,
+        #     "s3bucket_source": self.s3bucket_source,
+        #     "s3_key": s3_key,
+        #     "original_file_name": file_name,
+        #     "upload_time": current_date,
+        #     "file_image_hash": file_hash,
+        #     "epoch_timestamp": epoch_timestamp,
+        # }
+    except ClientError as err:
+        print(f"Error uploading {file_path} to S3: {err}")
+        return None
 
 
 #############################################################

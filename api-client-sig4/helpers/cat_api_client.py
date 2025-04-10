@@ -36,8 +36,12 @@ import sys
 import requests
 from helpers.aws_request_signer import AWSRequestSigner
 from helpers.boto3_bulk_s3_uploader import BulkS3Uploader
-from helpers.boto3_helpers import upload_local_image_2rekog_blocking
 from rich import print
+
+from shared_helpers.boto3_helpers import (
+    fetch_values_from_ssm,
+    upload_local_image_2rekog_blocking,
+)
 
 
 class CatAPIClient:

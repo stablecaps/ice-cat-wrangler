@@ -21,15 +21,16 @@ Dependencies:
     - sys
     - dotenv.load_dotenv
     - rich.print
-    - helpers.boto3_helpers.fetch_env_from_ssm
+    - helpers.boto3_helpers.fetch_values_from_ssm
 """
 
 import os
 import sys
 
 from dotenv import load_dotenv
-from helpers.boto3_helpers import fetch_env_from_ssm
 from rich import print
+
+from shared_helpers.boto3_helpers import fetch_values_from_ssm
 
 secret_vars = [
     "AWS_ACCESS_KEY_ID",
@@ -124,7 +125,7 @@ def load_environment_variables(secretsfile, debug=False):
     """
     if secretsfile == "ssm":
         print("\nFetching environment variables from AWS SSM Parameter Store...")
-        env_vars = fetch_env_from_ssm(ssm_keys)
+        env_vars = fetch_values_from_ssm(ssm_keys)
 
         # Set environment variables
         for key, value in env_vars.items():
