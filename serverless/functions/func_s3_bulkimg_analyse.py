@@ -7,6 +7,8 @@ import sys
 import boto3
 from botocore.exceptions import ClientError
 
+from shared_helpers.boto3_helpers import gen_boto3_client, gen_boto3_session
+
 LOG = logging.getLogger()
 LOG.setLevel(logging.INFO)
 
@@ -28,31 +30,31 @@ def safeget(dct, *keys):
     return dct
 
 
-def gen_boto3_session():
-    """Creates and returns a Boto3 session using environment variables.
+# def gen_boto3_session():
+#     """Creates and returns a Boto3 session using environment variables.
 
-    Returns:
-        boto3.Session: A Boto3 session object.
-    """
-    return boto3.Session(
-        aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
-        aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
-        aws_session_token=os.getenv("AWS_SESSION_TOKEN"),
-        region_name=os.getenv("AWS_REGION"),
-    )
+#     Returns:
+#         boto3.Session: A Boto3 session object.
+#     """
+#     return boto3.Session(
+#         aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+#         aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+#         aws_session_token=os.getenv("AWS_SESSION_TOKEN"),
+#         region_name=os.getenv("AWS_REGION"),
+#     )
 
 
-def gen_boto3_client(service_name, aws_region="eu-west-1"):
-    """Creates and returns a Boto3 client for a specified AWS service.
+# def gen_boto3_client(service_name, aws_region="eu-west-1"):
+#     """Creates and returns a Boto3 client for a specified AWS service.
 
-    Args:
-        service_name (str): The name of the AWS service (e.g., 's3', 'lambda').
+#     Args:
+#         service_name (str): The name of the AWS service (e.g., 's3', 'lambda').
 
-    Returns:
-        boto3.Client: A Boto3 client object for the specified service.
-    """
-    session = gen_boto3_session()
-    return session.client(service_name, aws_region)
+#     Returns:
+#         boto3.Client: A Boto3 client object for the specified service.
+#     """
+#     session = gen_boto3_session()
+#     return session.client(service_name, aws_region)
 
 
 def check_bucket_exists(bucket_name):

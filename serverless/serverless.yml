@@ -1,0 +1,116 @@
+# "org" ensures this Service is used with the correct Serverless Framework Access Key.
+org: stablecaps
+
+# "app" enables Serverless Framework Dashboard features and sharing them with other Services.
+app: ice-cat-wrangler5
+
+# "service" is the name of this project. This will also be added to your AWS resource names.
+service: ice-cat-wrangler5
+
+plugins:
+  - serverless-python-requirements
+  - serverless-ssm-fetch
+  - serverless-prune-versions
+custom:
+  defaultStage: dev
+  currentStage: ${opt:stage, self:custom.defaultStage}
+  awsRegion: ${file(./config/${self:custom.currentStage}.yml):aws_region}
+  deploymentBucketFromFile: ${file(./config/${self:custom.currentStage}.yml):deployment_bucket}
+  deploymentBucket: ${param:dbuck, self:custom.deploymentBucketFromFile}
+  # helpersarn: ${param:helpersarn, 'None'}  
+  iamRoleArnFromFile: ${file(./config/${self:custom.currentStage}.yml):iam_role_arn}
+  iamRoleArn: ${param:rolearn, self:custom.iamRoleArnFromFile}
+  # iamRoleArn: ${self:custom.serverlessSsmFetch.lambaRoleArn}
+  sourcebucketSsmKey: ${self:custom.serverlessSsmFetch.s3bucketSource}
+  serverlessSsmFetch:
+    s3bucketSource: '/stablecaps/dev/cat-wrangler/S3BUCKET_SOURCE'
+    s3bucketDest: '/stablecaps/dev/cat-wrangler/S3BUCKET_DEST'
+    s3bucketFail: '/stablecaps/dev/cat-wrangler/S3BUCKET_FAIL'
+    # for some reason we cannot assign this to provider.iam.role
+    lambaRoleArn: '/stablecaps/dev/cat-wrangler/lambda_role_cat_arn'
+
+  prune:
+    automatic: true
+    includeLayers: true
+    number: 2
+
+  pythonRequirements:
+    dockerizePip: true
+    zip: true
+
+stages:
+  default:
+    params:
+      helpersarn: ${param:helpersarn, 'None'} 
+
+provider:
+  name: aws
+  runtime: python3.12
+  stage: ${self:custom.currentStage}
+  region: ${self:custom.awsRegion}
+  deploymentBucket: ${self:custom.deploymentBucket}
+  logRetentionInDays: 14
+
+  iam:
+    role: ${self:custom.iamRoleArn}
+
+  tags:
+    version: ${file(./config/${self:custom.currentStage}.yml):version}
+    environment: ${self:custom.currentStage}
+
+# layers:
+#   shared_helpers:
+#     name: ${self:service}-${self:custom.currentStage}-shared-helpers
+#     description: Library that contains common dependencies for all lambdas
+#     package:
+#       artifact: layer/shared/layer_content.zip
+#     compatibleRuntimes:
+#       - python3.12
+
+functions:
+  s3_bulkimganalyse:
+    name: ${self:service}-${self:custom.currentStage}-s3-bulkimg-analyse
+    handler: functions.func_s3_bulkimg_analyse.run
+    description: "Bulk submit images from s3 for categorisation & identification"
+    layers:
+      - ${self:stages.default.params.helpersarn} 
+      # - ${self:custom.helpersarn} 
+    environment:
+      s3bucketSource: ${ssm:${self:custom.serverlessSsmFetch.s3bucketSource}}
+      s3bucketDest: ${ssm:${self:custom.serverlessSsmFetch.s3bucketDest}}
+      s3bucketFail: ${ssm:${self:custom.serverlessSsmFetch.s3bucketFail}}
+    package:
+      individually: true
+      exclude:
+        - "*/**"
+      include:
+        - functions/func_s3_bulkimg_analyse.py
+        - requirements.txt
+        - __init__.py
+    events:
+      - s3:
+          bucket: ${ssm:${self:custom.sourcebucketSsmKey}}
+          event: s3:ObjectCreated:*
+          existing: true
+
+
+resources:
+  Resources:
+    SSMAWSRegion:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: /stablecaps/${self:custom.currentStage}/cat-wrangler/AWS_REGION
+        Type: String
+        Value: "eu-west-1"
+        Tags:
+          Environment: ${self:custom.currentStage}
+
+    SSMFuncBulkImgAnalyserName:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: /stablecaps/${self:custom.currentStage}/cat-wrangler/FUNC_BULKIMG_ANALYSER_NAME
+        Type: String
+        Value: "${self:service}-${self:custom.currentStage}-s3-bulkimg-analyse"
+        Tags:
+          Environment: ${self:custom.currentStage}
+
