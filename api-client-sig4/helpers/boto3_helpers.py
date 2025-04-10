@@ -40,6 +40,44 @@ from rich import print
 
 from shared_helpers.boto3_helpers import gen_boto3_client, gen_boto3_session
 
+
+def fetch_env_from_ssm(ssm_keys):
+    """
+    Fetches environment variables from AWS SSM Parameter Store.
+
+    Args:
+        ssm_keys (list): A list of SSM parameter keys to fetch.
+
+    Returns:
+        dict: A dictionary containing the fetched environment variables.
+
+    Raises:
+        SystemExit: If any of the specified SSM keys are missing or invalid,
+        or if there is an error fetching parameters from SSM.
+    """
+    ssm_client = gen_boto3_client("ssm", "eu-west-1")
+    env_vars = {}
+
+    try:
+        response = ssm_client.get_parameters(Names=ssm_keys, WithDecryption=True)
+        # Store successfully fetched parameters
+        for param in response["Parameters"]:
+            env_vars[param["Name"]] = param["Value"]
+
+        missing_keys = response.get("InvalidParameters", [])
+        if missing_keys:
+            print(
+                f"Warning: The following SSM keys are missing or invalid: {missing_keys}"
+            )
+            sys.exit(42)
+
+    except ClientError as err:
+        print(f"Error fetching parameters from SSM: {err}")
+        sys.exit(1)
+
+    return env_vars
+
+
 session = gen_boto3_session()
 lambda_client = gen_boto3_client("lambda", "eu-west-1")
 
