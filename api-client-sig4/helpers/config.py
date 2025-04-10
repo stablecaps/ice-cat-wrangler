@@ -29,6 +29,7 @@ import sys
 
 from boto3_client_helpers import fetch_values_from_ssm
 from dotenv import load_dotenv
+from helpers.boto3_clients import ssm_client
 from rich import print
 
 secret_vars = [
@@ -124,7 +125,7 @@ def load_environment_variables(secretsfile, debug=False):
     """
     if secretsfile == "ssm":
         print("\nFetching environment variables from AWS SSM Parameter Store...")
-        env_vars = fetch_values_from_ssm(ssm_keys)
+        env_vars = fetch_values_from_ssm(ssm_client, ssm_keys)
 
         # Set environment variables
         for key, value in env_vars.items():

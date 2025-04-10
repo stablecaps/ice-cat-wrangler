@@ -9,7 +9,7 @@ from botocore.exceptions import ClientError
 from rich import print as rich_print
 
 
-def fetch_values_from_ssm(ssm_keys):
+def fetch_values_from_ssm(ssm_client, ssm_keys):
     """
     Fetches environment variables from AWS SSM Parameter Store.
 
@@ -23,7 +23,7 @@ def fetch_values_from_ssm(ssm_keys):
         SystemExit: If any of the specified SSM keys are missing or invalid,
         or if there is an error fetching parameters from SSM.
     """
-    ssm_client = gen_boto3_client("ssm", "eu-west-1")
+
     ssm_vars = {}
 
     try:

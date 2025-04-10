@@ -3,8 +3,9 @@ import os
 import time
 from datetime import datetime, timezone
 
-from boto3_helpers import check_bucket_exists, gen_boto3_client
+from boto3_helpers import check_bucket_exists
 from botocore.exceptions import ClientError
+from helpers.boto3_clients import s3_client
 from helpers.general import calculate_file_hash
 from rich import print
 
@@ -26,7 +27,7 @@ class BulkS3Uploader:
         self.folder_path = folder_path
 
         self.s3bucket_source = s3bucket_source
-        check_bucket_exists(bucket_name=self.s3bucket_source)
+        check_bucket_exists(s3_client=s3_client, bucket_name=self.s3bucket_source)
 
         self.client_id = client_id
         #
@@ -37,7 +38,6 @@ class BulkS3Uploader:
             logs_folder, f"{self.client_id}_{self.batch_id}.json"
         )
         self.debug = debug
-        self.s3_client = gen_boto3_client("s3", "eu-west-1")
 
     @staticmethod
     def ensure_logs_folder():
@@ -74,7 +74,7 @@ class BulkS3Uploader:
 
         try:
             print(f"Uploading {file_path} to s3://{self.s3bucket_source}/{s3_key}")
-            self.s3_client.upload_file(file_path, self.s3bucket_source, s3_key)
+            s3_client.upload_file(file_path, self.s3bucket_source, s3_key)
 
             # uploaded file metadata
             return {

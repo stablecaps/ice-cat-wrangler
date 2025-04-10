@@ -6,7 +6,14 @@ import sys
 
 from botocore.exceptions import ClientError
 
-from shared_helpers.boto3_helpers import check_bucket_exists, gen_boto3_client
+from shared_helpers.boto3_helpers import (
+    check_bucket_exists,
+    gen_boto3_client,
+    get_filebytes_from_s3,
+    move_s3_object_based_on_rekog_response,
+    rekog_image_categorise,
+)
+from shared_helpers.general import safeget
 
 LOG = logging.getLogger()
 LOG.setLevel(logging.INFO)
@@ -15,21 +22,7 @@ LOG.setLevel(logging.INFO)
 # TODO: add these functions into shared lib
 
 
-def safeget(dct, *keys):
-    """
-    Recover value safely from nested dictionary
-
-    safeget(example_dict, 'key1', 'key2')
-    """
-    for key in keys:
-        try:
-            dct = dct[key]
-        except KeyError:
-            return None
-    return dct
-
-
-# boto3 clients
+# create boto3 session clients
 s3_client = gen_boto3_client("s3", "eu-west-1")
 rekog_client = gen_boto3_client("rekognition", "eu-west-1")
 
@@ -68,60 +61,6 @@ rekog_client = gen_boto3_client("rekognition", "eu-west-1")
 
 
 #############################################################
-
-
-def get_filebytes_from_s3(bucket_name, object_key):
-    """
-    Retrieve a file from an S3 bucket.
-
-    Args:
-        bucket_name (str): The name of the S3 bucket.
-        object_key (str): The key of the object in the S3 bucket.
-
-    Returns:
-        bytes: The content of the file as bytes.
-    """
-    try:
-        response = s3_client.get_object(Bucket=bucket_name, Key=object_key)
-        file_bytes = response["Body"].read()
-        return file_bytes
-    except ClientError as err:
-        LOG.error(
-            "ClientError while retrieving file <%s> from bucket <%s>: <%s>",
-            object_key,
-            bucket_name,
-            err,
-        )
-        raise
-        raise
-    except Exception as err:
-        LOG.error(
-            "Unexpected error while retrieving file <%s> from bucket <%s>: <%s>",
-            object_key,
-            bucket_name,
-            err,
-        )
-        raise
-
-
-def rekog_image_categorise(image_bytes):
-
-    try:
-        rekognition_response = rekog_client.detect_labels(
-            Image={"Bytes": image_bytes},
-            MaxLabels=10,
-            MinConfidence=75,
-        )
-
-        # Print labels detected
-        labels = [label["Name"] for label in rekognition_response["Labels"]]
-        LOG.info("Labels detected: <%s>", labels)
-
-        return rekognition_response
-
-    except Exception as err:
-        LOG.error("Error processing image from S3: <%s>", err)
-        raise
 
 
 def run(event, context):
@@ -164,15 +103,27 @@ def run(event, context):
         LOG.critical("object_key not set. Exiting")
         sys.exit(42)
 
-    ### Process image file from s3
+    ### 2.  Process image file from s3
     file_bytes = get_filebytes_from_s3(
         bucket_name=s3bucket_source,
         object_key=object_key,
     )
 
-    # 1. submit image to rekognition
-    rekog_resp = rekog_image_categorise(image_bytes=file_bytes)
+    # 3. submit image to rekognition
+    rekog_resp = rekog_image_categorise(
+        rekog_client=rekog_client, image_bytes=file_bytes
+    )
     LOG.info("rekog_resp: <%s>", rekog_resp)
+
+    # 4. handle rekognition response by moving image to appropriate s3 bucket (success/fail)
+    move_s3_object_based_on_rekog_response(
+        s3_client=s3_client,
+        rekog_resp=rekog_resp,
+        s3bucket_source=s3bucket_source,
+        s3bucket_dest=s3bucket_dest,
+        s3bucket_fail=s3bucket_fail,
+        object_key=object_key,
+    )
 
     # lambda_response = {"statusCode": 200, "body": json.dumps(s3_resp)}
     # labels = [label["Name"] for label in s3_resp["Labels"]]
@@ -200,7 +151,7 @@ def run(event, context):
         s3_client.delete_object(Bucket=s3bucket_source, Key=object_key)
         print("Object {object_key} deleted from {s3bucket_source}")
 
-    except ClientError as e:
+    except ClientError as err:
         print("Error moving object {object_key}: {e}")
         raise
 
