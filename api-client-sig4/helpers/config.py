@@ -28,20 +28,20 @@ import os
 import sys
 
 from dotenv import load_dotenv
+from helpers.boto3_helpers import fetch_env_from_ssm
 from rich import print
-
-from shared_helpers.boto3_helpers import fetch_env_from_ssm
 
 secret_vars = [
     "AWS_ACCESS_KEY_ID",
     "AWS_SECRET_ACCESS_KEY",
     "AWS_REGION",
-    "SERVICE",
-    "API_HOST",
-    "FUNC_IMAGE_ANALYSER_NAME",
-    "FUNC_IMAGE_RESULTS_NAME",
-    "ANALYSE_ENDPOINT",
-    "RESULTS_ENDPOINT",
+    # "SERVICE",
+    # "API_HOST",
+    # "FUNC_IMAGE_ANALYSER_NAME",
+    # "FUNC_IMAGE_RESULTS_NAME",
+    "FUNC_BULKIMG_ANALYSER_NAME",
+    # "ANALYSE_ENDPOINT",
+    # "RESULTS_ENDPOINT",
     "S3BUCKET_SOURCE",
 ]
 
@@ -75,7 +75,7 @@ def construct_secrets_path(secret_filename):
     return dotenv_path
 
 
-def check_env_variables(dotenv_path):
+def check_env_variables():
     """
     Checks whether environment variables have been correctly loaded.
 
@@ -95,9 +95,6 @@ def check_env_variables(dotenv_path):
     Example:
         >>> check_env_variables("/path/to/.env")
     """
-
-    # load env variables
-    load_dotenv(dotenv_path, override=True)
 
     # check to see if env variables are available to app
     passed = True
@@ -138,10 +135,13 @@ def load_environment_variables(secretsfile, debug=False):
             f"Loading environment variables from the specified secrets file: {secretsfile}"
         )
         dotenv_path = construct_secrets_path(secret_filename=secretsfile)
-        has_env_vars = check_env_variables(dotenv_path=dotenv_path)
-        if not has_env_vars:
-            print("\nEnv variables not set up properly. Exiting...")
-            sys.exit(1)
+        # load env variables
+        load_dotenv(dotenv_path, override=True)
+
+    has_env_vars = check_env_variables()
+    if not has_env_vars:
+        print("\nEnv variables not set up properly. Exiting...")
+        sys.exit(1)
 
     if debug:
         print("\n Retrieved env vars")

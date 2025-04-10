@@ -17,7 +17,7 @@ custom:
   awsRegion: ${file(./config/${self:custom.currentStage}.yml):aws_region}
   deploymentBucketFromFile: ${file(./config/${self:custom.currentStage}.yml):deployment_bucket}
   deploymentBucket: ${param:dbuck, self:custom.deploymentBucketFromFile}
-  # helpersarn: ${param:helpersarn, 'None'}  
+  # helpersarn: ${param:helpersarn, 'None'}
   iamRoleArnFromFile: ${file(./config/${self:custom.currentStage}.yml):iam_role_arn}
   iamRoleArn: ${param:rolearn, self:custom.iamRoleArnFromFile}
   # iamRoleArn: ${self:custom.serverlessSsmFetch.lambaRoleArn}
@@ -41,7 +41,7 @@ custom:
 stages:
   default:
     params:
-      helpersarn: ${param:helpersarn, 'None'} 
+      helpersarn: ${param:helpersarn, 'None'}
 
 provider:
   name: aws
@@ -73,8 +73,8 @@ functions:
     handler: functions.func_s3_bulkimg_analyse.run
     description: "Bulk submit images from s3 for categorisation & identification"
     layers:
-      - ${self:stages.default.params.helpersarn} 
-      # - ${self:custom.helpersarn} 
+      - ${self:stages.default.params.helpersarn}
+      # - ${self:custom.helpersarn}
     environment:
       s3bucketSource: ${ssm:${self:custom.serverlessSsmFetch.s3bucketSource}}
       s3bucketDest: ${ssm:${self:custom.serverlessSsmFetch.s3bucketDest}}
@@ -113,4 +113,3 @@ resources:
         Value: "${self:service}-${self:custom.currentStage}-s3-bulkimg-analyse"
         Tags:
           Environment: ${self:custom.currentStage}
-
