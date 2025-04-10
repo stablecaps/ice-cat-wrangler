@@ -7,7 +7,9 @@ from botocore.exceptions import ClientError
 
 # from general import safeget
 
-LOG = logging.getLogger(__name__)
+# TODO: check logs propogate into dynamodb
+# use without __name__ cos thios module will propogate logs to lambda root logger so we can use LogCollectorHandler
+LOG = logging.getLogger()
 
 
 def gen_boto3_session():
@@ -66,11 +68,11 @@ def check_bucket_exists(s3_client, bucket_name):
     except ClientError as err:
         error_code = err.response["Error"]["Code"]
         if error_code == "404":
-            print("S3 bucket <%s> does not exist", bucket_name)
+            LOG.info("S3 bucket <%s> does not exist", bucket_name)
         elif error_code == "403":
-            print("Access denied to S3 bucket <%s>", bucket_name)
+            LOG.info("Access denied to S3 bucket <%s>", bucket_name)
         else:
-            print("Failed to verify S3 bucket <%s>: <%s>", bucket_name, err)
+            LOG.info("Failed to verify S3 bucket <%s>: <%s>", bucket_name, err)
         sys.exit(1)
 
 
@@ -211,6 +213,8 @@ def move_s3_object_based_on_rekog_response(
         raise
 
 
+################################################################################
+# rekognition functions
 def rekog_image_categorise(rekog_client, image_bytes):
 
     try:
@@ -228,4 +232,59 @@ def rekog_image_categorise(rekog_client, image_bytes):
 
     except Exception as err:
         LOG.error("Error processing image from S3: <%s>", err)
+        raise
+
+
+################################################################################
+# dynamodb functions
+
+
+def convert_pydict_to_dyndb_item(item_dict, required_keys):
+
+    for key in required_keys:
+        if key not in item_dict or item_dict[key] is None:
+            LOG.error("Missing required key: %s", key)
+            raise ValueError(f"Missing required key: {key}")
+
+    dyndb_item = {}
+    for key, value in item_dict.items():
+        if isinstance(value, str):
+            dyndb_item[key] = {"S": str(value)}
+        elif isinstance(value, (int, float)):
+            dyndb_item[key] = {"N": str(value)}
+        elif isinstance(value, bool):
+            dyndb_item[key] = {"BOOL": value}
+        elif isinstance(value, dict):
+            dyndb_item[key] = {"M": value}
+        elif value is None:
+            dyndb_item[key] = {"NULL": True}
+        else:
+            dyndb_item[key] = {"S": str(value)}
+
+    return dyndb_item
+
+
+def write_item_to_dyndb(dyndb_client, table_name, item_dict, required_keys):
+    """
+    Write an item to the DynamoDB table using a client.
+
+    Args:
+        table_name (str): The name of the DynamoDB table.
+        item_dict (dict): A dictionary containing the attributes to write to the table.
+
+    Returns:
+        dict: The response from DynamoDB.
+    """
+
+    dyndb_item = convert_pydict_to_dyndb_item(
+        item_dict=item_dict, required_keys=required_keys
+    )
+
+    try:
+        # so cuurently the db will overwrite an existing item with the same primary key
+        response = dyndb_client.put_item(TableName=table_name, Item=dyndb_item)
+        LOG.info("Successfully wrote item to DynamoDB: %s", item_dict)
+        return response
+    except ClientError as err:
+        LOG.error("Failed to write item to DynamoDB: %s", err)
         raise

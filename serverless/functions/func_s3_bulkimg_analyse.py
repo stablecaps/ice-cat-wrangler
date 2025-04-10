@@ -1,3 +1,4 @@
+import atexit
 import base64
 import json
 import logging
@@ -5,6 +6,9 @@ import os
 import sys
 
 from botocore.exceptions import ClientError
+from functions.data import required_dyndb_keys
+from functions.fhelpers import extract_s3_key_values
+from functions.globalcontext import global_context
 
 from shared_helpers.boto3_helpers import (
     check_bucket_exists,
@@ -13,54 +17,62 @@ from shared_helpers.boto3_helpers import (
     move_s3_object_based_on_rekog_response,
     rekog_image_categorise,
     safeget,
+    write_item_to_dyndb,
 )
+
+
+# Adds logs to the log_collector
+class LogCollectorHandler(logging.Handler):
+    def __init__(self):
+        super().__init__()
+        self.logs = []
+
+    def emit(self, record):
+        log_entry = self.format(record)
+        self.logs.append(log_entry)
+
 
 LOG = logging.getLogger()
 LOG.setLevel(logging.INFO)
-
-
-# for path in sys.path:
-#     LOG.info("sys paths: %s", path)
-
-# LOG.info("sys shared_helpers: <%s>", "/opt/python/lib/python3.12/site-packages/shared_helpers")
+log_collector = LogCollectorHandler()
+LOG.addHandler(log_collector)
 
 
 # create boto3 session clients
-s3_client = gen_boto3_client("s3", "eu-west-1")
-rekog_client = gen_boto3_client("rekognition", "eu-west-1")
+aws_region = os.getenv("AWS_REGION")
+s3_client = gen_boto3_client("s3", aws_region)
+rekog_client = gen_boto3_client("rekognition", aws_region)
+dyndb_client = gen_boto3_client("dynamodb", aws_region)
+#
+dyndb_table_name = os.getenv("dynamoDBTableName")
+dyndb_ttl = os.getenv("dynamoDBTTL")
+
+LOG.info("aws_region: <%s>", aws_region)
+LOG.info("dyndb_table_name: <%s>", dyndb_table_name)
+LOG.info("dyndb_ttl: <%s>", dyndb_ttl)
 
 
-# def upload_image(self, file_path, batch_id):
-#     """
-#     Processes a single file by uploading it to S3 and generating metadata.
+def write_logs_to_dynamodb():
 
-#     Args:
-#         file_path (str): The path to the file to upload.
-#         batch_id (str): The unique batch ID for the upload session.
+    # Retrieve batch_id and img_fprint from global context
+    # TODOD op_status may not be fail
+    item_dict = {
+        "batch_id": global_context["batch_id"],
+        "img_fprint": global_context["img_fprint"],
+        "op_status": "fail",
+        "logs": log_collector.logs,
+    }
+    LOG.info("Writing logs to DynamoDB atexit...")
+    write_item_to_dyndb(
+        dyndb_client=dyndb_client,
+        table_name=dyndb_table_name,
+        item_dict=item_dict,
+        required_keys=required_dyndb_keys,
+    )
 
-#     Returns:
-#         dict: Metadata for the uploaded file, or None if the upload failed.
-#     """
 
-#     try:
-#         print("Uploading {file_path} to s3://{self.s3bucket_source}/{s3_key}")
-#         self.s3_client.upload_file(file_path, self.s3bucket_source, s3_key)
-
-#         return
-#         # # uploaded file metadata
-#         # return {
-#         #     "client_id": self.client_id,
-#         #     "batch_id": batch_id,
-#         #     "s3bucket_source": self.s3bucket_source,
-#         #     "s3_key": s3_key,
-#         #     "original_file_name": file_name,
-#         #     "upload_time": current_date,
-#         #     "file_image_hash": file_hash,
-#         #     "epoch_timestamp": epoch_timestamp,
-#         # }
-#     except ClientError as err:
-#         print("Error uploading {file_path} to S3: {err}")
-#         return None
+# use atexit to call write_logs_to_dynamodb function if program exits
+atexit.register(write_logs_to_dynamodb)
 
 
 #############################################################
@@ -75,6 +87,11 @@ def run(event, context):
         2. gets rekognition response (update DynDB)
         3. success -> moves image to s3bucketDest (update DynDB)
         4. failure -> moves image to s3bucketFail (update DynDB)
+
+
+    events need to be written into the dynamodb databse at various points where an error could occure
+        1. when the s3 event is triggered
+        2. when the rekognition response is received
     """
 
     LOG.info("event: <%s> - <%s>", type(event), event)
@@ -101,17 +118,29 @@ def run(event, context):
         LOG.critical("record_list not set. Exiting")
         sys.exit(42)
 
-    object_key = safeget(record_list[0], "s3", "object", "key")
-    LOG.info("object_key: <%s>", object_key)
-    if object_key is None:
-        LOG.critical("object_key not set. Exiting")
+    s3_key = safeget(record_list[0], "s3", "object", "key")
+    LOG.info("s3_key: <%s>", s3_key)
+    if s3_key is None:
+        LOG.critical("s3_key not set. Exiting")
         sys.exit(42)
+
+    # db1. write item to dynamodb after getting the object key
+    item_dict = extract_s3_key_values(s3_key=s3_key, s3_bucket=s3bucket_source)
+
+    # Store s3_key and s3_bucket in global context for atexit
+
+    write_item_to_dyndb(
+        dyndb_client=dyndb_client,
+        table_name=dyndb_table_name,
+        item_dict=item_dict,
+        required_keys=required_dyndb_keys,
+    )
 
     ### 2.  Process image file from s3
     file_bytes = get_filebytes_from_s3(
         s3_client=s3_client,
         bucket_name=s3bucket_source,
-        object_key=object_key,
+        s3_key=s3_key,
     )
 
     # 3. submit image to rekognition
@@ -127,10 +156,7 @@ def run(event, context):
         s3bucket_source=s3bucket_source,
         s3bucket_dest=s3bucket_dest,
         s3bucket_fail=s3bucket_fail,
-        object_key=object_key,
+        s3_key=s3_key,
     )
-
-    # lambda_response = {"statusCode": 200, "body": json.dumps(s3_resp)}
     # labels = [label["Name"] for label in s3_resp["Labels"]]
     # print("Labels found:")
-    # print(labels)

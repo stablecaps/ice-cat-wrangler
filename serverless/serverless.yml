@@ -72,12 +72,15 @@ functions:
       s3bucketDest: ${ssm:${self:custom.serverlessSsmFetch.s3bucketDest}}
       s3bucketFail: ${ssm:${self:custom.serverlessSsmFetch.s3bucketFail}}
       dynamoDBTableName: ${ssm:${self:custom.serverlessSsmFetch.dynamoDBTableName}}
+      dynamoDBTTL: 1209600
     package:
       individually: true
       exclude:
         - "*/**"
       include:
         - functions/func_s3_bulkimg_analyse.py
+        - functions/fhelpers.py
+        - functions/data.py
         - requirements.txt
         - __init__.py
     events:
