@@ -3,11 +3,10 @@ import os
 import time
 from datetime import datetime, timezone
 
+from boto3_helpers import check_bucket_exists, gen_boto3_client
 from botocore.exceptions import ClientError
 from helpers.general import calculate_file_hash
 from rich import print
-
-from shared_helpers.boto3_helpers import gen_boto3_client
 
 
 class BulkS3Uploader:
@@ -25,7 +24,10 @@ class BulkS3Uploader:
             debug (bool, optional): If True, enables debug output. Defaults to False.
         """
         self.folder_path = folder_path
+
         self.s3bucket_source = s3bucket_source
+        check_bucket_exists(bucket_name=self.s3bucket_source)
+
         self.client_id = client_id
         #
         self.batch_id = f"batch-{int(time.time())}"

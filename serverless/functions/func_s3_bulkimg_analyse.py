@@ -4,10 +4,9 @@ import logging
 import os
 import sys
 
-import boto3
 from botocore.exceptions import ClientError
 
-from shared_helpers.boto3_helpers import gen_boto3_client, gen_boto3_session
+from shared_helpers.boto3_helpers import check_bucket_exists, gen_boto3_client
 
 LOG = logging.getLogger()
 LOG.setLevel(logging.INFO)
@@ -32,99 +31,96 @@ def safeget(dct, *keys):
 
 # boto3 clients
 s3_client = gen_boto3_client("s3", "eu-west-1")
+rekog_client = gen_boto3_client("rekognition", "eu-west-1")
 
 
-def check_bucket_exists(bucket_name):
-    """Sanity check whether S3 bucket exists using a Boto3 client."""
+# def upload_image(self, file_path, batch_id):
+#     """
+#     Processes a single file by uploading it to S3 and generating metadata.
 
-    try:
-        s3_client.head_bucket(Bucket=bucket_name)
-        print(f"Verified bucket {bucket_name} exists")
-    except ClientError as err:
-        error_code = err.response["Error"]["Code"]
-        if error_code == "404":
-            print(f"S3 bucket {bucket_name} does not exist")
-        elif error_code == "403":
-            print(f"Access denied to S3 bucket {bucket_name}")
-        else:
-            print(f"Failed to verify S3 bucket {bucket_name}: {err}")
-        sys.exit(1)
+#     Args:
+#         file_path (str): The path to the file to upload.
+#         batch_id (str): The unique batch ID for the upload session.
 
+#     Returns:
+#         dict: Metadata for the uploaded file, or None if the upload failed.
+#     """
 
-def upload_image(self, file_path, batch_id):
-    """
-    Processes a single file by uploading it to S3 and generating metadata.
+#     try:
+#         print("Uploading {file_path} to s3://{self.s3bucket_source}/{s3_key}")
+#         self.s3_client.upload_file(file_path, self.s3bucket_source, s3_key)
 
-    Args:
-        file_path (str): The path to the file to upload.
-        batch_id (str): The unique batch ID for the upload session.
-
-    Returns:
-        dict: Metadata for the uploaded file, or None if the upload failed.
-    """
-
-    try:
-        print(f"Uploading {file_path} to s3://{self.s3bucket_source}/{s3_key}")
-        self.s3_client.upload_file(file_path, self.s3bucket_source, s3_key)
-
-        return
-        # # uploaded file metadata
-        # return {
-        #     "client_id": self.client_id,
-        #     "batch_id": batch_id,
-        #     "s3bucket_source": self.s3bucket_source,
-        #     "s3_key": s3_key,
-        #     "original_file_name": file_name,
-        #     "upload_time": current_date,
-        #     "file_image_hash": file_hash,
-        #     "epoch_timestamp": epoch_timestamp,
-        # }
-    except ClientError as err:
-        print(f"Error uploading {file_path} to S3: {err}")
-        return None
+#         return
+#         # # uploaded file metadata
+#         # return {
+#         #     "client_id": self.client_id,
+#         #     "batch_id": batch_id,
+#         #     "s3bucket_source": self.s3bucket_source,
+#         #     "s3_key": s3_key,
+#         #     "original_file_name": file_name,
+#         #     "upload_time": current_date,
+#         #     "file_image_hash": file_hash,
+#         #     "epoch_timestamp": epoch_timestamp,
+#         # }
+#     except ClientError as err:
+#         print("Error uploading {file_path} to S3: {err}")
+#         return None
 
 
 #############################################################
 
 
-def process_image_from_s3(bucket_name, object_key):
+def get_filebytes_from_s3(bucket_name, object_key):
     """
-    Retrieve an image from S3, encode it in base64, and submit it to Rekognition.
+    Retrieve a file from an S3 bucket.
 
     Args:
         bucket_name (str): The name of the S3 bucket.
         object_key (str): The key of the object in the S3 bucket.
 
     Returns:
-        dict: The response from Rekognition.
+        bytes: The content of the file as bytes.
     """
-    # Initialize S3 and Rekognition clients
-    s3_client = boto3.client("s3")
-    rekognition_client = boto3.client("rekognition")
+    try:
+        response = s3_client.get_object(Bucket=bucket_name, Key=object_key)
+        file_bytes = response["Body"].read()
+        return file_bytes
+    except ClientError as err:
+        LOG.error(
+            "ClientError while retrieving file <%s> from bucket <%s>: <%s>",
+            object_key,
+            bucket_name,
+            err,
+        )
+        raise
+        raise
+    except Exception as err:
+        LOG.error(
+            "Unexpected error while retrieving file <%s> from bucket <%s>: <%s>",
+            object_key,
+            bucket_name,
+            err,
+        )
+        raise
+
+
+def rekog_image_categorise(image_bytes):
 
     try:
-        # Step 1: Retrieve the image from S3
-        response = s3_client.get_object(Bucket=bucket_name, Key=object_key)
-        image_content = response["Body"].read()
-
-        # Step 2: Base64 encode the image
-        base64_image = base64.b64encode(image_content).decode("utf-8")
-
-        # Step 3: Submit the image to Rekognition
-        rekognition_response = rekognition_client.detect_labels(
-            Image={"Bytes": image_content},
-            MaxLabels=10,  # Adjust the number of labels as needed
-            MinConfidence=75,  # Adjust the confidence threshold as needed
+        rekognition_response = rekog_client.detect_labels(
+            Image={"Bytes": image_bytes},
+            MaxLabels=10,
+            MinConfidence=75,
         )
 
-        # Print the labels detected
+        # Print labels detected
         labels = [label["Name"] for label in rekognition_response["Labels"]]
-        print("Labels detected:", labels)
+        LOG.info("Labels detected: <%s>", labels)
 
         return rekognition_response
 
-    except Exception as e:
-        print(f"Error processing image from S3: {e}")
+    except Exception as err:
+        LOG.error("Error processing image from S3: <%s>", err)
         raise
 
 
@@ -141,9 +137,6 @@ def run(event, context):
 
     LOG.info("event: <%s> - <%s>", type(event), event)
 
-    ### Setup boto3
-    s3_client = gen_boto3_client("s3", "eu-west-1")
-
     ### read env vars
     s3bucket_env_list = (
         os.getenv("s3bucketSource"),
@@ -151,8 +144,6 @@ def run(event, context):
         os.getenv("s3bucketFail"),
     )
     s3bucket_source, s3bucket_dest, s3bucket_fail = s3bucket_env_list
-
-    print(f"lambaRoleArn: {os.getenv('lambaRoleArn')}")
 
     ### Sanity check
     if None in s3bucket_env_list:
@@ -162,8 +153,11 @@ def run(event, context):
     for s3bucket in s3bucket_env_list:
         check_bucket_exists(bucket_name=s3bucket)
 
-    # TODO: sort out if record_list is None
+    # 1. get object key from event
     record_list = event.get("Records")
+    if record_list is None:
+        LOG.critical("record_list not set. Exiting")
+        sys.exit(42)
     object_key = safeget(record_list[0], "s3", "object", "key")
     LOG.info("object_key: <%s>", object_key)
     if object_key is None:
@@ -171,30 +165,19 @@ def run(event, context):
         sys.exit(42)
 
     ### Process image file from s3
-    response = s3_client.get_object(Bucket=s3bucket_source, Key=object_key)
-
-    LOG.info("response: %s", response)
+    file_bytes = get_filebytes_from_s3(
+        bucket_name=s3bucket_source,
+        object_key=object_key,
+    )
 
     # 1. submit image to rekognition
-    rekog_resp = rekognition.detect_labels(Image={"Bytes": image})
-    lambda_response = {"statusCode": 200, "body": json.dumps(response)}
-    labels = [label["Name"] for label in response["Labels"]]
-    print("Labels found:")
-    print(labels)
+    rekog_resp = rekog_image_categorise(image_bytes=file_bytes)
+    LOG.info("rekog_resp: <%s>", rekog_resp)
 
-    # my_image = read_img_2memory(get_obj_resp=response)
-    # log_image_data(img=my_image, label="exif data pass0")
-
-    # ### initial exif data delete
-    # my_image.delete_all()
-
-    # exif_data_list = log_image_data(img=my_image, label="exif data pass1")
-
-    # ### Mop any exif data that failed to delete with delete_all
-    # if len(exif_data_list) > 0:
-    #     for exif_tag in exif_data_list:
-    #         my_image.delete(exif_tag)
-    #     log_image_data(img=my_image, label="exif data pass2")
+    # lambda_response = {"statusCode": 200, "body": json.dumps(s3_resp)}
+    # labels = [label["Name"] for label in s3_resp["Labels"]]
+    # print("Labels found:")
+    # print(labels)
 
     ### Copy image with sanitised exif data to destination bucket
     # s3_client.put_object(
@@ -212,13 +195,13 @@ def run(event, context):
             Key=object_key,
             ACL="bucket-owner-full-control",
         )
-        print(f"Object {object_key} copied from {s3bucket_source} to {s3bucket_dest}")
+        print("Object {object_key} copied from {s3bucket_source} to {s3bucket_dest}")
 
         s3_client.delete_object(Bucket=s3bucket_source, Key=object_key)
-        print(f"Object {object_key} deleted from {s3bucket_source}")
+        print("Object {object_key} deleted from {s3bucket_source}")
 
     except ClientError as e:
-        print(f"Error moving object {object_key}: {e}")
+        print("Error moving object {object_key}: {e}")
         raise
 
     LOG.info(
