@@ -87,3 +87,16 @@ resource "aws_dynamodb_table" "image_cat" {
   # Tags
   tags = local.tags
 }
+
+
+resource "aws_ssm_parameter" "s3buckets" {
+
+  for_each = local.ssm_map
+
+  name      = "${local.ssm_root_prefix}/${each.key}"
+  type      = "String"
+  value     = each.value
+  overwrite = true
+
+  tags = local.tags
+}

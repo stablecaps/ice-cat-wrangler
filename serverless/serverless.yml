@@ -28,6 +28,7 @@ custom:
     s3bucketFail: '/stablecaps/dev/cat-wrangler/S3BUCKET_FAIL'
     # for some reason we cannot assign this to provider.iam.role
     lambaRoleArn: '/stablecaps/dev/cat-wrangler/lambda_role_cat_arn'
+    dynamoDBTableName: '/stablecaps/dev/cat-wrangler/DYNAMODB_TABLE_NAME'
 
   prune:
     automatic: true
@@ -66,9 +67,11 @@ functions:
     layers:
       - ${self:stages.default.params.helpersarn}
     environment:
+      awsRegion: ${self:custom.awsRegion}
       s3bucketSource: ${ssm:${self:custom.serverlessSsmFetch.s3bucketSource}}
       s3bucketDest: ${ssm:${self:custom.serverlessSsmFetch.s3bucketDest}}
       s3bucketFail: ${ssm:${self:custom.serverlessSsmFetch.s3bucketFail}}
+      dynamoDBTableName: ${ssm:${self:custom.serverlessSsmFetch.dynamoDBTableName}}
     package:
       individually: true
       exclude:

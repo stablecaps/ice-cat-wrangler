@@ -10,4 +10,8 @@ locals {
 
   ssm_root_prefix = "/stablecaps/${var.env}/${var.project}"
 
+  ssm_map = {
+    DYNAMODB_TABLE_NAME = "${var.dynamo_db_name}-${var.unique_str}-${var.env}"
+  }
+
 }

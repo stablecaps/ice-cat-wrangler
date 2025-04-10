@@ -46,3 +46,8 @@ variable "s3bucket_fail_name" {
   description = "s3 bucket fail name. Stores data from failed image processing"
   type        = string
 }
+
+variable "dynamo_db_name" {
+  description = "DynamoDB table name"
+  type        = string
+}
