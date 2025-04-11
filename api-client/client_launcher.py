@@ -108,7 +108,7 @@ class CLIArgs:
             dest="batch_file",
             type=str,
             required=True,
-            help="Path to the local batch logfile. Found in api-client-sig4/logs folder",
+            help="Path to the local batch logfile. Found in api-client/logs folder",
         )
 
         ########################################

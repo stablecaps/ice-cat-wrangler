@@ -1,10 +1,10 @@
-# api-client-sig4
+# api-client
 
 
 ## Setup
 
 venv
-source 
+source
 update-pip
 
 export aws keys
