@@ -224,9 +224,9 @@ def rekog_image_categorise(rekog_client, image_bytes, label_pattern="cat"):
         # Print labels detected
         labels = [label["Name"].lower() for label in rekog_resp["Labels"]]
 
-        rek_match = False
+        rek_match = "False"
         if label_pattern in labels:
-            rek_match = True
+            rek_match = "True"
 
         LOG.info("Labels detected: <%s>", labels)
         LOG.info("rek_match for label_pattern: <%s> is <%s>", label_pattern, rek_match)
@@ -289,7 +289,7 @@ class DynamoDBHelper:
         """
         if key not in self.attribute_types:
             LOG.error("Key: <%s> not found in attribute_types dict", key)
-            raise ValueError(f"Key: {key} not found in attribute_types dict")
+            raise ValueError("Key: <%s> not found in attribute_types dict", key)
 
         attr_type = self.attribute_types[key]
 
@@ -301,13 +301,18 @@ class DynamoDBHelper:
                 return {"N": str(int(value))}  # Convert to stringified integer
             except ValueError:
                 LOG.error("Invalid number value for key: %s", key)
-                raise ValueError(f"Invalid number value for key: {key}")
+                raise ValueError("Invalid number value for key: %s", key)
         elif attr_type == "BOOL":  # Ensure booleans are converted to True/False
-            return (
-                {"BOOL": value.lower() == "true"}
-                if isinstance(value, str)
-                else {"BOOL": bool(value)}
-            )
+            if isinstance(value, str):
+                if value.lower() not in ["true", "false"]:
+                    LOG.error("Invalid boolean string for key: %s", key)
+                    raise ValueError("Invalid boolean string for key: %s", key)
+            else:
+                LOG.error("Boolean value not represented as a string for key: %s", key)
+                raise ValueError(
+                    "Boolean value not represented as a string for key: %s", key
+                )
+            return {"S": value}
         elif attr_type == "M":  # Map (JSON)
             return {"M": value}  # Assume value is already a dictionary
         elif attr_type == "NULL":  # Null
@@ -333,7 +338,7 @@ class DynamoDBHelper:
         for key in self.required_keys:
             if key not in item_dict or item_dict[key] is None:
                 LOG.error("Missing required key: %s", key)
-                raise ValueError(f"Missing required key: {key}")
+                raise ValueError("Missing required key: %s", key)
 
         # Convert item_dict to DynamoDB item format
         dyndb_item = {}
@@ -341,6 +346,38 @@ class DynamoDBHelper:
             dyndb_item[key] = self.convert_value_to_dyndb_type(key, value)
 
         return dyndb_item
+
+    # @staticmethod
+    # def preprocess_dynamodb_dict(item):
+    #     """
+    #     Recursively preprocess an item to ensure it conforms to DynamoDB's type system.
+
+    #     Args:
+    #         item: The item to preprocess (can be a dict, list, or primitive type).
+
+    #     Returns:
+    #         dict: The item formatted for DynamoDB.
+    #     """
+    #     if isinstance(item, dict):
+    #         # Convert dictionary to DynamoDB Map type
+    #         return {"M": {k: DynamoDBHelper.preprocess_dynamodb_dict(v) for k, v in item.items()}}
+    #     elif isinstance(item, list):
+    #         # Convert list to DynamoDB List type
+    #         return {"L": [DynamoDBHelper.preprocess_dynamodb_dict(v) for v in item]}
+    #     elif isinstance(item, str):
+    #         # Convert string to DynamoDB String type
+    #         return {"S": item}
+    #     elif isinstance(item, (int, float)):
+    #         # Convert number to DynamoDB Number type
+    #         return {"N": str(item)}
+    #     elif isinstance(item, bool):
+    #         # Convert boolean to DynamoDB Boolean type
+    #         return {"BOOL": item}
+    #     elif item is None:
+    #         # Convert None to DynamoDB Null type
+    #         return {"NULL": True}
+    #     else:
+    #         raise ValueError(f"Unsupported type for DynamoDB: {type(item)}")
 
     def write_item(self, item_dict):
         """
@@ -352,6 +389,11 @@ class DynamoDBHelper:
         Returns:
             dict: The response from DynamoDB.
         """
+
+        # TODO: Preprocess the `rek_resp` field if it exists
+        # if "rek_resp" in item_dict:
+        #     item_dict["rek_resp"] = DynamoDBHelper.preprocess_dynamodb_dict(item_dict["rek_resp"])
+
         dyndb_item = self.convert_pydict_to_dyndb_item(item_dict)
 
         LOG.info("DynamoDB item to write: %s", dyndb_item)
@@ -365,4 +407,52 @@ class DynamoDBHelper:
             return response
         except ClientError as err:
             LOG.error("Failed to write item to DynamoDB: %s", err)
+            raise
+
+    def update_item(self, item_dict):
+        """
+        Update specific attributes in a DynamoDB item without deleting other attributes.
+
+        Args:
+            item_dict (dict): A dictionary containing the primary key and attributes to update.
+                              The primary key (partition key and sort key) must be included.
+
+        Returns:
+            dict: The response from the UpdateItem operation.
+        """
+        # Extract and convert the primary key attributes
+        key = {
+            "batch_id": self.convert_value_to_dyndb_type(
+                "batch_id", item_dict.pop("batch_id")
+            ),
+            "img_fprint": self.convert_value_to_dyndb_type(
+                "img_fprint", item_dict.pop("img_fprint")
+            ),
+        }
+
+        # Build the UpdateExpression and ExpressionAttributeValues
+        update_expression = "SET " + ", ".join(f"#{k} = :{k}" for k in item_dict.keys())
+
+        expression_attribute_names = {f"#{k}": k for k in item_dict.keys()}
+
+        expression_attribute_values = {
+            f":{k}": self.convert_value_to_dyndb_type(k, v)
+            for k, v in item_dict.items()
+        }
+
+        try:
+            response = self.dyndb_client.update_item(
+                TableName=self.table_name,
+                Key=key,
+                UpdateExpression=update_expression,
+                ExpressionAttributeNames=expression_attribute_names,
+                ExpressionAttributeValues=expression_attribute_values,
+                ReturnValues="ALL_NEW",
+            )
+            LOG.info(
+                "Successfully updated item in DynamoDB: %s", response["Attributes"]
+            )
+            return response
+        except ClientError as err:
+            LOG.error("Failed to update item in DynamoDB: %s", err)
             raise

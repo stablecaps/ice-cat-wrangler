@@ -1,5 +1,6 @@
 import logging
 import os
+from datetime import datetime
 
 from functions.global_context import global_context
 
@@ -10,6 +11,27 @@ from shared_helpers.boto3_helpers import (
 LOG = logging.getLogger()
 
 dyndb_ttl = os.getenv("dynamoDBTTL")
+
+
+def convert_time_string_to_epoch(time_string, format_string="%a, %d %b %Y %H:%M:%S %Z"):
+    """
+    Convert a time string in a format like "Fri, 11 Apr 2025 02:20:18 GMT" to epoch time.
+
+    Args:
+        time_string (str): The time string to convert.
+        format_string (str): The format of the time string. Default is "%a, %d %b %Y %H:%M:%S %Z".
+
+    Returns:
+        int: The epoch time.
+    """
+
+    # Parse the input string into a datetime object
+    dt_object = datetime.strptime(time_string, format_string)
+
+    # Convert the datetime object to epoch time
+    epoch_time = int(dt_object.timestamp())
+
+    return epoch_time
 
 
 def gen_item_dict1_from_s3key(s3_key, s3_bucket):
@@ -85,9 +107,22 @@ def gen_item_dict2_from_rek_resp(rekog_results):
         img_fprint = global_context.get("img_fprint")
 
         # Extract Rekognition response details
-        rekog_resp = rekog_results.get("rekog_resp", None)
+        # TODO: rename rekog_resp to rek_labels in db schema
+        rekog_resp = rekog_results.get("rekog_resp")
         rek_match = rekog_results.get("rek_match", None)
-        rek_ts = int(rekog_results.get("rek_ts", 0))
+
+        rek_long_time_string = safeget(
+            rekog_resp, "ResponseMetadata", "HTTPHeaders", "date"
+        )
+        rek_ts = convert_time_string_to_epoch(
+            time_string=rek_long_time_string, format_string="%a, %d %b %Y %H:%M:%S %Z"
+        )
+        LOG.info("rek_ts: %s", rek_ts)
+
+        # TODO: fix this - add empty dict for now
+        rekog_labels = {
+            "TODO": {"placeholder": {"S": "empty dict for now"}}
+        }  # rekog_resp.get("Labels")
 
         rek_status_code = safeget(rekog_resp, "ResponseMetadata", "HTTPStatusCode")
         op_status = "success" if rek_status_code == 200 else "fail"
@@ -97,7 +132,7 @@ def gen_item_dict2_from_rek_resp(rekog_results):
             "batch_id": batch_id,
             "img_fprint": img_fprint,
             "op_status": op_status,
-            "rek_resp": rekog_resp,
+            # "rek_resp": TODO: rekog_labels, # re-enable this when rekog_labels is fixed
             "rek_iscat": rek_match,
             "rek_ts": rek_ts,
         }
@@ -109,22 +144,6 @@ def gen_item_dict2_from_rek_resp(rekog_results):
         LOG.error("Failed to create item_dict2: %s", err)
         return {}
 
-
-# item_dict = {
-#     "batch_id": None,  # s3path[2]
-#     "img_fprint": "unique_image_hash",  # s3path[0]
-#     "client_id": "client123",  # s3path[1]
-#     "s3img_key": "bucket-name/path/to/image.jpg",  # s3bucket + s3path
-#     "file_name": "image.jpg",  # we can't get this yet
-#     "op_status": "success",  # pending, success, fail
-#     "rek_resp": {"Labels": [{"Name": "Cat", "Confidence": 95}]},  # rekognition response
-#     "rek_iscat": True,  # rekognition response
-#     "logs": {"debug": "Processed successfully"},  # logs (only if debug is supplied)
-#     "current_date": "2023-01-01-HH",  # s3path[3]
-#     "upload_ts": 1672531200,  # s3path[4]
-#     "rek_ts": 1672531300,  # rekognition timestamp
-#     "ttl": dyndb_ttl,  # dyndb_ttl
-# }
 
 # item_dict = {
 #     "batch_id": 12345, # s3path[2]

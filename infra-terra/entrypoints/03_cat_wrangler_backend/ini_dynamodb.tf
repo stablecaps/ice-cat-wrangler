@@ -32,7 +32,7 @@ resource "aws_dynamodb_table" "image_cat" {
 
   attribute {
     name = "rek_iscat"
-    type = "S" # (Boolean stored as string)
+    type = "S" # stringified boolean
   }
 
   attribute {

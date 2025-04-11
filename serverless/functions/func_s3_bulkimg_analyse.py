@@ -160,7 +160,7 @@ def run(event, context):
     # db2. update item in dynamodb with rekognition response
     item_dict2 = gen_item_dict2_from_rek_resp(rekog_results=rekog_results)
 
-    dynamodb_helper.write_item(
+    dynamodb_helper.update_item(
         item_dict=item_dict2,
     )
 
@@ -189,6 +189,6 @@ def run(event, context):
     if not move_success:
         item_dict3["op_status"] = "fail"
 
-    dynamodb_helper.write_item(
+    dynamodb_helper.update_item(
         item_dict=item_dict3,
     )
