@@ -44,6 +44,7 @@ secret_vars = [
     # "ANALYSE_ENDPOINT",
     # "RESULTS_ENDPOINT",
     "S3BUCKET_SOURCE",
+    "DYNAMODB_TABLE_NAME",
 ]
 
 ssm_excluded_keys = ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"]

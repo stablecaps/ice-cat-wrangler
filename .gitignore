@@ -191,12 +191,12 @@ cython_debug/
 **/config/uat.yml
 **/config/prod.yml
 #
-api-client-sig4/bulk_uploads/*.png
-api-client-sig4/bulk_uploads/*.jpg
-api-client-sig4/bulk_uploads/*.jpeg
+api-client/bulk_uploads/*.png
+api-client/bulk_uploads/*.jpg
+api-client/bulk_uploads/*.jpeg
 #
-api-client-sig4/config/client_id
-api-client-sig4/logs/*.json
+api-client/config/client_id
+api-client/logs/*.json
 #
 serverless/layer/shared/layer_content.zip
 **/deprecated*.*
