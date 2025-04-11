@@ -89,14 +89,14 @@ class CLIArgs:
         bulkresult_parser = subparsers.add_parser(
             "bulkresults", help="Upload local image to AWS Lambda analyse function"
         )
-        # bulkresults.add_argument(
-        #     "--imgpath",
-        #     "-i",
-        #     dest="img_path",
-        #     type=str,
-        #     required=True,
-        #     help="Path to the local image to upload. e.g. /path/to/image.jpg",
-        # )
+        bulkresult_parser.add_argument(
+            "--batchfile",
+            "-b",
+            dest="batch_file",
+            type=str,
+            required=True,
+            help="Path to the local batch logfile. Found in api-client-sig4/logs folder",
+        )
 
         ########################################
         args = parser.parse_args()
@@ -120,7 +120,7 @@ class CLIArgs:
         elif args.command == "result":
             CLIArgs.result(args.batch_id, args.img_fprint, args.debug)
         elif args.command == "bulkresults":
-            CLIArgs.bulkresults(args.result_id, args.debug)
+            CLIArgs.bulkresults(args.batch_file, args.debug)
 
     @staticmethod
     def get_client_id():
@@ -174,9 +174,8 @@ class CLIArgs:
         )
 
     @staticmethod
-    def bulkresults(debug):
-        print("Bulk results not implemented yet. Exiting...")
-        return
+    def bulkresults(batch_file, debug):
+        client = CatAPIClient(action="bulkresults", batch_file=batch_file, debug=debug)
 
 
 if __name__ == "__main__":

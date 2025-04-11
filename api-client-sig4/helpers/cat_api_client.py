@@ -54,6 +54,7 @@ class CatAPIClient:
         img_path=None,
         folder_path=None,
         batch_id=None,
+        batch_file=None,
         img_fprint=None,
         client_id=None,
         debug=False,
@@ -72,6 +73,7 @@ class CatAPIClient:
         self.folder_path = folder_path
         self.img_fprint = img_fprint
         self.batch_id = batch_id
+        self.batch_file = batch_file
         self.client_id = client_id
         self.debug = debug
         self.func_image_analyser_name = os.getenv("FUNC_IMAGE_ANALYSER_NAME")
@@ -211,4 +213,10 @@ class CatAPIClient:
         CatAPIClient.display_rek_iscat_table(iscat_results=iscat_results)
 
     def bulk_results(self):
-        pass
+        dynamodb_helper = ClientDynamoDBHelper(
+            dyndb_client=dyndb_client, table_name=self.dynamodb_table_name, debug=True
+        )
+        print("Bulk results not implemented yet. Exiting...")
+        import sys
+
+        sys.exit(42)
