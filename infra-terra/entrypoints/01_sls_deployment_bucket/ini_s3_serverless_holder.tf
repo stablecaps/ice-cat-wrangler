@@ -21,3 +21,16 @@ module "s3_serverless_deployment_bucket" {
 
   tags = local.tags
 }
+
+
+resource "aws_ssm_parameter" "sls_deploy_bucket" {
+
+  for_each = local.ssm_map
+
+  name      = "${local.ssm_root_prefix}/${each.key}"
+  type      = "String"
+  value     = each.value
+  overwrite = true
+
+  tags = local.tags
+}

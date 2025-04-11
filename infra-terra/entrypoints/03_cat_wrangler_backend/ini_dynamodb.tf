@@ -89,7 +89,7 @@ resource "aws_dynamodb_table" "image_cat" {
 }
 
 
-resource "aws_ssm_parameter" "s3buckets" {
+resource "aws_ssm_parameter" "dyndb_table_name" {
 
   for_each = local.ssm_map
 

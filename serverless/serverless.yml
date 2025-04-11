@@ -15,8 +15,10 @@ custom:
   defaultStage: dev
   currentStage: ${opt:stage, self:custom.defaultStage}
   awsRegion: ${file(./config/${self:custom.currentStage}.yml):aws_region}
-  deploymentBucketFromFile: ${file(./config/${self:custom.currentStage}.yml):deployment_bucket}
-  deploymentBucket: ${param:dbuck, self:custom.deploymentBucketFromFile}
+  # deploymentBucketFromFile: ${file(./config/${self:custom.currentStage}.yml):deployment_bucket}
+  # deploymentBucket: ${param:dbuck, self:custom.deploymentBucketFromFile}
+  deploymentBucket: ${param:dbuck, self:custom.serverlessSsmFetch.slsDeploymentBucketName}
+
   # helpersarn: ${param:helpersarn, 'None'}
   iamRoleArnFromFile: ${file(./config/${self:custom.currentStage}.yml):iam_role_arn}
   iamRoleArn: ${param:rolearn, self:custom.iamRoleArnFromFile}
@@ -29,6 +31,8 @@ custom:
     # for some reason we cannot assign this to provider.iam.role
     lambaRoleArn: '/stablecaps/dev/cat-wrangler/lambda_role_cat_arn'
     dynamoDBTableName: '/stablecaps/dev/cat-wrangler/DYNAMODB_TABLE_NAME'
+    slsDeploymentBucketName: '/stablecaps/dev/cat-wrangler/SLS_DEPLOY_BUCKET'
+
 
   prune:
     automatic: true

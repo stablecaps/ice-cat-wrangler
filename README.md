@@ -129,7 +129,12 @@ Available entrypoints:
 03_cat_wrangler_backend
 04_create_lambda_permissions
 
-Usage: ./xxx_tfhelperv3.sh terraform_exec=[path_to_terraform] inipath=[path] autoapprove=[yes|no] env=[dev|prod] action=[init|validate|plan|apply|full|destroy]
+Usage: ./xxx_tfhelperv3.sh
+          terraform_exec=[path_to_terraform]
+          inipath=[path]
+          autoapprove=[yes|no]
+          env=[dev|prod]
+          action=[init|validate|plan|apply|full|destroy]
 
 Parameters:
   terraform_exec   Path to the Terraform executable.
@@ -163,11 +168,10 @@ Parameters:
 Note SSM variables are exported at various stages so that `api-client` and `serverless` can grab variables such as ARNS, env-vars, etc created during TF deploys.
 
 5. Setting up TF remote backend
-On first run comment out the s3 backend section. This wil generate a local .tfstate file.
+On first run comment out the s3 backend section. This will generate a local .tfstate file.
+edit entrypoints/00_setup_terraform_remote_s3_backend_dev/provider.tf:
 
 ```shell
-# edit entrypoints/00_setup_terraform_remote_s3_backend_dev/provider.tf
-
 # backend "s3" {
 #   key     = "terraform-remotestate-stablecaps-dev/terraform.tfstate"
 #   encrypt = "true"
@@ -199,7 +203,7 @@ Note: when destroying the backend, you should download the remote tfstate file t
 
 Note: The permissions in 04_create_lambda_permissions are somewhat broad as this is a dev environment. These permissions would be tightened up via granular permissions in UAT before being deployed to PROD. I would utilise cloudtrail to create [restrictive policies](https://skildops.com/blog/generate-restricted-aws-iam-policy-via-cloudtrail)
 
-6. infra-terra has a `Makefile`. It contains a convinience function to create terraform docs. Run using:
+6. infra-terra has a `Makefile`. It contains a convenience function to create terraform docs. Run using:
 
 ```shell
 make docs
@@ -211,9 +215,40 @@ make docs
 1. export your **aws admin keys**
 2. Install serverless using nvm
 ```shell
-sss
+# Install nvm
+curl https://raw.githubusercontent.com/creationix/nvm/master/install.sh | bash
+
+# follow instructions to add env vars to .profile. Then
+source ~/.profile
+
+# Find node version to use, ans install using nvm. I used v18.20.8
+nvm ls-remote
+nvm install v18.20.8
+nvm use v18.20.8
+nvm alias default v18.20.8
+
+# Install serverless
+npm i serverless -g
+serverless update
 ```
 3. prepare serverless env vars
+
+```shell
+cd serverless
+cp serverless/config/dev.template.yml serverless/config/dev.yml
+
+# Then edit serverless/config/dev.yml to change env vars. We will get the iam_role_arn from SSM. So you can leave this as some string.
+```
+
+- venv - check rerquitemnets
+- Install serverless plugins. There i a Makefile that will assist with this process
+- check ssm for vars
+- tidy up yaml
+
+```shell
+make
+```
+
 
 ---
 
