@@ -13,13 +13,26 @@ from rich import print
 
 
 class CLIArgs:
-    """Setup arparse CLI options using dispatch pattern."""
+    """
+    Handles command-line interface (CLI) arguments and dispatches commands
+    to the appropriate subcommand handlers.
+
+    This class sets up argparse to parse CLI arguments, validates them,
+    and executes the corresponding functionality based on the provided
+    subcommand.
+    """
 
     def __init__(self):
+        """
+        Initializes the CLI argument parser, defines global arguments,
+        subcommands, and their respective arguments. Dispatches the
+        appropriate subcommand based on user input.
+        """
+
         help_banner = (
-            "./client_launcher.py --secretsfile dev_conf_secrets --debug analyse --imgpath /path/to/image.jpg\n"
-            "./client_launcher.py --secretsfile dev_conf_secrets --debug results --resultid 120\n"
-            "./client_launcher.py --secretsfile ssm --debug analyse --imgpath /path/to/image.jpg\n"
+            "./client_launcher.py --secretsfile ssm --debug bulkanalyse --folder bulk_uploads/\n"
+            "./client_launcher.py --secretsfile ssm result --imgfprint f54c84046c5ad95fa2f0f686db515bada71951cb0dde2ed37f76708a173033f7 --batchid 1744370618\n"
+            "./client_launcher.py --secretsfile ssm bulkresults --batchfile logs/stablecaps900_batch-1744377772.json\n"
         )
 
         parser = argparse.ArgumentParser(
@@ -126,13 +139,14 @@ class CLIArgs:
     def get_client_id():
         """
         Searches for a file named 'client_id' in the 'config' folder.
-        If found, reads and returns the client ID from the file.
+        If found, reads and returns the client ID from the file. If the file
+        does not exist, it creates one with a randomly generated client ID.
 
         Returns:
             str: The client ID read from the file.
 
         Raises:
-            SystemExit: If the file is not found or is empty.
+            SystemExit: If the file is empty or the client ID cannot be loaded.
         """
         config_folder = os.path.join(os.getcwd(), "config")
         client_id_file = os.path.join(config_folder, "client_id")
@@ -161,20 +175,44 @@ class CLIArgs:
 
     @staticmethod
     def bulkanalyse(folder, client_id, debug):
+        """
+        Handles the 'bulkanalyse' subcommand. Uploads images from a local
+        directory to an AWS S3 bucket.
 
+        Args:
+            folder (str): Path to the local folder containing images.
+            client_id (str): The client ID for authentication.
+            debug (bool): Debug mode flag.
+        """
         CatAPIClient(
             action="bulkanalyse", folder_path=folder, client_id=client_id, debug=debug
         )
 
     @staticmethod
     def result(batch_id, img_fprint, debug):
+        """
+        Handles the 'result' subcommand. Fetches results from dynamodb
+        for a specific batch ID and image fingerprint.
 
+        Args:
+            batch_id (str): The batch ID to fetch results for.
+            img_fprint (str): The image fingerprint hash.
+            debug (bool): Debug mode flag.
+        """
         client = CatAPIClient(
             action="result", batch_id=batch_id, img_fprint=img_fprint, debug=debug
         )
 
     @staticmethod
     def bulkresults(batch_file, debug):
+        """
+        Handles the 'bulkresults' subcommand. Processes a batch file (created by bulkanalyse)
+        to upload images and fetch results.
+
+        Args:
+            batch_file (str): Path to the local batch logfile.
+            debug (bool): Debug mode flag.
+        """
         client = CatAPIClient(action="bulkresults", batch_file=batch_file, debug=debug)
 
 
