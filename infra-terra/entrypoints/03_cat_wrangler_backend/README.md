@@ -17,15 +17,13 @@
 
 ## Modules
 
-| Name | Source | Version |
-|------|--------|---------|
-| <a name="module_s3_buckets"></a> [s3\_buckets](#module\_s3\_buckets) | terraform-aws-modules/s3-bucket/aws | 4.6.0 |
+No modules.
 
 ## Resources
 
 | Name | Type |
 |------|------|
-| [aws_ssm_parameter.s3buckets](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ssm_parameter) | resource |
+| [aws_dynamodb_table.image_cat](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/dynamodb_table) | resource |
 
 ## Inputs
 
@@ -43,9 +41,5 @@
 
 ## Outputs
 
-| Name | Description |
-|------|-------------|
-| <a name="output_s3bucket_dest_name"></a> [s3bucket\_dest\_name](#output\_s3bucket\_dest\_name) | S3 bucket name for the destination bucket |
-| <a name="output_s3bucket_fail_name"></a> [s3bucket\_fail\_name](#output\_s3bucket\_fail\_name) | S3 bucket name for the fail bucket |
-| <a name="output_s3bucket_source_name"></a> [s3bucket\_source\_name](#output\_s3bucket\_source\_name) | S3 bucket name for the source bucket |
+No outputs.
 <!-- END_TF_DOCS -->

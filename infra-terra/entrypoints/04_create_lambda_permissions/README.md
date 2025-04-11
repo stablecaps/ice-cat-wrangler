@@ -19,18 +19,19 @@
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_s3_buckets"></a> [s3\_buckets](#module\_s3\_buckets) | terraform-aws-modules/s3-bucket/aws | 4.6.0 |
+| <a name="module_lambda_role_and_policies"></a> [lambda\_role\_and\_policies](#module\_lambda\_role\_and\_policies) | github.com/stablecaps/terraform-aws-iam-policies-stablecaps | v2.1.0 |
 
 ## Resources
 
 | Name | Type |
 |------|------|
-| [aws_ssm_parameter.s3buckets](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ssm_parameter) | resource |
+| [aws_ssm_parameter.lambda_role_cat_arn](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ssm_parameter) | resource |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| <a name="input_aws_acc_no"></a> [aws\_acc\_no](#input\_aws\_acc\_no) | AWS account number | `string` | n/a | yes |
 | <a name="input_created_by"></a> [created\_by](#input\_created\_by) | Created by | `string` | `"terraform"` | no |
 | <a name="input_env"></a> [env](#input\_env) | Deployment environment. e.g. dev, uat, prod | `string` | n/a | yes |
 | <a name="input_owner"></a> [owner](#input\_owner) | Owner of the project | `string` | `"DevOps"` | no |
@@ -45,7 +46,5 @@
 
 | Name | Description |
 |------|-------------|
-| <a name="output_s3bucket_dest_name"></a> [s3bucket\_dest\_name](#output\_s3bucket\_dest\_name) | S3 bucket name for the destination bucket |
-| <a name="output_s3bucket_fail_name"></a> [s3bucket\_fail\_name](#output\_s3bucket\_fail\_name) | S3 bucket name for the fail bucket |
-| <a name="output_s3bucket_source_name"></a> [s3bucket\_source\_name](#output\_s3bucket\_source\_name) | S3 bucket name for the source bucket |
+| <a name="output_iam_role_arn"></a> [iam\_role\_arn](#output\_iam\_role\_arn) | Lambda IAM role arn used for serverless function |
 <!-- END_TF_DOCS -->

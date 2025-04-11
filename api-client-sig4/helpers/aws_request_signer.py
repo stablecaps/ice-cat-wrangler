@@ -27,15 +27,11 @@ Dependencies:
     - `rich` library for enhanced console output
 """
 
-import argparse
 import datetime
 import hashlib
 import hmac
 import os
-import sys
 
-import requests
-from dotenv import load_dotenv
 from rich import print
 
 
