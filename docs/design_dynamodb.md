@@ -30,8 +30,8 @@
 
 | **Name**         | **Type**   | **Description**                                                                 |
 |-------------------|------------|---------------------------------------------------------------------------------|
-| `img_fprint`      | String     | Unique image hash (used as the sort key).                                       |
 | `batch_id`        | Number     | Batch ID for grouping images (used as the partition key).                      |
+| `img_fprint`      | String     | Unique image hash (used as the sort key).                                       |
 | `client_id`       | String     | Unique ID for the client.                                                      |
 | `s3img_key`       | String     | S3 bucket key (source/destination/failure).                                    |
 | `file_name`       | String     | Original file name.                                                            |

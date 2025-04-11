@@ -24,10 +24,9 @@ class CLIArgs:
 
         parser = argparse.ArgumentParser(
             description="ICE Cat API Client",
-            usage=".e.g: ./client_launcher.py {--secretsfile [ssm|dev_conf_secrets]} [--debug] {analyse|bulkanalyse|results} [<args>]\n"
+            usage=".e.g: ./client_launcher.py {--secretsfile [ssm|dev_conf_secrets]} [--debug] {bulkanalyse|result|bulkresults} [<args>]\n"
             + help_banner,
         )
-
         # Global args
         parser.add_argument(
             "--secretsfile",
@@ -36,7 +35,6 @@ class CLIArgs:
             required=True,
             help="Secrets file name located in config folder to load environment variables from, or 'ssm' to fetch from AWS SSM Parameter Store.",
         )
-
         parser.add_argument(
             "--debug",
             "-d",
@@ -48,20 +46,6 @@ class CLIArgs:
 
         # Subparsers for commands
         subparsers = parser.add_subparsers(dest="command", required=True)
-
-        ########################################
-        # Subparser for "analyse"
-        analyse_parser = subparsers.add_parser(
-            "analyse", help="Upload local image to AWS Lambda analyse function"
-        )
-        analyse_parser.add_argument(
-            "--imgpath",
-            "-i",
-            dest="img_path",
-            type=str,
-            required=True,
-            help="Path to the local image to upload. e.g. /path/to/image.jpg",
-        )
 
         ########################################
         # Subparser for "bulk_analyse"
@@ -80,17 +64,39 @@ class CLIArgs:
 
         ########################################
         # Subparser for "results"
-        results_parser = subparsers.add_parser(
-            "results", help="Get results from AWS Lambda results function"
+        result_parser = subparsers.add_parser(
+            "result", help="Get results from AWS Lambda results function"
         )
-        results_parser.add_argument(
-            "--resultid",
-            "-r",
-            dest="result_id",
+        result_parser.add_argument(
+            "--batchid",
+            "-b",
+            dest="batch_id",
             type=str,
             required=True,
-            help="Result ID to get results for. e.g. 1234567890",
+            help="Batch ID to get results for. e.g. 1234567890",
         )
+        result_parser.add_argument(
+            "--imgfprint",
+            "-p",
+            dest="img_fprint",
+            type=str,
+            required=True,
+            help="Image fingerprint hash to get results for. e.g. a91c54f1f00...",
+        )
+
+        #######################################
+        # Subparser for "bulkresults"
+        bulkresult_parser = subparsers.add_parser(
+            "bulkresults", help="Upload local image to AWS Lambda analyse function"
+        )
+        # bulkresults.add_argument(
+        #     "--imgpath",
+        #     "-i",
+        #     dest="img_path",
+        #     type=str,
+        #     required=True,
+        #     help="Path to the local image to upload. e.g. /path/to/image.jpg",
+        # )
 
         ########################################
         args = parser.parse_args()
@@ -109,12 +115,12 @@ class CLIArgs:
         client_id = CLIArgs.get_client_id()
 
         # Dispatch to the appropriate subcommand
-        if args.command == "analyse":
-            CLIArgs.analyse(args.img_path, args.debug)
-        elif args.command == "bulkanalyse":
+        if args.command == "bulkanalyse":
             CLIArgs.bulkanalyse(args.folder, client_id, args.debug)
-        elif args.command == "results":
-            CLIArgs.results(args.result_id, args.debug)
+        elif args.command == "result":
+            CLIArgs.result(args.batch_id, args.img_fprint, args.debug)
+        elif args.command == "bulkresults":
+            CLIArgs.bulkresults(args.result_id, args.debug)
 
     @staticmethod
     def get_client_id():
@@ -154,25 +160,23 @@ class CLIArgs:
         return client_id
 
     @staticmethod
-    def analyse(img_path, debug):
-
-        client = CatAPIClient(action="analyse", img_path=img_path, debug=debug)
-        client.make_request()
-
-    @staticmethod
     def bulkanalyse(folder, client_id, debug):
 
-        client = CatAPIClient(
+        CatAPIClient(
             action="bulkanalyse", folder_path=folder, client_id=client_id, debug=debug
         )
 
     @staticmethod
-    def results(result_id, debug):
+    def result(batch_id, img_fprint, debug):
 
         client = CatAPIClient(
-            action="results", img_path=None, result_id=result_id, debug=debug
+            action="result", batch_id=batch_id, img_fprint=img_fprint, debug=debug
         )
-        client.make_request()
+
+    @staticmethod
+    def bulkresults(debug):
+        print("Bulk results not implemented yet. Exiting...")
+        return
 
 
 if __name__ == "__main__":
