@@ -2,11 +2,11 @@
 
 set -e
 
-echo -e "\nAvailable entrypoints:\n$(find entrypoints/ -mindepth 1 -maxdepth 1 -printf '%Ts %p\n' | sort -n | cut -d ' ' -f2-)\n"
+echo -e "\nAvailable entrypoints:\n$(ls -1 entrypoints/ | sort -n )\n"
 
 
 function print_help() {
-    echo "Usage: $0 terraform_exec=[path_to_terraform] inipath=[path] autoapprove=[yes|no] env=[dev|prod] action=[init|plan|apply|full|destroy]"
+    echo "Usage: $0 terraform_exec=[terraform_v1.11.3] inipath=[path] autoapprove=[yes|no] env=[dev|prod] action=[init|validate|plan|apply|full|destroy]"
     echo
     echo "Parameters:"
     echo "  terraform_exec   Path to the Terraform executable."
@@ -75,8 +75,8 @@ then
 fi
 
 ###
-if ! [[ -d "$inipath" ]]; then
-    echo -e "<$inipath> relative path does not exist \nExiting.."
+if ! [[ -d "entrypoints/${inipath}" ]]; then
+    echo -e "<entrypoints/${inipath}> relative path does not exist \nExiting.."
     echo $correct_usage_str
     exit 42
 fi
@@ -89,9 +89,9 @@ if ! [[ "$autoapprove" =~ ^(yes|no)$ ]]; then
 fi
 
 ###
-if ! [[ "$action" =~ ^(init|plan|apply|full|destroy)$ ]]; then
+if ! [[ "$action" =~ ^(init|validate|plan|apply|full|destroy)$ ]]; then
     echo -e "<$action> is not in the allowed actions options list \nExiting.."
-    echo $correct_usage_str
+    echo $correct_usage_strcd
     exit 42
 fi
 
@@ -106,7 +106,7 @@ function tf_exec_with_autoapprove() {
 
 ################################################
 
-cd $inipath
+cd entrypoints/${inipath}
     echo -e "Running terraform from path $inipath"
     if [ "$action" == "init" ]; then
         echo -e "\nRunnning TF init\n"
@@ -114,11 +114,10 @@ cd $inipath
         rm -rf .terraform .terraform.lock.hcl
         $terraform_exec init -backend-config ../../envs/${env}/${env}.backend.hcl
 
-    elif [ "$action" == "apply" ]; then
-        echo -e "\nRunnning TF apply with -auto-approve set to **${autoapprove}**\n"
+    elif [ "$action" == "validate" ]; then
+        echo -e "\nRunnning TF validate\n"
 
-        exec_str=$(tf_exec_with_autoapprove "$terraform_exec apply -var-file=../../envs/${env}/${env}.tfvars")
-        $exec_str
+        $terraform_exec validate
 
     elif [ "$action" == "plan" ]; then
         echo -e "\nRunnning TF plan\n"
@@ -126,11 +125,20 @@ cd $inipath
         exec_str=$(tf_exec_with_autoapprove "$terraform_exec plan -var-file=../../envs/${env}/${env}.tfvars")
         $exec_str
 
+    elif [ "$action" == "apply" ]; then
+        echo -e "\nRunnning TF apply with -auto-approve set to **${autoapprove}**\n"
+
+        exec_str=$(tf_exec_with_autoapprove "$terraform_exec apply -var-file=../../envs/${env}/${env}.tfvars")
+        $exec_str
+
+
     elif [ "$action" == "full" ]; then
         echo -e "\nYOLO! Runnning TF full with -auto-approve set to **${autoapprove}**\n"
 
         rm -rf .terraform .terraform.lock.hcl
         $terraform_exec init -backend-config ../../envs/${env}/${env}.backend.hcl
+
+        $terraform_exec validate
 
         exec_str=$(tf_exec_with_autoapprove "$terraform_exec apply -var-file=../../envs/${env}/${env}.tfvars -auto-approve")
         $exec_str

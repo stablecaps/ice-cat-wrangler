@@ -99,13 +99,13 @@ cd ice-cat-wrangler/
 2. prepare terraform env vars
 3. Note you need to use terraform v1.11.3 binary
 ```
-# remove encrypted secrets file. this is for the repo pipeline (used by secrets_decryptor.sh) - you won't need this.
+# remove encrypted secrets file. this is for the repo pipeline (used by `secrets_decryptor.sh`) - you won't need this.
 rm -f infra-terra/envs/dev/dev.backend.hcl.enc
 
 cp infra-terra/envs/dev/dev.template.backend.hcl infra-terra/envs/dev/dev.backend.hcl
 cp infra-terra/envs/dev/dev.template.tfvars infra-terra/envs/dev/dev.tfvars
 
-# Now edit dev.tfvars & dev.backend.hcl with your preffered vars
+# Now edit dev.tfvars & dev.backend.hcl with your preferred vars. Note you should change the number at the end of `ice1` to something random because s3 buckets need to be globally unique. Also change unique string to sometimg random
 ```
 
 3. run terraform code using `infra-terra/xxx_tfhelperv3.sh`
@@ -126,7 +126,7 @@ Available entrypoints:
 03_cat_wrangler_backend
 04_create_lambda_permissions
 
-Usage: ./xxx_tfhelperv3.sh terraform_exec=[path_to_terraform] inipath=[path] autoapprove=[yes|no] env=[dev|prod] action=[init|plan|apply|full|destroy]
+Usage: ./xxx_tfhelperv3.sh terraform_exec=[path_to_terraform] inipath=[path] autoapprove=[yes|no] env=[dev|prod] action=[init|validate|plan|apply|full|destroy]
 
 Parameters:
   terraform_exec   Path to the Terraform executable.
@@ -139,6 +139,7 @@ Parameters:
 # Example commands to run for a full TF deployment
 ./xxx_tfhelperv3.sh terraform_v1.11.3 02_cat_wrangler_s3_buckets yes dev init
 ./xxx_tfhelperv3.sh terraform_v1.11.3 02_cat_wrangler_s3_buckets yes dev plan
+./xxx_tfhelperv3.sh terraform_v1.11.3 02_cat_wrangler_s3_buckets yes dev validate
 ./xxx_tfhelperv3.sh terraform_v1.11.3 02_cat_wrangler_s3_buckets yes dev apply
 
 # To do the whole thing run with full in one go
@@ -151,7 +152,7 @@ Parameters:
 
 4. Entrypoint descriptions:
 * 00_setup_terraform_remote_s3_backend_dev: Sets up TF remotestate backend with dynamodb & S3
-* 01b_github_actions_oidc: Sets-up a [Github OIDC Role](https://docs.github.com/en/actions/security-for-github-actions/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services) so that pipelines can deploy into AWS from Github actions
+* 01b_github_actions_oidc: Sets-up a [Github OIDC Role](https://docs.github.com/en/actions/security-for-github-actions/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services) so that pipelines can deploy into AWS from Github actions. This is optional as it is only used if running the github actions pipeline
 * 01_sls_deployment_bucket: Creates a serverless deployment bucket into the root of S3. Ensures the root of S3 does not get cluttered with various deploys.
 * 02_cat_wrangler_s3_buckets: Creates s3 buckets for uploaded images - source, success (dest) & fail buckets
 * 03_cat_wrangler_backend: Creates DynamoDb Table
@@ -160,18 +161,45 @@ Parameters:
 Note SSM variables are exported at various stages so that `api-client` and `serverless` can grab variables such as ARNS, env-vars, etc created during TF deploys.
 
 5. Setting up TF remote backend
-First comment out the s3 backend section when running for the first time
+On first run comment out the s3 backend section. This wil generate a local .tfstate file.
 ```
+# edit entrypoints/00_setup_terraform_remote_s3_backend_dev/provider.tf
 # backend "s3" {
 #   key     = "terraform-remotestate-stablecaps-dev/terraform.tfstate"
 #   encrypt = "true"
 # }
 ```
 
-Then run ``
+Then run
+```
+./xxx_tfhelperv3.sh terraform_v1.11.3 00_setup_terraform_remote_s3_backend_dev yes dev full
+
+# Then copy local tfstate file to remote backend
+cd entrypoints/00_setup_terraform_remote_s3_backend_dev
+
+# uncomment 3 block in entrypoints/00_setup_terraform_remote_s3_backend_dev/provider.tf
+backend "s3" {
+  key     = "terraform-remotestate-stablecaps-dev/terraform.tfstate"
+  encrypt = "true"
+}
+
+# Then upload tfstate to remote backend and remove it
+terraform_exec init -backend-config ../../envs/dev/dev.backend.hcl -migrate-state
+rm terraform.tfstate*
+```
+
+Note: when destroying the backend, you should download the remote tfstate file to the local directory. Then comment the s3 backend block again. Then run the destroy using the local tfstate.
+
+5. Then install rest of TF infrastructure using folder numbers as an order guide.
+
+Note: The permissions in 04_create_lambda_permissions are somewhat broad as this is a dev environment. These permissions would be tightened up via granular permissions in UAT before being deployed to PROD. I would utilise cloudtrail to create [restrictive policies](https://skildops.com/blog/generate-restricted-aws-iam-policy-via-cloudtrail)
 
 
+### C. Serverless
 
+### D. Api-Client
+
+### E. Github Actions Pipeline
 
 - **Pre-commit setup**
 - **S3 lifecycle**: Delete old objects (14 days).

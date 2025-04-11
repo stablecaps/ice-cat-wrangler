@@ -50,7 +50,7 @@ variable "s3bucket_source_name" {
 
 
 variable "s3bucket_dest_name" {
-  description = "s3 bucket destination name. Stores sucessfully processed images are stored"
+  description = "s3 bucket destination name. Stores successfully processed images are stored"
   type        = string
 }
 
