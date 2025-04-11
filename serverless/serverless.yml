@@ -81,6 +81,7 @@ functions:
         - functions/func_s3_bulkimg_analyse.py
         - functions/fhelpers.py
         - functions/data.py
+        - functions/global_context.py
         - requirements.txt
         - __init__.py
     events:

@@ -28,7 +28,7 @@ def extract_s3_key_values(s3_key, s3_bucket):
         #
         file_hash = parts[0]
         client_id = parts[1]
-        batch_id = parts[2]
+        batch_id = parts[2].replace("batch-", "")
         current_date = parts[3]
         epoch_timestamp = parts[4].split(".")[0]
 
@@ -37,7 +37,7 @@ def extract_s3_key_values(s3_key, s3_bucket):
         global_context["img_fprint"] = file_hash
 
         return {
-            "batch_id": batch_id,
+            "batch_id": int(batch_id),
             "img_fprint": file_hash,
             "client_id": client_id,
             "s3img_key": f"{s3_bucket}/{s3_key}",

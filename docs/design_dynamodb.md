@@ -39,6 +39,7 @@
 | `rek_resp`        | JSON       | Rekognition response.                                                          |
 | `rek_iscat`       | Boolean    | Indicates whether the image contains a cat.                                    |
 | `logs`            | JSON       | Debug logs for troubleshooting.                                                |
+| `current_date`       | Number     | Upload timestamp (epoch).                                                      |
 | `upload_ts`       | Number     | Upload timestamp (epoch).                                                      |
 | `rek_ts`          | Number     | Rekognition processing timestamp (epoch).                                      |
 | `ttl`             | Number     | Time-to-live in seconds (used for automatic deletion of items after expiration).|

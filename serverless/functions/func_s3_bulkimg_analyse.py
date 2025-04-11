@@ -8,16 +8,16 @@ import sys
 from botocore.exceptions import ClientError
 from functions.data import required_dyndb_keys
 from functions.fhelpers import extract_s3_key_values
-from functions.globalcontext import global_context
+from functions.global_context import global_context
 
-from shared_helpers.boto3_helpers import (
+from shared_helpers.boto3_helpers import (  # write_item_to_dyndb,
+    DynamoDBHelper,
     check_bucket_exists,
     gen_boto3_client,
     get_filebytes_from_s3,
     move_s3_object_based_on_rekog_response,
     rekog_image_categorise,
     safeget,
-    write_item_to_dyndb,
 )
 
 
@@ -51,6 +51,13 @@ LOG.info("aws_region: <%s>", aws_region)
 LOG.info("dyndb_table_name: <%s>", dyndb_table_name)
 LOG.info("dyndb_ttl: <%s>", dyndb_ttl)
 
+# Initialize the helper
+dynamodb_helper = DynamoDBHelper(
+    dyndb_client=dyndb_client,
+    table_name=dyndb_table_name,
+    required_keys=required_dyndb_keys,
+)
+
 
 def write_logs_to_dynamodb():
 
@@ -63,11 +70,8 @@ def write_logs_to_dynamodb():
         "logs": log_collector.logs,
     }
     LOG.info("Writing logs to DynamoDB atexit...")
-    write_item_to_dyndb(
-        dyndb_client=dyndb_client,
-        table_name=dyndb_table_name,
+    dynamodb_helper.write_item_to_dyndb(
         item_dict=item_dict,
-        required_keys=required_dyndb_keys,
     )
 
 
@@ -125,14 +129,12 @@ def run(event, context):
         sys.exit(42)
 
     # db1. write item to dynamodb after getting the object key
-    item_dict = extract_s3_key_values(s3_key=s3_key, s3_bucket=s3bucket_source)
+    item_dict1 = extract_s3_key_values(s3_key=s3_key, s3_bucket=s3bucket_source)
 
-    # Store s3_key and s3_bucket in global context for atexit
-
-    write_item_to_dyndb(
+    dynamodb_helper.write_item_to_dyndb(
         dyndb_client=dyndb_client,
         table_name=dyndb_table_name,
-        item_dict=item_dict,
+        item_dict=item_dict1,
         required_keys=required_dyndb_keys,
     )
 
@@ -148,6 +150,14 @@ def run(event, context):
         rekog_client=rekog_client, image_bytes=file_bytes
     )
     LOG.info("rekog_resp: <%s>", rekog_resp)
+
+    # db2. update item in dynamodb with rekognition response
+    # dynamodb_helper.write_item_to_dyndb(
+    #     dyndb_client=dyndb_client,
+    #     table_name=dyndb_table_name,
+    #     item_dict=item_dict2,
+    #     required_keys=required_dyndb_keys,
+    # )
 
     # 4. handle rekognition response by moving image to appropriate s3 bucket (success/fail)
     move_s3_object_based_on_rekog_response(

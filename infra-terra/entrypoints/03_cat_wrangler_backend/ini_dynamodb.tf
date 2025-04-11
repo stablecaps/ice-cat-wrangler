@@ -1,5 +1,5 @@
 resource "aws_dynamodb_table" "image_cat" {
-  name         = "IceCatWrangler"
+  name         = local.ssm_map["DYNAMODB_TABLE_NAME"]
   billing_mode = "PAY_PER_REQUEST"
 
   table_class                 = "STANDARD"
@@ -81,7 +81,7 @@ resource "aws_dynamodb_table" "image_cat" {
     attribute_name = "ttl"
   }
   lifecycle {
-    prevent_destroy = true
+    prevent_destroy = false
   }
 
   # Tags
