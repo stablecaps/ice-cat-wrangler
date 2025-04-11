@@ -94,7 +94,9 @@ class CatAPIClient:
         #     self.method = "GET"
         #     self.endpoint = f"{os.getenv('RESULTS_ENDPOINT')}/{self.img_fprint}"
         else:
-            raise ValueError("Invalid action. Choose 'analyse' or 'results'.")
+            raise ValueError(
+                "Invalid action. Choose 'bulkanalyse', 'result', or 'bulkresults'."
+            )
 
         return
 

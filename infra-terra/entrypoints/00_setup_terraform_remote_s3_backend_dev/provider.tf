@@ -10,10 +10,10 @@ terraform {
   # IMPORTANT: On 1st run we create a local tfstate file. we should need to back it up to keep it safe
   # After 1st run uncomment below
   # and run `$terraform_exec init -backend-config ../../envs/${env}/${env}.backend.hcl -migrate-state` to push to remote state we just created
-  backend "s3" {
-    key     = "terraform-remotestate-stablecaps-dev/terraform.tfstate"
-    encrypt = "true"
-  }
+  # backend "s3" {
+  #   key     = "terraform-remotestate-stablecaps-dev/terraform.tfstate"
+  #   encrypt = "true"
+  # }
 }
 
 provider "aws" {

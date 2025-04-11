@@ -9,8 +9,10 @@ module "remote_state" {
   override_s3_bucket_name = true
   s3_bucket_name          = local.base_name
 
-  enable_replication      = false
-  s3_bucket_force_destroy = false
+  enable_replication                   = false
+  s3_bucket_force_destroy              = true
+  dynamodb_deletion_protection_enabled = false
+
 
   noncurrent_version_transitions = []
 
@@ -22,8 +24,6 @@ module "remote_state" {
 
   ### kms
   kms_key_alias = local.base_name
-
-  ### Iam: Defaults are fine because we should use name prefix
 
 
   providers = {

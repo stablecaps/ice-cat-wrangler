@@ -1,13 +1,20 @@
-variable "aws_acc_no" {
-  description = "AWS account number"
+variable "company" {
+  description = "Project name"
   type        = string
+  default     = "stablecaps"
 }
 
 variable "project" {
   description = "Project name"
   type        = string
-  default     = "stablecaps"
+  default     = "cat-wrangler"
 }
+
+variable "aws_acc_no" {
+  description = "AWS account number"
+  type        = string
+}
+
 
 variable "owner" {
   description = "Owner of the project"

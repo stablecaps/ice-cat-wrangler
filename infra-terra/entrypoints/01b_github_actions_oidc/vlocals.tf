@@ -2,6 +2,7 @@
 locals {
 
   tags = {
+    company     = var.company
     environment = var.env
     unique_str  = var.unique_str
     project     = var.project

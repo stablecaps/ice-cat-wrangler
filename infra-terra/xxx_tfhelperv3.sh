@@ -2,9 +2,26 @@
 
 set -e
 
-correct_usage_str="e.g: ./script.sh =[terraform_v1.11.3] inipath=[\$tf_init_path] autoapprove=[yes|no] env=[dev|prod] action=[init|plan|apply|full|destroy]"
-
 echo -e "\nAvailable entrypoints:\n$(find entrypoints/ -mindepth 1 -maxdepth 1 -printf '%Ts %p\n' | sort -n | cut -d ' ' -f2-)\n"
+
+
+function print_help() {
+    echo "Usage: $0 terraform_exec=[path_to_terraform] inipath=[path] autoapprove=[yes|no] env=[dev|prod] action=[init|plan|apply|full|destroy]"
+    echo
+    echo "Parameters:"
+    echo "  terraform_exec   Path to the Terraform executable."
+    echo "  inipath          Path from which Terraform is invoked."
+    echo "  autoapprove      Whether to auto-approve actions (yes or no)."
+    echo "  env              Environment (dev or prod)."
+    echo "  action           Terraform action to perform (init, plan, apply, full, destroy)."
+    echo
+    exit 0
+}
+
+# Check for -h or --help
+if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    print_help
+fi
 
 ###
 if [ -z "$1" ]; then

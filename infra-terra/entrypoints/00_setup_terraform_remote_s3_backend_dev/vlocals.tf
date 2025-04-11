@@ -1,5 +1,6 @@
 locals {
   tags = {
+    company     = var.company
     environment = var.env
     unique_str  = var.unique_str
     project     = var.project
@@ -8,6 +9,6 @@ locals {
     terraform   = "true"
   }
 
-  base_name = "terraform-remotestate-stablecaps-${var.unique_str}-${var.env}"
+  base_name = "terraform-remotestate-${var.company}-${var.unique_str}-${var.env}"
 
 }

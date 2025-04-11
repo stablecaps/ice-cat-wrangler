@@ -1,7 +1,7 @@
 variable "project" {
   description = "Project name"
   type        = string
-  default     = "stablecaps"
+  default     = "cat-wrangler"
 }
 
 variable "owner" {

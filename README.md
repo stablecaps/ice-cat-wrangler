@@ -1,4 +1,4 @@
-# ice-cat-wrangler
+# ice-cat-wrangler - 2025 (A Timed Interview Test ~11 days)
 
 ## Context
 
@@ -88,7 +88,87 @@ The article also discusses other aspects such as how to best organise terraform 
 
 ---
 
-1. Terraform
+### A. setup repo
+```
+git clone https://github.com/stablecaps/ice-cat-wrangler.git
+cd ice-cat-wrangler/
+```
+
+### B. Terraform
+1. export your **terraform admin keys**
+2. prepare terraform env vars
+3. Note you need to use terraform v1.11.3 binary
+```
+# remove encrypted secrets file. this is for the repo pipeline (used by secrets_decryptor.sh) - you won't need this.
+rm -f infra-terra/envs/dev/dev.backend.hcl.enc
+
+cp infra-terra/envs/dev/dev.template.backend.hcl infra-terra/envs/dev/dev.backend.hcl
+cp infra-terra/envs/dev/dev.template.tfvars infra-terra/envs/dev/dev.tfvars
+
+# Now edit dev.tfvars & dev.backend.hcl with your preffered vars
+```
+
+3. run terraform code using `infra-terra/xxx_tfhelperv3.sh`
+
+This script acts by running terraform with your chosen TF binary (make sure it is in your PATH) and supplying various options such as backend & car files, autoapprove, and TF action to take. Entrypoints are numbered to show install order
+
+```
+cd infra-terra/
+
+# Get Available entrypoints & help text by running script without args
+$ ./xxx_tfhelperv3.sh --help
+
+Available entrypoints:
+00_setup_terraform_remote_s3_backend_dev
+01b_github_actions_oidc
+01_sls_deployment_bucket
+02_cat_wrangler_s3_buckets
+03_cat_wrangler_backend
+04_create_lambda_permissions
+
+Usage: ./xxx_tfhelperv3.sh terraform_exec=[path_to_terraform] inipath=[path] autoapprove=[yes|no] env=[dev|prod] action=[init|plan|apply|full|destroy]
+
+Parameters:
+  terraform_exec   Path to the Terraform executable.
+  inipath          Path from which Terraform is invoked.
+  autoapprove      Whether to auto-approve actions (yes or no).
+  env              Environment (dev or prod).
+  action           Terraform action to perform (init, plan, apply, full, destroy).
+
+
+# Example commands to run for a full TF deployment
+./xxx_tfhelperv3.sh terraform_v1.11.3 02_cat_wrangler_s3_buckets yes dev init
+./xxx_tfhelperv3.sh terraform_v1.11.3 02_cat_wrangler_s3_buckets yes dev plan
+./xxx_tfhelperv3.sh terraform_v1.11.3 02_cat_wrangler_s3_buckets yes dev apply
+
+# To do the whole thing run with full in one go
+./xxx_tfhelperv3.sh terraform_v1.11.3 02_cat_wrangler_s3_buckets yes dev full
+
+# To destroy run with destroy
+./xxx_tfhelperv3.sh terraform_v1.11.3 02_cat_wrangler_s3_buckets yes dev destroy
+
+```
+
+4. Entrypoint descriptions:
+* 00_setup_terraform_remote_s3_backend_dev: Sets up TF remotestate backend with dynamodb & S3
+* 01b_github_actions_oidc: Sets-up a [Github OIDC Role](https://docs.github.com/en/actions/security-for-github-actions/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services) so that pipelines can deploy into AWS from Github actions
+* 01_sls_deployment_bucket: Creates a serverless deployment bucket into the root of S3. Ensures the root of S3 does not get cluttered with various deploys.
+* 02_cat_wrangler_s3_buckets: Creates s3 buckets for uploaded images - source, success (dest) & fail buckets
+* 03_cat_wrangler_backend: Creates DynamoDb Table
+* 04_create_lambda_permissions: Creates IAM lambda role and permissions fot cat-wrangler.
+
+Note SSM variables are exported at various stages so that `api-client` and `serverless` can grab variables such as ARNS, env-vars, etc created during TF deploys.
+
+5. Setting up TF remote backend
+First comment out the s3 backend section when running for the first time
+```
+# backend "s3" {
+#   key     = "terraform-remotestate-stablecaps-dev/terraform.tfstate"
+#   encrypt = "true"
+# }
+```
+
+Then run ``
 
 
 
