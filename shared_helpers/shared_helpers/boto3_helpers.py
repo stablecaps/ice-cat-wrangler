@@ -234,6 +234,7 @@ def rekog_image_categorise(rekog_client, image_bytes):
 # dynamodb functions
 
 
+# TODO: but this in seperate helpers file
 class DynamoDBHelper:
     def __init__(self, dyndb_client, table_name, required_keys):
         """

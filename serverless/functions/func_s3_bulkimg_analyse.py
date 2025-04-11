@@ -10,7 +10,7 @@ from functions.data import required_dyndb_keys
 from functions.fhelpers import extract_s3_key_values
 from functions.global_context import global_context
 
-from shared_helpers.boto3_helpers import (  # write_item_to_dyndb,
+from shared_helpers.boto3_helpers import (
     DynamoDBHelper,
     check_bucket_exists,
     gen_boto3_client,
@@ -75,8 +75,11 @@ def write_logs_to_dynamodb():
     )
 
 
-# use atexit to call write_logs_to_dynamodb function if program exits
-atexit.register(write_logs_to_dynamodb)
+# use atexit to call write_logs_to_dynamodb function if program exits if is_debug = True
+is_debug = global_context.get("is_debug", False)
+if is_debug:
+    LOG.info("Debug mode is enabled. Registering atexit function.")
+    atexit.register(write_logs_to_dynamodb)
 
 
 #############################################################
@@ -160,6 +163,7 @@ def run(event, context):
     # )
 
     # 4. handle rekognition response by moving image to appropriate s3 bucket (success/fail)
+
     move_s3_object_based_on_rekog_response(
         s3_client=s3_client,
         rekog_resp=rekog_resp,

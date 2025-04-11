@@ -70,7 +70,10 @@ class BulkS3Uploader:
         current_date = datetime.now(timezone.utc).strftime("%Y-%m-%d-%H")
         epoch_timestamp = int(time.time())
 
-        s3_key = f"{file_hash}/{self.client_id}/{batch_id}/{current_date}/{epoch_timestamp}.png"
+        if self.debug:
+            s3_key = f"{file_hash}/{self.client_id}/{batch_id}/{current_date}/{epoch_timestamp}-debug.png"
+        else:
+            s3_key = f"{file_hash}/{self.client_id}/{batch_id}/{current_date}/{epoch_timestamp}.jpg"
 
         try:
             print(f"Uploading {file_path} to s3://{self.s3bucket_source}/{s3_key}")

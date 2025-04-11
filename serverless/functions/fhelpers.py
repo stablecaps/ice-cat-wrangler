@@ -11,8 +11,13 @@ dyndb_ttl = os.getenv("dynamoDBTTL")
 def extract_s3_key_values(s3_key, s3_bucket):
     """
     Extract key-value pairs from the S3 key format:
-    "{file_hash}/{self.client_id}/{batch_id}/{current_date}/{epoch_timestamp}.png"
-      0               1              2            3                4
+
+    without debug:
+        "{file_hash}/{self.client_id}/{batch_id}/{current_date}/{epoch_timestamp}.png"
+        0               1              2            3                4
+    with debug:
+        "{file_hash}/{self.client_id}/{batch_id}/{current_date}/{epoch_timestamp}-debug.png"
+        0               1              2            3                4
 
     Args:
         s3_key (str): The S3 key to parse.
@@ -30,7 +35,13 @@ def extract_s3_key_values(s3_key, s3_bucket):
         client_id = parts[1]
         batch_id = parts[2].replace("batch-", "")
         current_date = parts[3]
-        epoch_timestamp = parts[4].split(".")[0]
+        epoch_timestamp_isdebug_check = parts[4].split(".")[0].split("-")
+
+        epoch_timestamp = epoch_timestamp_isdebug_check[0]
+        is_debug = False
+        if len(epoch_timestamp_isdebug_check) == 2:
+            is_debug = True
+            global_context["is_debug"] = True
 
         # set shared context (for atexit logging)
         global_context["batch_id"] = batch_id
