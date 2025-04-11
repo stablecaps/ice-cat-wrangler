@@ -94,12 +94,15 @@ git clone https://github.com/stablecaps/ice-cat-wrangler.git
 cd ice-cat-wrangler/
 ```
 
+---
+
 ### B. Terraform
-1. export your **terraform admin keys**
+1. export your **aws admin keys**
 2. prepare terraform env vars
 3. Note you need to use terraform v1.11.3 binary
-```
-# remove encrypted secrets file. this is for the repo pipeline (used by `secrets_decryptor.sh`) - you won't need this.
+
+```shell
+# remove encrypted secrets file. this is for the repo pipeline (used by `secrets_decryptor.sh`) - you won't need this unless you want to run the pipeline.
 rm -f infra-terra/envs/dev/dev.backend.hcl.enc
 
 cp infra-terra/envs/dev/dev.template.backend.hcl infra-terra/envs/dev/dev.backend.hcl
@@ -112,7 +115,7 @@ cp infra-terra/envs/dev/dev.template.tfvars infra-terra/envs/dev/dev.tfvars
 
 This script acts by running terraform with your chosen TF binary (make sure it is in your PATH) and supplying various options such as backend & car files, autoapprove, and TF action to take. Entrypoints are numbered to show install order
 
-```
+```shell
 cd infra-terra/
 
 # Get Available entrypoints & help text by running script without args
@@ -147,7 +150,6 @@ Parameters:
 
 # To destroy run with destroy
 ./xxx_tfhelperv3.sh terraform_v1.11.3 02_cat_wrangler_s3_buckets yes dev destroy
-
 ```
 
 4. Entrypoint descriptions:
@@ -162,16 +164,19 @@ Note SSM variables are exported at various stages so that `api-client` and `serv
 
 5. Setting up TF remote backend
 On first run comment out the s3 backend section. This wil generate a local .tfstate file.
-```
+
+```shell
 # edit entrypoints/00_setup_terraform_remote_s3_backend_dev/provider.tf
+
 # backend "s3" {
 #   key     = "terraform-remotestate-stablecaps-dev/terraform.tfstate"
 #   encrypt = "true"
 # }
 ```
 
-Then run
-```
+Then run:
+
+```shell
 ./xxx_tfhelperv3.sh terraform_v1.11.3 00_setup_terraform_remote_s3_backend_dev yes dev full
 
 # Then copy local tfstate file to remote backend
@@ -194,13 +199,31 @@ Note: when destroying the backend, you should download the remote tfstate file t
 
 Note: The permissions in 04_create_lambda_permissions are somewhat broad as this is a dev environment. These permissions would be tightened up via granular permissions in UAT before being deployed to PROD. I would utilise cloudtrail to create [restrictive policies](https://skildops.com/blog/generate-restricted-aws-iam-policy-via-cloudtrail)
 
+6. infra-terra has a `Makefile`. It contains a convinience function to create terraform docs. Run using:
+
+```shell
+make docs
+```
+
+---
 
 ### C. Serverless
+1. export your **aws admin keys**
+2. Install serverless using nvm
+```shell
+sss
+```
+3. prepare serverless env vars
+
+---
 
 ### D. Api-Client
 
+---
+
 ### E. Github Actions Pipeline
 
+---
 - **Pre-commit setup**
 - **S3 lifecycle**: Delete old objects (14 days).
 - **DynamoDB (DDB)**:
