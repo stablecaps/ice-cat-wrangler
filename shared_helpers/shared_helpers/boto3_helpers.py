@@ -147,14 +147,15 @@ def copy_s3_object(
         raise
 
 
+# TODO: return true/false from this so we can set op status to fail if copt fails
 def move_s3_object_based_on_rekog_response(
-    s3_client, rekog_resp, s3bucket_source, s3bucket_dest, s3bucket_fail, s3_key
+    s3_client, op_status, s3bucket_source, s3bucket_dest, s3bucket_fail, s3_key
 ):
     """
     Handle the Rekognition response and move the image to the appropriate S3 bucket.
 
     Args:
-        rekog_resp (dict): The response from Rekognition.
+        op_status (str): success or failure status of the Rekognition operation.
         s3bucket_source (str): The source S3 bucket name.
         s3bucket_dest (str): The destination S3 bucket name for successful processing.
         s3bucket_fail (str): The destination S3 bucket name for failed processing.
@@ -164,8 +165,7 @@ def move_s3_object_based_on_rekog_response(
         None
     """
     try:
-        http_status_code = safeget(rekog_resp, "ResponseMetadata", "HTTPStatusCode")
-        if http_status_code == 200:
+        if op_status == "success":
             # Move to success bucket
             copy_source = {"Bucket": s3bucket_source, "Key": s3_key}
             copy_s3_object(
@@ -200,6 +200,8 @@ def move_s3_object_based_on_rekog_response(
                 "Object <%s> deleted from source bucket %s", s3_key, s3bucket_source
             )
 
+        return True
+
     except ClientError as err:
         LOG.error("Error moving object %s: %s", s3_key, err)
         raise
@@ -210,20 +212,26 @@ def move_s3_object_based_on_rekog_response(
 
 ################################################################################
 # rekognition functions
-def rekog_image_categorise(rekog_client, image_bytes):
+def rekog_image_categorise(rekog_client, image_bytes, label_pattern="cat"):
 
     try:
-        rekognition_response = rekog_client.detect_labels(
+        rekog_resp = rekog_client.detect_labels(
             Image={"Bytes": image_bytes},
             MaxLabels=10,
             MinConfidence=75,
         )
 
         # Print labels detected
-        labels = [label["Name"] for label in rekognition_response["Labels"]]
-        LOG.info("Labels detected: <%s>", labels)
+        labels = [label["Name"].lower() for label in rekog_resp["Labels"]]
 
-        return rekognition_response
+        rek_match = False
+        if label_pattern in labels:
+            rek_match = True
+
+        LOG.info("Labels detected: <%s>", labels)
+        LOG.info("rek_match for label_pattern: <%s> is <%s>", label_pattern, rek_match)
+
+        return {"rekog_resp": rekog_resp, "rek_match": rek_match}
 
     except Exception as err:
         LOG.error("Error processing image from S3: <%s>", err)
@@ -358,157 +366,3 @@ class DynamoDBHelper:
         except ClientError as err:
             LOG.error("Failed to write item to DynamoDB: %s", err)
             raise
-
-
-# def convert_value_to_dyndb_type(key, value):
-#     """
-#     Converts a single key-value pair to the correct DynamoDB type.
-
-#     Args:
-#         key (str): The attribute name.
-#         value: The attribute value.
-#         attribute_types (dict): A dictionary mapping attribute names to their DynamoDB types.
-
-#     Returns:
-#         dict: A DynamoDB-compatible key-value pair.
-
-#     Raises:
-#         ValueError: If the attribute type is unknown or the value is invalid.
-#     """
-#     if key not in attribute_types:
-#         LOG.error("Key: <%s> not found in attribute_types dict", key)
-#         raise ValueError("Key: <%s> not found in attribute_types dict", key)
-
-#     attr_type = attribute_types[key]
-
-#     # Convert the value based on the attribute type
-#     if attr_type == "S":  # String
-#         return {"S": str(value)}
-#     elif attr_type == "N":  # assume all numbers are integers
-#         try:
-#             return {"N": str(int(value))}  # Convert to stringified integer
-#         except ValueError:
-#             LOG.error("Invalid number value for key: %s", key)
-#             raise ValueError(f"Invalid number value for key: {key}")
-#     elif attr_type == "BOOL":  # ensure boolean are conveerted to True/False
-#         return {"BOOL": value.lower() == "true"} if isinstance(value, str) else {"BOOL": bool(value)}
-#     elif attr_type == "M":  # Map (JSON)
-#         return {"M": value}  # Assume value is already a dictionary
-#     elif attr_type == "NULL":  # Null
-#         return {"NULL": True}
-#     else:
-#         LOG.error("Unsupported attribute type for key: %s", key)
-#         raise ValueError(f"Unsupported attribute type for key: {key}")
-
-# def convert_pydict_to_dyndb_item(item_dict, required_keys):
-#     """
-#     Converts a Python dictionary to a DynamoDB-compatible item format.
-
-#     Args:
-#         item_dict (dict): The dictionary containing the item data.
-#         required_keys (list): A list of required keys that must be present in the item_dict.
-#         attribute_types (dict): A dictionary mapping attribute names to their DynamoDB types
-#                                 (e.g., {"batch_id": "N", "img_fprint": "S"}).
-
-#     Returns:
-#         dict: A DynamoDB-compatible item.
-
-#     Raises:
-#         ValueError: If a required key is missing or if an attribute type is unknown.
-#     """
-#     # Check for required keys
-#     for key in required_keys:
-#         if key not in item_dict or item_dict[key] is None:
-#             LOG.error("Missing required key: %s", key)
-#             raise ValueError(f"Missing required key: {key}")
-
-#     # Convert item_dict to DynamoDB item format
-#     dyndb_item = {}
-#     for key, value in item_dict.items():
-#         dyndb_item[key] = convert_value_to_dyndb_type(key, value)
-
-#     return dyndb_item
-
-
-# def write_item_to_dyndb(dyndb_client, table_name, item_dict, required_keys):
-#     """
-#     Write an item to the DynamoDB table using a client.
-
-#     Args:
-#         table_name (str): The name of the DynamoDB table.
-#         item_dict (dict): A dictionary containing the attributes to write to the table.
-
-#     Returns:
-#         dict: The response from DynamoDB.
-#     """
-#     dyndb_item = convert_pydict_to_dyndb_item(
-#         item_dict=item_dict, required_keys=required_keys
-#     )
-
-#     LOG.info("DynamoDB item to write: %s", dyndb_item)
-
-#     try:
-#         # The database will overwrite an existing item with the same primary key
-#         response = dyndb_client.put_item(TableName=table_name, Item=dyndb_item)
-#         LOG.info("Successfully wrote item to DynamoDB: %s", item_dict)
-#         return response
-#     except ClientError as err:
-#         LOG.error("Failed to write item to DynamoDB: %s", err)
-#         raise
-
-# def convert_pydict_to_dyndb_item(item_dict, required_keys):
-
-#     for key in required_keys:
-#         if key not in item_dict or item_dict[key] is None:
-#             LOG.error("Missing required key: %s", key)
-#             raise ValueError(f"Missing required key: {key}")
-
-#     dyndb_item = {}
-#     for key, value in item_dict.items():
-#         if key not in attribute_types:
-#             LOG.error("Unknown attribute type for key: %s", key)
-#             raise ValueError(f"Unknown attribute type for key: {key}")
-
-#         attr_type = attribute_types[key]
-
-
-#         if isinstance(value, str):
-#             dyndb_item[key] = {"S": str(value)}
-#         elif isinstance(value, (int, float)):
-#             dyndb_item[key] = {"N": str(value)}
-#         elif isinstance(value, bool):
-#             dyndb_item[key] = {"BOOL": value}
-#         elif isinstance(value, dict):
-#             dyndb_item[key] = {"M": value}
-#         elif value is None:
-#             dyndb_item[key] = {"NULL": True}
-#         else:
-#             dyndb_item[key] = {"S": str(value)}
-
-#     return dyndb_item
-
-
-# def write_item_to_dyndb(dyndb_client, table_name, item_dict, required_keys):
-#     """
-#     Write an item to the DynamoDB table using a client.
-
-#     Args:
-#         table_name (str): The name of the DynamoDB table.
-#         item_dict (dict): A dictionary containing the attributes to write to the table.
-
-#     Returns:
-#         dict: The response from DynamoDB.
-#     """
-
-#     dyndb_item = convert_pydict_to_dyndb_item(
-#         item_dict=item_dict, required_keys=required_keys
-#     )
-
-#     try:
-#         # so cuurently the db will overwrite an existing item with the same primary key
-#         response = dyndb_client.put_item(TableName=table_name, Item=dyndb_item)
-#         LOG.info("Successfully wrote item to DynamoDB: %s", item_dict)
-#         return response
-#     except ClientError as err:
-#         LOG.error("Failed to write item to DynamoDB: %s", err)
-#         raise

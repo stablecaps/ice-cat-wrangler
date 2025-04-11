@@ -7,7 +7,7 @@ import sys
 
 from botocore.exceptions import ClientError
 from functions.data import required_dyndb_keys
-from functions.fhelpers import extract_s3_key_values
+from functions.fhelpers import gen_item_dict1_from_s3key, gen_item_dict2_from_rek_resp
 from functions.global_context import global_context
 
 from shared_helpers.boto3_helpers import (
@@ -70,7 +70,7 @@ def write_logs_to_dynamodb():
         "logs": log_collector.logs,
     }
     LOG.info("Writing logs to DynamoDB atexit...")
-    dynamodb_helper.write_item_to_dyndb(
+    dynamodb_helper.write_item(
         item_dict=item_dict,
     )
 
@@ -132,13 +132,10 @@ def run(event, context):
         sys.exit(42)
 
     # db1. write item to dynamodb after getting the object key
-    item_dict1 = extract_s3_key_values(s3_key=s3_key, s3_bucket=s3bucket_source)
+    item_dict1 = gen_item_dict1_from_s3key(s3_key=s3_key, s3_bucket=s3bucket_source)
 
-    dynamodb_helper.write_item_to_dyndb(
-        dyndb_client=dyndb_client,
-        table_name=dyndb_table_name,
+    dynamodb_helper.write_item(
         item_dict=item_dict1,
-        required_keys=required_dyndb_keys,
     )
 
     ### 2.  Process image file from s3
@@ -149,28 +146,49 @@ def run(event, context):
     )
 
     # 3. submit image to rekognition
-    rekog_resp = rekog_image_categorise(
-        rekog_client=rekog_client, image_bytes=file_bytes
+    rekog_results = rekog_image_categorise(
+        rekog_client=rekog_client, image_bytes=file_bytes, label_pattern="cat"
     )
+
+    rekog_resp = rekog_results.get("rekog_resp")
     LOG.info("rekog_resp: <%s>", rekog_resp)
 
+    # rek_ts = int(rekog_results.get("rek_ts"))
+    # rek_match = rekog_results.get("rek_match")
+    # rek_status_code = safeget(rekog_resp, "ResponseMetadata", "HTTPStatusCode")
+
     # db2. update item in dynamodb with rekognition response
-    # dynamodb_helper.write_item_to_dyndb(
-    #     dyndb_client=dyndb_client,
-    #     table_name=dyndb_table_name,
-    #     item_dict=item_dict2,
-    #     required_keys=required_dyndb_keys,
-    # )
+    item_dict2 = gen_item_dict2_from_rek_resp(rekog_results=rekog_results)
+
+    dynamodb_helper.write_item(
+        item_dict=item_dict2,
+    )
 
     # 4. handle rekognition response by moving image to appropriate s3 bucket (success/fail)
-
-    move_s3_object_based_on_rekog_response(
+    move_success = move_s3_object_based_on_rekog_response(
         s3_client=s3_client,
-        rekog_resp=rekog_resp,
+        op_status=item_dict2.get("op_status"),
         s3bucket_source=s3bucket_source,
         s3bucket_dest=s3bucket_dest,
         s3bucket_fail=s3bucket_fail,
         s3_key=s3_key,
     )
-    # labels = [label["Name"] for label in s3_resp["Labels"]]
-    # print("Labels found:")
+    # db3. update item in dynamodb with renamed s3+key
+    s3img_key = (f"{s3bucket_fail}/{s3_key}",)
+    op_status = "fail"
+    if move_success:
+        s3img_key = f"{s3bucket_dest}/{s3_key}"
+        op_status = "success"
+
+    item_dict3 = {
+        "batch_id": global_context.get("batch_id"),
+        "img_fprint": global_context.get("img_fprint"),
+        "s3img_key": f"{s3bucket_dest}/{s3_key}",
+    }
+
+    if not move_success:
+        item_dict3["op_status"] = "fail"
+
+    dynamodb_helper.write_item(
+        item_dict=item_dict3,
+    )
