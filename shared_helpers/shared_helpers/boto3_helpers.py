@@ -28,7 +28,7 @@ def gen_boto3_session():
     )
 
 
-def gen_boto3_client(service_name, aws_region="eu-west-1"):
+def gen_boto3_client(service_name, aws_region=None):
     """
     Creates and returns a Boto3 client for a specified AWS service.
 
@@ -39,6 +39,7 @@ def gen_boto3_client(service_name, aws_region="eu-west-1"):
     Returns:
         boto3.Client: A Boto3 client object for the specified service.
     """
+    aws_region = aws_region or os.getenv("AWS_REGION", "eu-west-1")
     session = gen_boto3_session()
     return session.client(service_name, aws_region)
 
@@ -68,12 +69,12 @@ def check_bucket_exists(s3_client, bucket_name):
     except ClientError as err:
         error_code = err.response["Error"]["Code"]
         if error_code == "404":
-            LOG.info("S3 bucket <%s> does not exist", bucket_name)
+            LOG.critical("S3 bucket <%s> does not exist", bucket_name)
         elif error_code == "403":
-            LOG.info("Access denied to S3 bucket <%s>", bucket_name)
+            LOG.critical("Access denied to S3 bucket <%s>", bucket_name)
         else:
-            LOG.info("Failed to verify S3 bucket <%s>: <%s>", bucket_name, err)
-        sys.exit(1)
+            LOG.critical("Failed to verify S3 bucket <%s>: <%s>", bucket_name, err)
+        sys.exit(42)
 
 
 def get_filebytes_from_s3(s3_client, bucket_name, s3_key):
@@ -166,40 +167,19 @@ def move_s3_object_based_on_rekog_response(
     """
     try:
         if op_status == "success":
-            # Move to success bucket
-            copy_source = {"Bucket": s3bucket_source, "Key": s3_key}
-            copy_s3_object(
-                s3_client,
-                source_bucket=s3bucket_source,
-                dest_bucket=s3bucket_dest,
-                s3_key=s3_key,
-                acl="bucket-owner-full-control",
-            )
-            LOG.info("Object <%s> copied to success bucket %s", s3_key, s3bucket_dest)
-
-            # Delete from source bucket
-            s3_client.delete_object(Bucket=s3bucket_source, Key=s3_key)
-            LOG.info(
-                "Object <%s> deleted from source bucket %s", s3_key, s3bucket_source
-            )
+            target_bucket = s3bucket_dest
         else:
-            # Move to failure bucket
-            copy_source = {"Bucket": s3bucket_source, "Key": s3_key}
-            copy_s3_object(
-                s3_client,
-                source_bucket=s3bucket_source,
-                dest_bucket=s3bucket_fail,
-                s3_key=s3_key,
-                acl="bucket-owner-full-control",
-            )
-            LOG.info("Object <%s> copied to failure bucket %s", s3_key, s3bucket_fail)
+            target_bucket = s3bucket_fail
 
-            # Delete from source bucket
-            s3_client.delete_object(Bucket=s3bucket_source, Key=s3_key)
-            LOG.info(
-                "Object <%s> deleted from source bucket %s", s3_key, s3bucket_source
-            )
-
+        copy_source = {"Bucket": s3bucket_source, "Key": s3_key}
+        s3_client.copy_object(
+            CopySource=copy_source,
+            Bucket=target_bucket,
+            Key=s3_key,
+            ACL="bucket-owner-full-control",
+        )
+        s3_client.delete_object(Bucket=s3bucket_source, Key=s3_key)
+        LOG.info("Moved object <%s> to <%s>", s3_key, target_bucket)
         return True
 
     except ClientError as err:

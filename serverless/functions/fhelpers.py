@@ -1,16 +1,43 @@
 import logging
 import os
+import sys
 from datetime import datetime
 
 from functions.global_context import global_context
 
-from shared_helpers.boto3_helpers import (
-    safeget,
-)
+from shared_helpers.boto3_helpers import check_bucket_exists, safeget
 
 LOG = logging.getLogger()
 
 dyndb_ttl = os.getenv("dynamoDBTTL")
+
+
+def validate_s3bucket(s3_client):
+    s3bucket_env_list = (
+        os.getenv("s3bucketSource"),
+        os.getenv("s3bucketDest"),
+        os.getenv("s3bucketFail"),
+    )
+    if None in s3bucket_env_list:
+        LOG.critical("env vars are unset in bucket_env_list: <%s>", s3bucket_env_list)
+        sys.exit(42)
+
+    for s3bucket in s3bucket_env_list:
+        check_bucket_exists(s3_client=s3_client, bucket_name=s3bucket)
+
+    return s3bucket_env_list
+
+
+def get_s3_key_from_event(event):
+    record_list = event.get("Records")
+    if record_list is None:
+        LOG.critical("record_list not set. Exiting")
+        sys.exit(42)
+    s3_key = safeget(record_list[0], "s3", "object", "key")
+    if s3_key is None:
+        LOG.critical("s3_key not set. Exiting")
+        sys.exit(42)
+    return s3_key
 
 
 def convert_time_string_to_epoch(time_string, format_string="%a, %d %b %Y %H:%M:%S %Z"):
@@ -64,10 +91,12 @@ def gen_item_dict1_from_s3key(s3_key, s3_bucket):
         epoch_timestamp_isdebug_check = parts[4].split(".")[0].split("-")
 
         epoch_timestamp = epoch_timestamp_isdebug_check[0]
+
         is_debug = False
         if len(epoch_timestamp_isdebug_check) == 2:
             is_debug = True
-            global_context["is_debug"] = True
+        global_context["is_debug"] = is_debug
+        LOG.debug("is_debug set to: %s", global_context["is_debug"])
 
         # set shared context (for atexit logging)
         global_context["batch_id"] = batch_id
@@ -85,7 +114,7 @@ def gen_item_dict1_from_s3key(s3_key, s3_bucket):
         }
     except Exception as err:
         LOG.error("Failed to extract values from S3 key: %s", err)
-        return {}
+        raise ValueError("Failed to extract values from S3 key: %s" % err)
 
 
 def gen_item_dict2_from_rek_resp(rekog_results):
