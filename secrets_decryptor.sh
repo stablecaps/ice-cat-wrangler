@@ -43,7 +43,7 @@ for secret_path in $ALL_SECRET_FILES; do
     exit 42
   fi
 
-
+  rm -f "${secret_path}"
   openssl enc -aes-256-cbc -d -in "${secret_enc_path}" -out "${secret_path}" -k "$password" -pbkdf2
   if [ $? -ne 0 ]; then
     # TODO: this does not catch error
