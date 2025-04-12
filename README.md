@@ -355,6 +355,13 @@ options:
 
 ### E. Github Actions Pipeline
 
+---
+
+### F. Pre-commit hooks
+Note that both `api-client` and `serverless` virtual envs have pre-commit installed to perform various checks to make sure code follows best practices.
+- The root of the repo contains the config for this in `.pre-commit-config.yaml`.
+- when you run `make develop` for either environment the build script automatically runs `pre-commit install`
+
 
 ## things to do
 1. bump-version

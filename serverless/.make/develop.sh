@@ -17,6 +17,7 @@ fi
 source venv/bin/activate
 
 pip install --upgrade pip
+pre-commit install
 
 pip install -r requirements-dev.txt
 pip show boto3
