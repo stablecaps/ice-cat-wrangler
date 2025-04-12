@@ -231,7 +231,22 @@ nvm alias default v18.20.8
 npm i serverless -g
 serverless update
 ```
-3. prepare serverless env vars
+
+3. Prepare python3.12 development environment with `shared_helpers`
+
+There is Makefile in the `serverless` directory that will help us install packages. We need to also install the `shared_helpers` module which is shared with `api-client` in editable mode (allows code changes to be reflected immediately without redoing pip install).
+
+```shell
+make develop
+```
+
+The make command basically:
+- creates a virtual env called `venv`
+- installs pip-requirements-dev
+- installs shared_helpers module (which contains boto3 dependency) in editable mode `pip install -e ../shared_helpers`
+- in the local dev shared_helpers can be imported using this syntaxL `from boto3_helpers import gen_boto3_session`
+
+4. prepare serverless env vars
 
 ```shell
 cd serverless
@@ -240,14 +255,35 @@ cp serverless/config/dev.template.yml serverless/config/dev.yml
 # Then edit serverless/config/dev.yml to change env vars. We will get the iam_role_arn from SSM. So you can leave this as some string.
 ```
 
-- venv - check rerquitemnets
-- Install serverless plugins. There i a Makefile that will assist with this process
-- check ssm for vars
-- tidy up yaml
+Note: The serverless.yml file is setup to automatically download the following variables from ssm
+- deployment_bucket
+- iam_role_arn
+
+If you want to read from config file instead of ssm, uncomment code under the string:
+`"# re-enable to get the deployment bucket from the config file instead of the SSM parameter"`
+
+5. Install serverless plugins
+
+This installs plugins specified in serverless.yml
+```shell
+make slsplugins
+```
+
+6. Deploying serverless with `shared_helpers`
+
+When deploying our serverless package we also need to created a layer to hold the `shared_helpers` packages. There are several makefile helpers that will assist us in this.
 
 ```shell
-make
+# build layer from ../shared_helpers
+make slslayer
+
+# Deploy just serverless without rebuilding layer (use if edits only occur in serverless src files)
+make slsdeploy
+
+# The previous 2 command combined (use if shared_helpers have been edited)
+make slsdeployfull
 ```
+
 
 
 ---
@@ -258,6 +294,9 @@ make
 
 ### E. Github Actions Pipeline
 
+
+## things to do
+1. bump-version
 ---
 - **Pre-commit setup**
 - **S3 lifecycle**: Delete old objects (14 days).
