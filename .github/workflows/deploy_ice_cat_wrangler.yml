@@ -24,6 +24,14 @@ jobs:
     - name: Check out code
       uses: actions/checkout@v2
 
+    - name: Setup node
+      uses: actions/setup-node@v4
+      with:
+        node-version: 18.20.8
+        cache: 'npm'
+    - run: npm ci
+    - run: npm test
+
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4 # More information on this action can be found below in the 'AWS Credentials' section
       with:
@@ -31,6 +39,7 @@ jobs:
         # role arn is output from 01b_github_actions_oidc/voutputs.tf
         role-to-assume: ${{ secrets.AWS_GHA_ASSUME_ROLE_ARN }}
         role-session-name: GitHubActions985dtd968
+
 
     - name: Install Terraform
       uses: hashicorp/setup-terraform@v3
@@ -85,6 +94,9 @@ jobs:
 
         set -e
         cd serverless
+          npm i serverless -g
+          serverless update
+          make slsplugins
           make slsdeployfull
         cd -
 
