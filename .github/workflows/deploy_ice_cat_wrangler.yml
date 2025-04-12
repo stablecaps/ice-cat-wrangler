@@ -91,6 +91,8 @@ jobs:
 
         set -e
 
+        export ${{ secrets.serverless_ci_secret}}
+
         cd serverless
           npm ci
           #
