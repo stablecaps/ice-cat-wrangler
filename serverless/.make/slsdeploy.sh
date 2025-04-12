@@ -11,7 +11,7 @@ echo -e "\nDeploying shared helpers layer"
 
 SERVICE_NAME=$(grep "service:" serverless.yml | tr ' ' '\n' | tail -1)
 AWS_REGION=$(grep aws_region config/dev.yml | cut -d' ' -f2)
-SHARED_HELPERS_ARN=$(aws --region $AWS_REGION lambda publish-layer-version --layer-name ${SERVICE_NAME}-dev-s3-shared-helpers6 \
+SHARED_HELPERS_ARN=$(aws --region $AWS_REGION lambda publish-layer-version --layer-name ${SERVICE_NAME}-dev-s3-shared-helpers \
     --description "Library that contains common dependencies for all lambdas" \
     --license-info "MIT" \
     --zip-file fileb://layer/shared/layer_content.zip \

@@ -2,7 +2,6 @@ import atexit
 import logging
 import os
 
-from dynamo_db_helper.py import DynamoDBHelper
 from functions.data import required_dyndb_keys
 from functions.fhelpers import (
     convert_to_json,
@@ -13,14 +12,13 @@ from functions.fhelpers import (
 )
 from functions.global_context import global_context
 
-from shared_helpers.boto3_helpers import (  # check_bucket_exists,
-    DynamoDBHelper,
+from shared_helpers.boto3_helpers import (
     gen_boto3_client,
     get_filebytes_from_s3,
     move_s3_object_based_on_rekog_response,
     rekog_image_categorise,
-    safeget,
 )
+from shared_helpers.dynamo_db_helper import DynamoDBHelper
 
 
 ######################################################################

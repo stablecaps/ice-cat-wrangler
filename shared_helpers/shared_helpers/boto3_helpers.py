@@ -7,6 +7,10 @@ from botocore.exceptions import ClientError
 
 # from general import safeget
 
+# TODO: check logs propagate into dynamodb
+# use without __name__ cos this module will propagate logs to lambda root logger so we can use LogCollectorHandler
+LOG = logging.getLogger()
+
 
 def gen_boto3_session():
     """
