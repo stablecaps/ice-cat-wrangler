@@ -30,9 +30,11 @@ fi
 
 ##############################
 
-ALL_SECRETS=$(cat secrets.txt)
+ALL_SECRET_FILES=$(cat secrets.txt)
 
-for secret_path in $ALL_SECRETS; do
+echo -e "\nALL_SECRET_FILES:\n$ALL_SECRET_FILES\n"
+
+for secret_path in $ALL_SECRET_FILES; do
   secret_enc_path="${secret_path}.enc"
   echo "Decrypting ${secret_enc_path}"
 

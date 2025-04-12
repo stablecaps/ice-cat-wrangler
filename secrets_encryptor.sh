@@ -31,9 +31,9 @@ fi
 
 ##############################
 
-ALL_SECRETS=$(cat secrets.txt)
+ALL_SECRET_FILES=$(cat secrets.txt)
 
-for secret_path in $ALL_SECRETS; do
+for secret_path in $ALL_SECRET_FILES; do
   echo "Encrypting $secret_path"
 
   if [ ! -f "$secret_path" ]; then

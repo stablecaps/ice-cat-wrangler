@@ -94,9 +94,9 @@ jobs:
 
         set -e
 
-        ALL_SECRETS=$(cat secrets.txt)
+        ALL_SECRET_FILES=$(cat secrets.txt)
 
-        for secret_path in $ALL_SECRETS; do
+        for secret_path in $ALL_SECRET_FILES; do
           echo "Deleting secret $secret_path"
           rm -f $secret_path
         done
