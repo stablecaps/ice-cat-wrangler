@@ -36,9 +36,9 @@
 | `s3img_key`       | String     | S3 bucket key (source/destination/failure).                                    |
 | `file_name`       | String     | Original file name.                                                            |
 | `op_status`       | String     | Processing status (e.g., pending, success, fail).                              |
-| `rek_resp`        | JSON       | Rekognition response.                                                          |
+| `rek_resp`        | String       | Rekognition response.                                                          |
 | `rek_iscat`       | Boolean    | Indicates whether the image contains a cat.                                    |
-| `logs`            | JSON       | Debug logs for troubleshooting.                                                |
+| `logs`            | String       | Debug logs for troubleshooting.                                                |
 | `current_date`       | Number     | Upload timestamp (epoch).                                                      |
 | `upload_ts`       | Number     | Upload timestamp (epoch).                                                      |
 | `rek_ts`          | Number     | Rekognition processing timestamp (epoch).                                      |

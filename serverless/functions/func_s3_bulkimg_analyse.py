@@ -2,8 +2,10 @@ import atexit
 import logging
 import os
 
+from dynamo_db_helper.py import DynamoDBHelper
 from functions.data import required_dyndb_keys
 from functions.fhelpers import (
+    convert_to_json,
     gen_item_dict1_from_s3key,
     gen_item_dict2_from_rek_resp,
     get_s3_key_from_event,
@@ -77,7 +79,7 @@ def write_logs_to_dynamodb():
     item_dict = {
         "batch_id": batch_id,
         "img_fprint": img_fprint,
-        "logs": log_collector.logs,
+        "logs": convert_to_json(data=log_collector.logs),
     }
 
     LOG.info("Writing logs to DynamoDB atexit: %s", item_dict)

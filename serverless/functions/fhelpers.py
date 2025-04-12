@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import sys
@@ -59,6 +60,24 @@ def convert_time_string_to_epoch(time_string, format_string="%a, %d %b %Y %H:%M:
     epoch_time = int(dt_object.timestamp())
 
     return epoch_time
+
+
+def convert_to_json(data):
+    """
+    Convert any supported Python data type to a JSON string.
+
+    Args:
+        data: The data to convert. Can be a primitive type, complex type, or nested structure.
+
+    Returns:
+        str: The JSON string representation of the data.
+    """
+    try:
+        json_string = json.dumps(data, indent=4)
+        return json_string
+    except TypeError as err:
+        print(f"Error: Data type not serializable to JSON. {err}")
+        return None
 
 
 def gen_item_dict1_from_s3key(s3_key, s3_bucket):
@@ -148,10 +167,10 @@ def gen_item_dict2_from_rek_resp(rekog_results):
         )
         LOG.info("rek_ts: %s", rek_ts)
 
-        # TODO: fix this - add empty dict for now
-        rekog_labels = {
-            "TODO": {"placeholder": {"S": "empty dict for now"}}
-        }  # rekog_resp.get("Labels")
+        # TODO: fix this - add empty dict for now For Map type in dynamodb
+        # rekog_labels = {
+        #     "TODO": {"placeholder": {"S": "empty dict for now"}}
+        # }  # rekog_resp.get("Labels")
 
         rek_status_code = safeget(rekog_resp, "ResponseMetadata", "HTTPStatusCode")
         op_status = "success" if rek_status_code == 200 else "fail"
@@ -161,7 +180,9 @@ def gen_item_dict2_from_rek_resp(rekog_results):
             "batch_id": batch_id,
             "img_fprint": img_fprint,
             "op_status": op_status,
-            # "rek_resp": TODO: rekog_labels, # re-enable this when rekog_labels is fixed
+            "rek_resp": convert_to_json(
+                data=rekog_resp
+            ),  # TODO: rekog_labels, # re-enable this when rekog_labels is fixed
             "rek_iscat": rek_match,
             "rek_ts": rek_ts,
         }
