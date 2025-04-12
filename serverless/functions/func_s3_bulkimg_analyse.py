@@ -163,6 +163,7 @@ def run(event, context):
         )
 
         # Step 7: Update DynamoDB with final S3 key and operation status
+        # TODO: try move image to fail bucket if move fails
         s3img_key = (
             f"{s3bucket_dest}/{s3_key}" if move_success else f"{s3bucket_fail}/{s3_key}"
         )

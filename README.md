@@ -85,10 +85,37 @@ The article also discusses other aspects such as how to best organise terraform 
 2. Serverless
 3. Api-client
 
+The lambda function interacts with S3 and DynamoDB in the following manner after the user uploads an image to the S3 source bucket.
+```mermaid
+sequenceDiagram
+    participant User as User
+    participant S3 as S3 Bucket (Source)
+    participant Lambda as Lambda (s3_bulkimganalyse.run)
+    participant Rekognition as Rekognition
+    participant DynamoDB as DynamoDB
+    participant S3Dest as S3 Bucket (Destination)
+    participant S3Fail as S3 Bucket (Failure)
+
+    User->>S3: Uploads image
+    S3-->>Lambda: Triggers s3_bulkimganalyse.run
+    Lambda->>DynamoDB: Write initial item (Step 2)
+    Lambda->>S3: Retrieve file bytes (Step 3)
+    Lambda->>Rekognition: Submit image for categorization (Step 4)
+    Rekognition-->>Lambda: Returns categorization response
+    Lambda->>DynamoDB: Update item with Rekognition response (Step 5)
+    alt Success
+        Lambda->>S3Dest: Success: Move image to destination bucket (Step 6)
+    else Failure
+        Lambda->>S3Fail: Fail: Move image to failure bucket (Step 6)
+    end
+    Lambda->>DynamoDB: Update item with final status (Step 7)
+    Lambda->>DynamoDB: Write logs (if debug mode enabled)
+```
+
 ---
 
 ### A. setup repo
-```
+```shell
 git clone https://github.com/stablecaps/ice-cat-wrangler.git
 cd ice-cat-wrangler/
 ```
@@ -354,6 +381,33 @@ options:
 # Get the results for a single uploaded image (you need to know imgfprint & batchid).
 /client_launcher.py --secretsfile SSM result --imgfprint 0eaf1da24040970c6396ca59488ad7fa739ef7ab4ee1f757f180dade9adc43cf --batchid 1744481929
 ```
+
+5. How the api-client integrates with DynamoDB:
+
+The DB uses `batch_id` as the partition key and `img_fprint` as the sort key.
+
+- batch_id: Every time the client is run a new random `batch_id` gets created.
+- img_fprint: This is the file hash of the image (sha256).
+- client_id: Each instance of the client has a `client_id`. This id can be manually set at `api-client/config/client_id`. If this file is not present, the program will automatically generate one using the format `stablecaps_$random_3digits` on first run.
+- debug: When a power user adds the debug flag. the s3 key has debug added to it so that the lambda processing s3 files added to the source bucket saves the logs for that particular file.
+
+logs: When uploading images, the client stores details of the uploads as a list of dicts in json format. This can be used to keep track of jobs via `batch_id`, and get PK & SK to query DynamoDB using the `result` subcommand. The entire log can be used as input into the `bulkresults` subcommand.
+
+```json
+[
+    {
+        "client_id": "stablecaps900",
+        "batch_id": "batch-1744377772",
+        "s3bucket_source": "cat-wrangler-source-ice1-dev",
+        "s3_key": "0eaf1da24040970c6396ca59488ad7fa739ef7ab4ee1f757f180dade9adc43cf/stablecaps900/batch-1744377772/2025-04-11-13/1744377772-debug.png",
+        "original_file_name": "siberian-cats-for-sale-siberian-kitten-malechampion-bloodline-hampstead-garden-suburb-london-image-2.webp.png",
+        "upload_time": "2025-04-11-13",
+        "file_image_hash": "0eaf1da24040970c6396ca59488ad7fa739ef7ab4ee1f757f180dade9adc43cf",
+        "epoch_timestamp": 1744377772
+    }
+]
+```
+
 
 ---
 
