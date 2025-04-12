@@ -74,18 +74,42 @@ For more details on the co-location method used here please see: [Terraform & Se
 
 The article also discusses other aspects such as how to best organise terraform repos, etc.
 
----
+## Infrastructure Overview
 
-## Setup
+The `ice-cat-wrangler` application consists of the following AWS infrastructure components:
 
-**Setup assumes you have AWS admin credentials and can export them into your terminal environment**
+### 1. **S3 Buckets**
+- **Source Bucket**: Stores images uploaded by the user.
+- **Destination Bucket**: Stores successfully processed images.
+- **Failure Bucket**: Stores images that failed processing.
 
-### Installation order
-1. Terraform
-2. Serverless
-3. Api-client
+### 2. **Lambda Function**
+- **s3_bulkimganalyse.run**: Processes images uploaded to the source bucket.
+  - Reads the image from the source bucket.
+  - Submits the image to **Amazon Rekognition** for analysis.
+  - Writes results to **DynamoDB**.
+  - Moves the image to the destination or failure bucket based on the Rekognition response.
 
-The lambda function interacts with S3 and DynamoDB in the following manner after the user uploads an image to the S3 source bucket.
+### 3. **Amazon Rekognition**
+- Analyzes the image to determine if it contains a cat.
+- Returns a response to the Lambda function.
+
+### 4. **DynamoDB**
+- Stores metadata and processing results for each image.
+- Tracks the status of image processing (`pending`, `success`, `fail`).
+- Stores Rekognition responses and debug logs.
+
+### 5. **SSM Parameter Store**
+- Stores configuration values such as bucket names, IAM roles, and DynamoDB table names.
+- Used by both Terraform and Serverless for resource sharing.
+
+### 6. **IAM Roles**
+- Provides permissions for the Lambda function to access S3, Rekognition, and DynamoDB.
+* Another role provides permissions to Github actions so that an automated pipeline can deploy into AWS.
+
+
+### System Process Overview
+The lambda function interacts with S3 and DynamoDB in the following manner after the user uploads an image to the S3 source bucket:
 ```mermaid
 sequenceDiagram
     participant User as User
@@ -111,6 +135,18 @@ sequenceDiagram
     Lambda->>DynamoDB: Update item with final status (Step 7)
     Lambda->>DynamoDB: Write logs (if debug mode enabled)
 ```
+
+
+---
+
+## Setup
+
+**Setup assumes you have AWS admin credentials and can export them into your terminal environment**
+
+### Installation order
+1. Terraform
+2. Serverless
+3. Api-client
 
 ---
 
