@@ -354,6 +354,21 @@ options:
 ---
 
 ### E. Github Actions Pipeline
+The deployment pipeline file is located at `.github/workflows/deploy_ice_cat_wrangler.yml`.
+- Deploys all terraform & serverless components
+- deals with secrets by leveraging ``secrets.txt`, `secrets_encryptor.sh` & `secrets_decryptor.sh` located in root of repo.
+
+**secrets:**
+
+We need to run CI, but we do not want to store unencrypted secrets or config values in the repository. so
+
+```shell
+# 1. populate `secrets.txt` with config file paths
+./secrets_encryptor.sh path/to/ice-cat-secrets-pass.txt
+
+# The ci/cd system will run
+./secrets_decryptor.sh path/to/ice-cat-secrets-pass.txt
+```
 
 ---
 
