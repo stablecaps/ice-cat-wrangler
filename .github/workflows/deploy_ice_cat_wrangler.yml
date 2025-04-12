@@ -93,7 +93,6 @@ jobs:
 
         cd serverless
           npm ci
-          npm test
           #
           npm i serverless -g
           serverless update

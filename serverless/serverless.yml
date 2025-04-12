@@ -107,7 +107,8 @@ resources:
         Type: String
         Value: ${custom.aws_region}
         Tags:
-          Environment: ${self:custom.currentStage}
+          version: ${file(./config/${self:custom.currentStage}.yml):version}
+          environment: ${self:custom.currentStage}
 
     SSMFuncBulkImgAnalyserName:
       Type: AWS::SSM::Parameter
@@ -116,4 +117,5 @@ resources:
         Type: String
         Value: "${self:service}-${self:custom.currentStage}-s3-bulkimg-analyse"
         Tags:
-          Environment: ${self:custom.currentStage}
+          version: ${file(./config/${self:custom.currentStage}.yml):version}
+          environment: ${self:custom.currentStage}
