@@ -86,6 +86,8 @@ jobs:
         cd -
 
     - name: Deploy serverless
+      env:
+        SERVERLESS_ACCESS_KEY: ${{ secrets.serverless_ci_secret }}
       run: |
         #!/bin/bash
 
