@@ -1,11 +1,9 @@
 name: Deploy ice-cat-wrangler to ECS
 
-# on:
-#   push:
-#     branches:
-#       - main
-
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       icecat_tag:
@@ -30,7 +28,7 @@ jobs:
       uses: aws-actions/configure-aws-credentials@v4 # More information on this action can be found below in the 'AWS Credentials' section
       with:
         aws-region: eu-west-1
-        # role arn is output from entrypoints/01b_github_actions_oidc/voutputs.tf
+        # role arn is output from 01b_github_actions_oidc/voutputs.tf
         role-to-assume: ${{ secrets.AWS_GHA_ASSUME_ROLE_ARN }}
         role-session-name: GitHubActions985dtd968
 
@@ -50,15 +48,43 @@ jobs:
         #!/bin/bash
 
         cd infra-terra
-          ./xxx_tfhelperv3.sh terraform entrypoints/02_cat_wrangler_s3_buckets yes dev full
+          ./xxx_tfhelperv3.sh terraform 02_cat_wrangler_s3_buckets yes dev full
         cd -
+
     - name: Deploy lambda permissions
       run: |
         #!/bin/bash
 
         set -e
         cd infra-terra
-          ./xxx_tfhelperv3.sh terraform entrypoints/03_create_lambda_permissions yes dev full
+          ./xxx_tfhelperv3.sh terraform 03_create_lambda_permissions yes dev full
+        cd -
+
+    - name: Deploy dynamodb table
+      run: |
+        #!/bin/bash
+
+        set -e
+        cd infra-terra
+          ./xxx_tfhelperv3.sh terraform 03_cat_wrangler_backend yes dev full
+        cd -
+
+    - name: Deploy lambda permissions
+      run: |
+        #!/bin/bash
+
+        set -e
+        cd infra-terra
+          ./xxx_tfhelperv3.sh terraform 04_create_lambda_permissions yes dev full
+        cd -
+
+    - name: Deploy serverless
+      run: |
+        #!/bin/bash
+
+        set -e
+        cd serverless
+          make slsdeployfull
         cd -
 
     - name: Delete unecrypted secrets from build agent
