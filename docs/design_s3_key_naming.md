@@ -15,7 +15,9 @@ Sequential Timestamps including YYYY-MM-DD-HH and epoch_timestamp in the key cre
 
 Initial key name 0: `client_id/file_hash-YYYY-MM-DD-HH/epoch_timestamp.png`
 
-Better key name 1: `file_hash/client_id/YYYY-MM-DD/epoch_timestamp.png`
+Better key name 1: `file_hash/client_id/batchid/YYYY-MM-DD/epoch_timestamp.png`
+
+e.g. `cat-wrangler-dest-ice666-dev/0eaf1da24040970c6396ca59488ad7fa739ef7ab4ee1f757f180dade9adc43cf/stablecaps900/batch-1744481929/2025-04-12-18/1744481929-debug.png`
 
 #### Why key name 1 is a good choice for better partition distribution, scalability, and performance for high-volume workloads:
 

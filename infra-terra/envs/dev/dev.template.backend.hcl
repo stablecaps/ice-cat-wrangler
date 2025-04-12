@@ -1,3 +1,3 @@
 region         = "eu-west-1"
-bucket         = "tf-backend-dev-stablecaps-ice1"
-dynamodb_table = "tf-backend-dev-stablecaps-ice1"
+bucket         = "terraform-remotestate-stablecaps-ice1-dev"
+dynamodb_table = "terraform-remotestate-stablecaps-ice1-dev"

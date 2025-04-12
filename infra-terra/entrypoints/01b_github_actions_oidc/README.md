@@ -37,10 +37,11 @@ No modules.
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_aws_acc_no"></a> [aws\_acc\_no](#input\_aws\_acc\_no) | AWS account number | `string` | n/a | yes |
+| <a name="input_company"></a> [company](#input\_company) | Project name | `string` | `"stablecaps"` | no |
 | <a name="input_created_by"></a> [created\_by](#input\_created\_by) | Created by | `string` | `"terraform"` | no |
 | <a name="input_env"></a> [env](#input\_env) | Deployment environment. e.g. dev, uat, prod | `string` | n/a | yes |
 | <a name="input_owner"></a> [owner](#input\_owner) | Owner of the project | `string` | `"DevOps"` | no |
-| <a name="input_project"></a> [project](#input\_project) | Project name | `string` | `"stablecaps"` | no |
+| <a name="input_project"></a> [project](#input\_project) | Project name | `string` | `"cat-wrangler"` | no |
 | <a name="input_region"></a> [region](#input\_region) | AWS region. e.g. eu-west-1 | `string` | n/a | yes |
 | <a name="input_unique_str"></a> [unique\_str](#input\_unique\_str) | A unique string to avoid conflicts | `string` | n/a | yes |
 

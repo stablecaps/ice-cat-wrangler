@@ -1,7 +1,7 @@
 # DynamoDB Table design
 
 ## Use cases
-* Assume the user has a whole bunch of images they wish to categorise and they upload a single or multiple images to s3 bucket. We need to track image hash to avoid reprocessing and to cerate s3 file name. we also need to store logs in case debug flag is provided.
+* Assume the user has a whole bunch of images they wish to categorise and they upload a single or multiple images to S3 bucket. We need to track image hash to avoid reprocessing and to cerate S3 file name. we also need to store logs in case debug flag is provided.
 
 
 1. batch_id: user would either want to retrieve the results for a small - medium submission. i.e. 1-20 images.

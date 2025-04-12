@@ -2,10 +2,12 @@
 
 set -eo pipefail
 
-echo -e "Usage:\n"
-echo -e "1. Provide a file path containing the password: $0 /path/to/password_file"
-echo -e "2. Provide a text password directly: $0 '\$password'\n"
-
+if [[ "$1" == "--help" || "$1" == "-h" ]]; then
+  echo -e "Usage:\n"
+  echo -e "1. Provide a file path containing the password: $0 /path/to/password_file"
+  echo -e "2. Provide a text password directly: $0 '\$password'\n"
+  exit 0
+fi
 
 if ! command -v openssl &>/dev/null ; then
   echo "openssl is not installed. Please install it and try again."
@@ -29,9 +31,9 @@ fi
 
 ##############################
 
-ALL_SECRETS=$(cat secrets.txt)
+ALL_SECRET_FILES=$(cat secrets.txt)
 
-for secret_path in $ALL_SECRETS; do
+for secret_path in $ALL_SECRET_FILES; do
   echo "Encrypting $secret_path"
 
   if [ ! -f "$secret_path" ]; then

@@ -1,6 +1,7 @@
-variable "aws_acc_no" {
-  description = "AWS account number"
+variable "company" {
+  description = "Project name"
   type        = string
+  default     = "stablecaps"
 }
 
 variable "project" {
@@ -8,6 +9,12 @@ variable "project" {
   type        = string
   default     = "cat-wrangler"
 }
+
+variable "aws_acc_no" {
+  description = "AWS account number"
+  type        = string
+}
+
 
 variable "owner" {
   description = "Owner of the project"
@@ -43,7 +50,7 @@ variable "s3bucket_source_name" {
 
 
 variable "s3bucket_dest_name" {
-  description = "s3 bucket destination name. Stores sucessfully processed images are stored"
+  description = "s3 bucket destination name. Stores successfully processed images are stored"
   type        = string
 }
 

@@ -12,8 +12,8 @@ locals {
             "logs:CreateLogGroup"
           ],
           "Resource" : [
-            "arn:aws:logs:eu-west-1:${var.aws_acc_no}:log-group:/aws/lambda/*",
-            "arn:aws:logs:eu-west-1:${var.aws_acc_no}:log-group:/aws/lambda/*",
+            "arn:aws:logs:${var.region}:${var.aws_acc_no}:log-group:/aws/lambda/*",
+            "arn:aws:logs:${var.region}:${var.aws_acc_no}:log-group:/aws/lambda/*",
             "arn:aws:s3:::${local.s3bucket_source_fullname}",
             "arn:aws:s3:::${local.s3bucket_dest_fullname}",
             "arn:aws:s3:::${local.s3bucket_fail_fullname}",
@@ -26,8 +26,8 @@ locals {
             "logs:PutLogEvents"
           ],
           "Resource" : [
-            "arn:aws:logs:eu-west-1:${var.aws_acc_no}:log-group:/aws/lambda/*:log-stream:*",
-            "arn:aws:logs:eu-west-1:${var.aws_acc_no}:log-group:/aws/lambda/*:*:*"
+            "arn:aws:logs:${var.region}:${var.aws_acc_no}:log-group:/aws/lambda/*:log-stream:*",
+            "arn:aws:logs:${var.region}:${var.aws_acc_no}:log-group:/aws/lambda/*:*:*"
           ]
         },
         {

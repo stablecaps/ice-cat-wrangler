@@ -1,11 +1,9 @@
 name: Deploy ice-cat-wrangler to ECS
 
-# on:
-#   push:
-#     branches:
-#       - main
-
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       icecat_tag:
@@ -26,13 +24,19 @@ jobs:
     - name: Check out code
       uses: actions/checkout@v2
 
+    - name: Setup node
+      uses: actions/setup-node@v4
+      with:
+        node-version: 18.20.8
+
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4 # More information on this action can be found below in the 'AWS Credentials' section
       with:
         aws-region: eu-west-1
-        # role arn is output from entrypoints/01b_github_actions_oidc/voutputs.tf
+        # role arn is output from 01b_github_actions_oidc/voutputs.tf
         role-to-assume: ${{ secrets.AWS_GHA_ASSUME_ROLE_ARN }}
         role-session-name: GitHubActions985dtd968
+
 
     - name: Install Terraform
       uses: hashicorp/setup-terraform@v3
@@ -50,15 +54,56 @@ jobs:
         #!/bin/bash
 
         cd infra-terra
-          ./xxx_tfhelperv3.sh terraform entrypoints/02_cat_wrangler_s3_buckets yes dev full
+          ./xxx_tfhelperv3.sh terraform 02_cat_wrangler_s3_buckets yes dev full
         cd -
+
+    - name: Deploy dynamodb table
+      run: |
+        #!/bin/bash
+
+        set -e
+        cd infra-terra
+          ./xxx_tfhelperv3.sh terraform 03_cat_wrangler_backend yes dev full
+        cd -
+
+
     - name: Deploy lambda permissions
       run: |
         #!/bin/bash
 
         set -e
         cd infra-terra
-          ./xxx_tfhelperv3.sh terraform entrypoints/03_create_lambda_permissions yes dev full
+          ./xxx_tfhelperv3.sh terraform 04_create_lambda_permissions yes dev full
+        cd -
+
+    - name: Deploy lambda permissions
+      run: |
+        #!/bin/bash
+
+        set -e
+        cd infra-terra
+          ./xxx_tfhelperv3.sh terraform 04_create_lambda_permissions yes dev full
+        cd -
+
+    - name: Deploy serverless
+      env:
+        SERVERLESS_ACCESS_KEY: ${{ secrets.serverless_ci_secret }}
+      run: |
+        #!/bin/bash
+
+        set -e
+
+        export ${{ secrets.serverless_ci_secret}}
+
+        cd serverless
+          npm ci
+          #
+          npm i serverless -g
+          serverless update
+          serverless login
+          #
+          make slsplugins
+          make slsdeployfull
         cd -
 
     - name: Delete unecrypted secrets from build agent
@@ -68,9 +113,9 @@ jobs:
 
         set -e
 
-        ALL_SECRETS=$(cat secrets.txt)
+        ALL_SECRET_FILES=$(cat secrets.txt)
 
-        for secret_path in $ALL_SECRETS; do
+        for secret_path in $ALL_SECRET_FILES; do
           echo "Deleting secret $secret_path"
           rm -f $secret_path
         done

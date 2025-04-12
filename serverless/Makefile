@@ -28,3 +28,7 @@ slsdeploy:
 slsdeployfull:
 	./.make/sls_buildlayer.sh
 	./.make/slsdeploy.sh
+
+.PHONY: slsrm
+slsrm:
+	serverless remove

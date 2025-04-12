@@ -1,7 +1,13 @@
-variable "project" {
+variable "company" {
   description = "Project name"
   type        = string
   default     = "stablecaps"
+}
+
+variable "project" {
+  description = "Project name"
+  type        = string
+  default     = "cat-wrangler"
 }
 
 variable "owner" {
