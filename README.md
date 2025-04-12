@@ -74,7 +74,6 @@ For more details on the co-location method used here please see: [Terraform & Se
 
 The article also discusses other aspects such as how to best organise terraform repos, etc.
 
-
 ---
 
 ## Setup
@@ -284,11 +283,73 @@ make slsdeploy
 make slsdeployfull
 ```
 
-
-
 ---
 
 ### D. Api-Client
+
+The api-client uses boto3 to
+- upload images to s3
+- fetch results from dynamoDB
+
+1. export your **aws admin keys**
+2. Prepare python3.12 development environment with `shared_helpers`
+
+It also has a make file so you can run:
+
+```
+make develop
+```
+3. prepare api-client env vars
+
+```shell
+cd api-client
+cp config/dev_conf_secrets.template config/dev_conf_secrets
+
+# Then edit api-client/config/dev_conf_secrets to change env vars.
+```
+Notes:
+- Instead of passing the secretsfile to the program to read the config file, you can instead use ssm.
+- If using ssm, please ensure the correct aws region you wish to use is exported:
+
+```shell
+export AWS_REGION=eu-west-1
+```
+
+4. running the api-client
+
+The client uses the dispatch pattern to read CLI args and has several modes
+
+```
+# show help
+./client_launcher.py --help
+
+usage: .e.g: ./client_launcher.py {--secretsfile [ssm|dev_conf_secrets]} [--debug] {bulkanalyse|result|bulkresults} [<args>]
+./client_launcher.py --secretsfile ssm --debug bulkanalyse --folder bulk_uploads/
+./client_launcher.py --secretsfile ssm result --imgfprint f54c84046c5ad95fa2f0f686db515bada71951cb0dde2ed37f76708a173033f7 --batchid 1744370618
+./client_launcher.py --secretsfile ssm bulkresults --batchfile logs/stablecaps900_batch-1744377772.json
+
+ICE Cat API Client
+
+positional arguments:
+  {bulkanalyse,result,bulkresults}
+    bulkanalyse         Bulk upload images from local directory to AWS S3 bucket
+    result              Get results from AWS Lambda results function
+    bulkresults         Upload local image to AWS Lambda analyse function
+
+options:
+  -h, --help            show this help message and exit
+  --secretsfile SECRETSFILE, -s SECRETSFILE
+                        Secrets file name located in config folder to load environment variables from, or 'ssm' to fetch from AWS SSM
+                        Parameter Store.
+  --debug, -d           Debug mode. Set to True to enable debug output.
+
+# Bulk upload files to s3 source/incoming bucket
+./client_launcher.py --secretsfile ssm --debug bulkanalyse --folder bulk_uploads/
+
+
+# get the results for a single uploaded image (you need to know imgfprint & batchid)
+/client_launcher.py --secretsfile ssm result --imgfprint 0eaf1da24040970c6396ca59488ad7fa739ef7ab4ee1f757f180dade9adc43cf --batchid 1744481929
+```
 
 ---
 
