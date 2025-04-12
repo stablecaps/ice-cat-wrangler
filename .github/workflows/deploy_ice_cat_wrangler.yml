@@ -51,15 +51,6 @@ jobs:
           ./xxx_tfhelperv3.sh terraform 02_cat_wrangler_s3_buckets yes dev full
         cd -
 
-    - name: Deploy lambda permissions
-      run: |
-        #!/bin/bash
-
-        set -e
-        cd infra-terra
-          ./xxx_tfhelperv3.sh terraform 03_create_lambda_permissions yes dev full
-        cd -
-
     - name: Deploy dynamodb table
       run: |
         #!/bin/bash
@@ -67,6 +58,16 @@ jobs:
         set -e
         cd infra-terra
           ./xxx_tfhelperv3.sh terraform 03_cat_wrangler_backend yes dev full
+        cd -
+
+
+    - name: Deploy lambda permissions
+      run: |
+        #!/bin/bash
+
+        set -e
+        cd infra-terra
+          ./xxx_tfhelperv3.sh terraform 04_create_lambda_permissions yes dev full
         cd -
 
     - name: Deploy lambda permissions
