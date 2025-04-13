@@ -1,3 +1,46 @@
+"""
+dynamo_db_helper.py
+
+This module provides a helper class for interacting with DynamoDB. It includes
+methods for writing, updating, and converting items to DynamoDB-compatible formats.
+The `DynamoDBHelper` class simplifies common DynamoDB operations and ensures
+data is properly formatted before being sent to the database.
+
+Classes:
+    DynamoDBHelper: A helper class for performing DynamoDB operations such as
+    writing and updating items, and converting Python dictionaries to DynamoDB
+    item formats.
+
+Constants:
+    LOG (logging.Logger): A logger instance for logging messages.
+
+Example:
+    To use the `DynamoDBHelper` class:
+
+        import boto3
+        from dynamo_db_helper import DynamoDBHelper
+
+        # Initialize the DynamoDB client
+        dynamodb_client = boto3.client('dynamodb')
+
+        # Define the table name and required keys
+        table_name = "example_table"
+        required_keys = ["batch_id", "img_fprint"]
+
+        # Create an instance of DynamoDBHelper
+        helper = DynamoDBHelper(dynamodb_client, table_name, required_keys)
+
+        # Write an item to the table
+        item = {
+            "batch_id": 123,
+            "img_fprint": "abc123",
+            "client_id": "client_1",
+            "file_name": "example.jpg",
+        }
+        response = helper.write_item(item)
+        print(response)
+"""
+
 import logging
 
 from botocore.exceptions import ClientError
