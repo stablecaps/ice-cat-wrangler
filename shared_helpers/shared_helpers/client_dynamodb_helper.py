@@ -80,7 +80,7 @@ class ClientDynamoDBHelper:
         Raises:
             Exception: If there is an error querying DynamoDB.
         """
-        results = []
+        results_list = []
 
         for record in batch_records:
             # print("record", record)
@@ -105,7 +105,14 @@ class ClientDynamoDBHelper:
                 # Check if the item exists in the response
                 if "Item" in response:
                     item = {k: list(v.values())[0] for k, v in response["Item"].items()}
-                    results.append(item)
+
+                    # add some other identifying info to the result
+                    if self.debug:
+                        print("response", response)
+
+                    item["original_file_name"] = record["original_file_name"]
+                    #
+                    results_list.append(item)
                 else:
                     print(
                         f"No record found for batch_id={batch_id}, img_fprint={img_fprint}"
@@ -117,4 +124,4 @@ class ClientDynamoDBHelper:
                 )
                 continue
 
-        return results
+        return results_list

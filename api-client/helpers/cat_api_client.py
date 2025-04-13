@@ -128,16 +128,27 @@ class CatAPIClient:
 
         table = Table(title="Rekognition Results")
 
-        table.add_column("rek_iscat", justify="center", style="green")
-        table.add_column("batch_id", justify="center", style="cyan")
-        table.add_column("img_fprint", justify="center", style="magenta")
+        table.add_column("rek_iscat", justify="left", style="green")
+        table.add_column("batch_id", justify="left", style="magenta")
+        table.add_column("img_fprint", justify="left", style="yellow")
+        table.add_column("og_file", justify="left", style="cyan")
+        table.add_column("s3_key short", justify="left", style="blue")
 
         # Add rows for each result in the list
         for result_dict in iscat_results:
+            s3img_key = result_dict.get("s3img_key", None)
+
+            s3_key_short_last = "N/A"
+            if s3img_key:
+                s3_key_split = s3img_key.split("/")
+                s3_key_short_last = "/".join(s3_key_split[2:])
+
             table.add_row(
                 str(result_dict.get("rek_iscat", "N/A")),
                 str(result_dict.get("batch_id", "N/A")),
                 result_dict.get("img_fprint", "N/A"),
+                result_dict.get("original_file_name", "N/A"),
+                s3_key_short_last,
             )
 
         console = Console()
@@ -172,6 +183,7 @@ class CatAPIClient:
                 "rek_iscat": rek_iscat,
                 "batch_id": self.batch_id,
                 "img_fprint": self.img_fprint,
+                "s3_key": item.get("s3_key", "N/A"),
             }
         ]
 
