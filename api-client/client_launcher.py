@@ -31,11 +31,12 @@ class CLIArgs:
         """
 
         help_banner = (
-            "./client_launcher.py --secretsfile ssm --debug bulkanalyse --folder bulk_uploads/\n"
+            "./client_launcher.py --secretsfile ssm --debug bulkanalyse --folder_path bulk_uploads/\n"
             "./client_launcher.py --secretsfile ssm result --imgfprint f54c84046c5ad95fa2f0f686db515bada71951cb0dde2ed37f76708a173033f7 --batchid 1744370618\n"
             "./client_launcher.py --secretsfile ssm bulkresults --batchfile logs/stablecaps900_batch-1744377772.json\n"
         )
 
+        ########################################
         parser = argparse.ArgumentParser(
             description="ICE Cat API Client",
             usage=".e.g: ./client_launcher.py {--secretsfile [ssm|dev_conf_secrets]} [--debug] {bulkanalyse|result|bulkresults} [<args>]\n"
@@ -47,7 +48,7 @@ class CLIArgs:
             "-s",
             type=str,
             required=True,
-            help="Secrets file name located in config folder to load environment variables from, or 'ssm' to fetch from AWS SSM Parameter Store.",
+            help="Secrets file name located in config folder_path to load environment variables from, or 'ssm' to fetch from AWS SSM Parameter Store.",
         )
         parser.add_argument(
             "--debug",
@@ -70,6 +71,7 @@ class CLIArgs:
         bulk_analyse_parser.add_argument(
             "--folder",
             "-f",
+            dest="folder_path",
             type=str,
             required=True,
             default="./bulk_images",
@@ -109,14 +111,15 @@ class CLIArgs:
             dest="batch_file",
             type=str,
             required=True,
-            help="Path to the local batch logfile. Found in api-client/logs folder. e.g.: logs/stablecaps900_batch-1744499247.json",
+            help="Path to the local batch logfile. Found in api-client/logs folder e.g.: logs/stablecaps900_batch-1744499247.json",
         )
 
         ########################################
         args = parser.parse_args()
+        print("args:", args)
 
-        if not hasattr(CLIArgs, args.command):
-            print("Unrecognized command")
+        if args.command not in ["bulkanalyse", "result", "bulkresults"]:
+            print()
             parser.print_help()
             sys.exit(42)
 
@@ -130,13 +133,12 @@ class CLIArgs:
         # Get the client ID
         self.client_id = CLIArgs.get_client_id()
 
-        # Dispatch to the appropriate subcommand
-        if args.command == "bulkanalyse":
-            self.bulkanalyse(args.folder)
-        elif args.command == "result":
-            self.result(args.batch_id, args.img_fprint)
-        elif args.command == "bulkresults":
-            self.bulkresults(args.batch_file)
+        CatAPIClient(
+            action=args.command,
+            client_id=self.client_id,
+            # debug=args.debug,
+            **vars(args),
+        )
 
     @staticmethod
     def get_client_id():
@@ -165,9 +167,7 @@ class CLIArgs:
             print(f"'client_id' file created with ID: {client_id}")
 
         else:
-            read_file_2string(filepath=client_id_file, mode="r")
-            with open(client_id_file, "r") as file:
-                client_id = file.read().strip()
+            client_id = read_file_2string(filepath=client_id_file, mode="r")
 
         if not client_id:
             print(f"Error: 'client_id' not found. Exiting...")
@@ -176,56 +176,56 @@ class CLIArgs:
         print(f"Client ID loaded successfully: {client_id}\n")
         return client_id
 
-    def bulkanalyse(self, folder):
-        """
-        Handles the 'bulkanalyse' subcommand. Uploads images from a local
-        directory to an AWS S3 bucket.
+    # def bulkanalyse(self, folder_path):
+    #     """
+    #     Handles the 'bulkanalyse' subcommand. Uploads images from a local
+    #     directory to an AWS S3 bucket.
 
-        Args:
-            folder (str): Path to the local folder containing images.
-            client_id (str): The client ID for authentication.
-            debug (bool): Debug mode flag.
-        """
-        CatAPIClient(
-            action="bulkanalyse",
-            folder_path=folder,
-            client_id=self.client_id,
-            debug=self.debug,
-        )
+    #     Args:
+    #         folder_path (str): Path to the local folder_path containing images.
+    #         client_id (str): The client ID for authentication.
+    #         debug (bool): Debug mode flag.
+    #     """
+    #     CatAPIClient(
+    #         action="bulkanalyse",
+    #         folder_path=folder_path,
+    #         client_id=self.client_id,
+    #         debug=self.debug,
+    #     )
 
-    def result(self, batch_id, img_fprint):
-        """
-        Handles the 'result' subcommand. Fetches results from dynamodb
-        for a specific batch ID and image fingerprint.
+    # def result(self, batch_id, img_fprint):
+    #     """
+    #     Handles the 'result' subcommand. Fetches results from dynamodb
+    #     for a specific batch ID and image fingerprint.
 
-        Args:
-            batch_id (str): The batch ID to fetch results for.
-            img_fprint (str): The image fingerprint hash.
-            debug (bool): Debug mode flag.
-        """
-        client = CatAPIClient(
-            action="result",
-            batch_id=batch_id,
-            img_fprint=img_fprint,
-            client_id=self.client_id,
-            debug=self.debug,
-        )
+    #     Args:
+    #         batch_id (str): The batch ID to fetch results for.
+    #         img_fprint (str): The image fingerprint hash.
+    #         debug (bool): Debug mode flag.
+    #     """
+    #     client = CatAPIClient(
+    #         action="result",
+    #         batch_id=batch_id,
+    #         img_fprint=img_fprint,
+    #         client_id=self.client_id,
+    #         debug=self.debug,
+    #     )
 
-    def bulkresults(self, batch_file):
-        """
-        Handles the 'bulkresults' subcommand. Processes a batch file (created by bulkanalyse)
-        to upload images and fetch results.
+    # def bulkresults(self, batch_file):
+    #     """
+    #     Handles the 'bulkresults' subcommand. Processes a batch file (created by bulkanalyse)
+    #     to upload images and fetch results.
 
-        Args:
-            batch_file (str): Path to the local batch logfile.
-            debug (bool): Debug mode flag.
-        """
-        client = CatAPIClient(
-            action="bulkresults",
-            batch_file=batch_file,
-            client_id=self.client_id,
-            debug=self.debug,
-        )
+    #     Args:
+    #         batch_file (str): Path to the local batch logfile.
+    #         debug (bool): Debug mode flag.
+    #     """
+    #     client = CatAPIClient(
+    #         action="bulkresults",
+    #         batch_file=batch_file,
+    #         client_id=self.client_id,
+    #         debug=self.debug,
+    #     )
 
 
 if __name__ == "__main__":

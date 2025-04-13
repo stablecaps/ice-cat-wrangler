@@ -108,59 +108,6 @@ class CatAPIClient:
                 "Invalid action. Choose 'bulkanalyse', 'result', or 'bulkresults'."
             )
 
-    # @staticmethod
-    # def display_rek_iscat_table(iscat_results):
-    #     """
-    #     Displays multiple rows of rek_iscat, batch_id, and img_fprint values in a formatted table.
-
-    #     Args:
-    #         iscat_results (list of dict): A list of dictionaries, where each dictionary contains:
-    #             - rek_iscat (bool): The rekognition result indicating if the image contains a cat.
-    #             - batch_id (str): The batch ID associated with the image.
-    #             - img_fprint (str): The image fingerprint hash.
-    #     """
-
-    #     table = Table(title="Rekognition Results")
-
-    #     table.add_column("rek_iscat", justify="left", style="green")
-    #     table.add_column("batch_id", justify="left", style="magenta")
-    #     table.add_column("img_fprint", justify="left", style="yellow")
-    #     table.add_column("og_file", justify="left", style="cyan", no_wrap=False)
-    #     table.add_column("s3_key short", justify="left", style="blue", no_wrap=False)
-
-    #     # Add rows for each result in the list
-    #     for result_dict in iscat_results:
-    #         s3img_key = result_dict.get("s3img_key", None)
-
-    #         s3_key_short_last = "N/A"
-    #         if s3img_key:
-    #             s3_key_split = s3img_key.split("/")
-    #             s3_key_short_last = "/".join(s3_key_split[2:])
-
-    #         # Conditionally format rek_iscat color
-    #         rek_iscat = result_dict.get("rek_iscat", "N/A")
-    #         # print("rek_iscat:", rek_iscat, type(rek_iscat))
-
-    #         if rek_iscat == "N/A":
-    #             rek_iscat_color = "red"
-    #         elif rek_iscat.lower() == "true":
-    #             rek_iscat_color = "green"
-    #         elif rek_iscat.lower() == "false":
-    #             rek_iscat_color = "red"
-    #         else:
-    #             rek_iscat_color = "yellow"
-
-    #         table.add_row(
-    #             f"[{rek_iscat_color}]{rek_iscat}[/]",
-    #             str(result_dict.get("batch_id", "N/A")),
-    #             result_dict.get("img_fprint", "N/A"),
-    #             result_dict.get("original_file_name", "N/A"),
-    #             s3_key_short_last,
-    #         )
-
-    #     console = Console()
-    #     console.print(table)
-
     @staticmethod
     def display_rek_iscat_table(iscat_results):
         # Define table columns
@@ -181,18 +128,7 @@ class CatAPIClient:
             data=iscat_results, title="Rekognition Results", columns=columns
         )
 
-    def bulkanalyse(self):
-        """Uploads images in a folder to S3 and logs metadata for each upload."""
-        s3_uploader = BulkS3Uploader(
-            folder_path=self.folder_path,
-            s3bucket_source=self.s3bucket_source,
-            client_id=self.client_id,
-            debug=self.debug,
-        )
-        s3_uploader.process_files()
-
-    # @staticmethod
-    def write_debug_logs_to_file(self, dynamodb_results):
+    def write_debug_logs(self, dynamodb_results):
         """
         Writes debug logs to a file if debug mode is enabled.
 
@@ -226,6 +162,16 @@ class CatAPIClient:
             else:
                 print("No valid debug logs found in the provided DynamoDB results.")
 
+    def bulkanalyse(self):
+        """Uploads images in a folder to S3 and logs metadata for each upload."""
+        s3_uploader = BulkS3Uploader(
+            folder_path=self.folder_path,
+            s3bucket_source=self.s3bucket_source,
+            client_id=self.client_id,
+            debug=self.debug,
+        )
+        s3_uploader.process_files()
+
     def result(self):
 
         dynamodb_helper = ClientDynamoDBHelper(
@@ -240,6 +186,7 @@ class CatAPIClient:
         if self.debug:
             print("Retrieved item:", item)
 
+        item_list = []
         if item:
             rek_iscat = item.get("rek_iscat", "N/A")
 
@@ -253,10 +200,11 @@ class CatAPIClient:
             ]
 
             # print("* ", rek_iscat, self.batch_id, self.img_fprint)
-            CatAPIClient.rich_display_table(iscat_results=iscat_results)
+            CatAPIClient.display_rek_iscat_table(iscat_results=iscat_results)
 
             # print debug logs to file
-            self.write_debug_logs_to_file(dynamodb_results=[item])
+            item_list.append(item)
+            self.write_debug_logs(dynamodb_results=item_list)
 
     def bulk_results(self):
         batch_file_json = read_batch_file(batch_file_path=self.batch_file)
@@ -280,6 +228,6 @@ class CatAPIClient:
         )
 
         # print debug logs to file
-        self.write_debug_logs_to_file(dynamodb_results=batch_results)
+        self.write_debug_logs(dynamodb_results=batch_results)
 
         CatAPIClient.display_rek_iscat_table(iscat_results=batch_results)

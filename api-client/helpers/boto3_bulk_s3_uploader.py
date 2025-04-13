@@ -24,6 +24,8 @@ class BulkS3Uploader:
             client_id (str): The client ID to include in the S3 key.
             debug (bool, optional): If True, enables debug output. Defaults to False.
         """
+
+        self.SUPPORTED_EXTENSIONS = (".png", ".jpg", ".jpeg")
         self.folder_path = folder_path
 
         self.s3bucket_source = s3bucket_source
@@ -33,56 +35,43 @@ class BulkS3Uploader:
         #
         self.batch_id = f"batch-{int(time.time())}"
         #
-        # logs_folder = BulkS3Uploader.ensure_logs_folder()
-        # self.batch_file_path = os.path.join(
-        #     logs_folder, f"{self.client_id}_{self.batch_id}.json"
-        # )
+
         self.batch_file_path = gen_batch_file_path(
             client_id=client_id, batch_id=client_id
         )
         self.debug = debug
 
-    # @staticmethod
-    # def ensure_logs_folder():
-    #     """
-    #     Ensures the logs folder exists in the current working directory.
+    def generate_s3_key(self, file_hash, batch_id, current_date, epoch_timestamp):
+        """
+        Generates the S3 key for the uploaded file.
 
-    #     Returns:
-    #         str: The path to the logs folder.
-    #     """
-    #     logs_folder = os.path.join(os.getcwd(), "logs")
-    #     if not os.path.exists(logs_folder):
-    #         os.makedirs(logs_folder)
-    #     return logs_folder
+        Args:
+            file_hash (str): The hash of the file.
+            batch_id (str): The batch ID.
+            current_date (str): The current date.
+            epoch_timestamp (int): The epoch timestamp.
+
+        Returns:
+            str: The S3 key.
+        """
+        suffix = "-debug.png" if self.debug else ".jpg"
+        return f"{file_hash}/{self.client_id}/{batch_id}/{current_date}/{epoch_timestamp}{suffix}"
 
     def upload_image(self, file_path, batch_id):
         """
         Processes a single file by uploading it to S3 and generating metadata.
-
-        Args:
-            file_path (str): The path to the file to upload.
-            batch_id (str): The unique batch ID for the upload session.
-
-        Returns:
-            dict: Metadata for the uploaded file, or None if the upload failed.
         """
         file_name = os.path.basename(file_path)
-
         file_hash = calculate_file_hash(file_path)
-
         current_date = datetime.now(timezone.utc).strftime("%Y-%m-%d-%H")
         epoch_timestamp = int(time.time())
-
-        if self.debug:
-            s3_key = f"{file_hash}/{self.client_id}/{batch_id}/{current_date}/{epoch_timestamp}-debug.png"
-        else:
-            s3_key = f"{file_hash}/{self.client_id}/{batch_id}/{current_date}/{epoch_timestamp}.jpg"
+        s3_key = self.generate_s3_key(
+            file_hash, batch_id, current_date, epoch_timestamp
+        )
 
         try:
             print(f"Uploading {file_path} to s3://{self.s3bucket_source}/{s3_key}")
             s3_client.upload_file(file_path, self.s3bucket_source, s3_key)
-
-            # uploaded file metadata
             return {
                 "client_id": self.client_id,
                 "batch_id": batch_id,
@@ -113,7 +102,7 @@ class BulkS3Uploader:
             for file in files:
                 file_path = os.path.join(root, file)
 
-                if not file.lower().endswith((".png", ".jpg", ".jpeg")):
+                if not file.lower().endswith(self.SUPPORTED_EXTENSIONS):
                     if self.debug:
                         print(f"Skipping non-image file: {file_path}")
                     continue
@@ -126,6 +115,7 @@ class BulkS3Uploader:
         if len(upload_records) == 0:
             print("No images were found to upload.")
             return
+
         # Write the upload records to the log file
         write_batch_file(filepath=self.batch_file_path, batch_records=upload_records)
 
