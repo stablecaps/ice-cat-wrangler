@@ -30,11 +30,11 @@ Dependencies:
 """
 
 import os
-import random
 
 from boto3_client_helpers import ClientDynamoDBHelper
 from helpers.boto3_bulk_s3_uploader import BulkS3Uploader
 from helpers.boto3_clients import dyndb_client
+from helpers.general import read_batch_file
 from rich import print
 from rich.console import Console
 from rich.table import Table
@@ -124,32 +124,6 @@ class CatAPIClient:
         # Convert the rek_iscat value to a boolean
         return item["rek_iscat"] == "True"
 
-    # @staticmethod
-    # def display_rek_iscat_table(rek_iscat, batch_id, img_fprint):
-    #     """
-    #     Displays the rek_iscat, batch_id, and img_fprint values in a formatted table.
-
-    #     Args:
-    #         rek_iscat (bool): The rekognition result indicating if the image contains a cat.
-    #         batch_id (str): The batch ID associated with the image.
-    #         img_fprint (str): The image fingerprint hash.
-    #     """
-    #     from rich.table import Table
-    #     from rich.console import Console
-    #     table = Table(title="Rekognition Results")
-
-    #     # Add columns
-    #     table.add_column("rek_iscat", justify="center", style="green")
-    #     table.add_column("batch_id", justify="center", style="cyan")
-    #     table.add_column("img_fprint", justify="center", style="magenta")
-
-    #     # Add row with the data
-    #     table.add_row(str(rek_iscat), str(batch_id), img_fprint)
-
-    #     # Render the table
-    #     console = Console()
-    #     console.print(table)
-
     @staticmethod
     def display_rek_iscat_table(iscat_results):
         """
@@ -215,10 +189,8 @@ class CatAPIClient:
         CatAPIClient.display_rek_iscat_table(iscat_results=iscat_results)
 
     def bulk_results(self):
+        batch_file_json = read_batch_file(batch_file_path=self.batch_file)
+
         dynamodb_helper = ClientDynamoDBHelper(
             dyndb_client=dyndb_client, table_name=self.dynamodb_table_name, debug=True
         )
-        print("Bulk results not implemented yet. Exiting...")
-        import sys
-
-        sys.exit(42)

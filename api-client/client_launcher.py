@@ -9,6 +9,7 @@ from helpers.cat_api_client import CatAPIClient
 from helpers.config import (
     load_environment_variables,
 )
+from helpers.general import read_file_2string, write_string_2file
 from rich import print
 
 
@@ -158,11 +159,11 @@ class CLIArgs:
             print("Dev helper automatically creating file")
 
             client_id = f"stablecaps{random.randint(100, 999)}"
-            with open(client_id_file, "w") as file:
-                file.write(client_id)
+            write_string_2file(filepath=client_id_file, filetext=client_id, mode="w")
             print(f"'client_id' file created with ID: {client_id}")
 
         else:
+            read_file_2string(filepath=client_id_file, mode="r")
             with open(client_id_file, "r") as file:
                 client_id = file.read().strip()
 

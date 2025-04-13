@@ -186,4 +186,6 @@ def run(event, context):
         if item_dict_if_fail:
             item_dict_if_fail["s3img_key"] = f"{s3bucket_source}/{s3_key}"
         dynamodb_helper.update_item(item_dict=item_dict_if_fail)
-        # raise  - TODO: Re-raise the exception to allow lambda to handle retries. need additional ifra like SQS DLQ
+
+        # TODO: Re-raise the exception to allow lambda to handle retries. need additional ifra like SQS DLQ
+        # raise
