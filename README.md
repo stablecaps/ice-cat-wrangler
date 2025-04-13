@@ -438,7 +438,7 @@ logs: When uploading images, the client stores details of the uploads as a list 
         "s3_key": "0eaf1da24040970c6396ca59488ad7fa739ef7ab4ee1f757f180dade9adc43cf/stablecaps900/batch-1744377772/2025-04-11-13/1744377772-debug.png",
         "original_file_name": "siberian-cats-for-sale-siberian-kitten-malechampion-bloodline-hampstead-garden-suburb-london-image-2.webp.png",
         "upload_time": "2025-04-11-13",
-        "file_image_hash": "0eaf1da24040970c6396ca59488ad7fa739ef7ab4ee1f757f180dade9adc43cf",
+        "img_fprint": "0eaf1da24040970c6396ca59488ad7fa739ef7ab4ee1f757f180dade9adc43cf",
         "epoch_timestamp": 1744377772
     }
 ]
@@ -500,7 +500,7 @@ Note that both `api-client` and `serverless` virtual envs have pre-commit instal
      - `batch_id`
      - `original_file_name`
      - `upload_time="YYYY-MM-DD-HH"`
-     - `file_image_hash`
+     - `img_fprint`
      - `epoch_timestamp`
    - For the database:
      - Multiple clients/customers should have unique IDs to assist with searching.

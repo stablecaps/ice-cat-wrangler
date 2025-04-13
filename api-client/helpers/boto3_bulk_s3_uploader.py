@@ -87,7 +87,7 @@ class BulkS3Uploader:
                 "s3_key": s3_key,
                 "original_file_name": file_name,
                 "upload_time": current_date,
-                "file_image_hash": file_hash,
+                "img_fprint": file_hash,
                 "epoch_timestamp": epoch_timestamp,
             }
         except ClientError as err:

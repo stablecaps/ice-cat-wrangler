@@ -31,7 +31,7 @@ Dependencies:
 
 import os
 
-from boto3_client_helpers import ClientDynamoDBHelper
+from client_dynamodb_helper import ClientDynamoDBHelper
 from helpers.boto3_bulk_s3_uploader import BulkS3Uploader
 from helpers.boto3_clients import dyndb_client
 from helpers.general import read_batch_file
@@ -85,23 +85,13 @@ class CatAPIClient:
         elif action == "result":
             self.result()
         elif action == "bulkresults":
-            print("Bulk results not implemented yet. Exiting...")
             self.bulk_results()
-        # elif action == "analyse":
-        #     self.method = "POST"
-        #     self.endpoint = os.getenv("ANALYSE_ENDPOINT")
-        # elif action == "results":
-        #     self.method = "GET"
-        #     self.endpoint = f"{os.getenv('RESULTS_ENDPOINT')}/{self.img_fprint}"
         else:
             raise ValueError(
                 "Invalid action. Choose 'bulkanalyse', 'result', or 'bulkresults'."
             )
 
         return
-
-        # args = AWSRequestSigner(method=self.method, endpoint=self.endpoint)
-        # self.headers = args.get_auth_headers()
 
     @staticmethod
     def get_rek_iscat_status(item):
@@ -191,6 +181,13 @@ class CatAPIClient:
     def bulk_results(self):
         batch_file_json = read_batch_file(batch_file_path=self.batch_file)
 
+        if self.debug:
+            print("batch_file_json:", batch_file_json)
+
         dynamodb_helper = ClientDynamoDBHelper(
             dyndb_client=dyndb_client, table_name=self.dynamodb_table_name, debug=True
         )
+        batch_results = dynamodb_helper.get_multiple_items(
+            batch_records=batch_file_json
+        )
+        CatAPIClient.display_rek_iscat_table(iscat_results=batch_results)

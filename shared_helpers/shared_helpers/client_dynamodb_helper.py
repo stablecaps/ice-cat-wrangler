@@ -67,13 +67,12 @@ class ClientDynamoDBHelper:
             )
             raise
 
-    def query_dynamodb_for_records(self, batch_records):
+    def get_multiple_items(self, batch_records):
         """
-        Queries DynamoDB for related records based on batch_id and file_image_hash (img_fprint).
+        Queries DynamoDB for related records based on batch_id and img_fprint.
 
         Args:
-            batch_records (list of dict): List of dictionaries containing `batch_id` and `file_image_hash`.
-            table_name (str): The name of the DynamoDB table to query.
+            batch_records (list of dict): List of dictionaries containing `batch_id` and `img_fprint`.
 
         Returns:
             list of dict: A list of dictionaries containing the queried DynamoDB records.
@@ -81,35 +80,40 @@ class ClientDynamoDBHelper:
         Raises:
             Exception: If there is an error querying DynamoDB.
         """
-
         results = []
 
         for record in batch_records:
-            batch_id = record.get("batch_id")
-            file_image_hash = record.get("file_image_hash")  # Also known as img_fprint
+            # print("record", record)
 
-            if not batch_id or not file_image_hash:
+            batch_id = str(int(record.get("batch_id").replace("batch-", "")))
+            img_fprint = record.get("img_fprint")
+            if not batch_id or not img_fprint:
                 print(
-                    f"Skipping record due to missing batch_id or file_image_hash: {record}"
+                    f"Skipping record due to missing batch_id or img_fprint: {record}"
                 )
                 continue
 
             try:
                 response = self.dynamodb_client.get_item(
-                    Key={"batch_id": batch_id, "img_fprint": file_image_hash}
+                    TableName=self.table_name,
+                    Key={
+                        "batch_id": {"N": batch_id},
+                        "img_fprint": {"S": img_fprint},
+                    },
                 )
 
                 # Check if the item exists in the response
                 if "Item" in response:
-                    results.append(response["Item"])
+                    item = {k: list(v.values())[0] for k, v in response["Item"].items()}
+                    results.append(item)
                 else:
                     print(
-                        f"No record found for batch_id={batch_id}, img_fprint={file_image_hash}"
+                        f"No record found for batch_id={batch_id}, img_fprint={img_fprint}"
                     )
 
-            except ClientError as e:
+            except ClientError as err:
                 print(
-                    f"Error querying DynamoDB for batch_id={batch_id}, img_fprint={file_image_hash}: {e}"
+                    f"Error querying DynamoDB for batch_id={batch_id}, img_fprint={img_fprint}: {err}"
                 )
                 continue
 
