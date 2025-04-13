@@ -16,6 +16,4 @@ Example:
             print("Item is valid.")
 """
 
-import os
-
 required_dyndb_keys = ["batch_id", "img_fprint"]
