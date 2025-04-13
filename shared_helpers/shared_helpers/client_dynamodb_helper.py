@@ -1,11 +1,28 @@
+"""
+client_dynamodb_helper.py
+
+This module provides a helper class for interacting with AWS DynamoDB. It includes methods for fetching
+single and multiple items from a DynamoDB table.
+
+Classes:
+    - ClientDynamoDBHelper: A helper class for DynamoDB operations.
+
+Dependencies:
+    - Python 3.12 or higher
+    - `boto3` for AWS DynamoDB interactions
+    - `botocore.exceptions.ClientError` for handling AWS client errors
+    - `rich` for enhanced console output
+"""
+
 from botocore.exceptions import ClientError
 from rich import print as rich_print
 
 
 class ClientDynamoDBHelper:
     """
-    Client helper class for interacting with DynamoDB.
-    Provides methods to get items from a DynamoDB table using a client.
+    A helper class for interacting with AWS DynamoDB.
+
+    This class provides methods to fetch single and multiple items from a DynamoDB table.
     """
 
     def __init__(self, dyndb_client, table_name, debug=False):
@@ -13,6 +30,7 @@ class ClientDynamoDBHelper:
         Initializes the DynamoDBHelper.
 
         Args:
+            dyndb_client (boto3.client): A boto3 DynamoDB client instance.
             table_name (str): The name of the DynamoDB table.
             debug (bool): Whether to enable debug output.
         """
@@ -22,21 +40,21 @@ class ClientDynamoDBHelper:
 
     def get_item(self, batch_id, img_fprint):
         """
-        Retrieves an item from the DynamoDB table using the primary key and sort key.
+        Fetches a single item from the DynamoDB table.
 
         Args:
-            batch_id (str): The primary key value.
-            img_fprint (str): The sort key value.
+            batch_id (str): The batch ID of the item to fetch.
+            img_fprint (str): The image fingerprint of the item to fetch.
 
         Returns:
-            dict: The retrieved item, or None if not found.
+            dict or None: A dictionary representing the item if found, otherwise None.
 
         Raises:
-            ClientError: If there is an error during the DynamoDB operation.
+            ClientError: If there is an error querying DynamoDB.
         """
-
         rich_print(
-            f"Fetching item from table '{self.table_name}' with batch_id='{batch_id}' and img_fprint='{img_fprint}'"
+            f"Fetching item from table '{self.table_name}' with batch_id='{batch_id}'"
+            " and img_fprint='{img_fprint}'"
         )
         try:
 
@@ -79,54 +97,44 @@ class ClientDynamoDBHelper:
 
     def get_multiple_items(self, batch_records):
         """
-        Queries DynamoDB for related records based on batch_id and img_fprint.
+        Fetches multiple items from DynamoDB based on batch records.
 
         Args:
-            batch_records (list of dict): List of dictionaries containing `batch_id` and `img_fprint`.
+            batch_records (list): A list of dictionaries containing batch_id and img_fprint.
 
         Returns:
-            list of dict: A list of dictionaries containing the queried DynamoDB records.
-
-        Raises:
-            Exception: If there is an error querying DynamoDB.
+            list: A list of dictionaries representing the retrieved items.
         """
         results_list = []
 
         for record in batch_records:
-
-            batch_id = str(int(record.get("batch_id").replace("batch-", "")))
+            batch_id = record.get("batch_id")
             img_fprint = record.get("img_fprint")
+
             if not batch_id or not img_fprint:
                 print(
                     f"Skipping record due to missing batch_id or img_fprint: {record}"
                 )
                 continue
 
+            # Normalize batch_id
             try:
-                response = self.dynamodb_client.get_item(
-                    TableName=self.table_name,
-                    Key={
-                        "batch_id": {"N": batch_id},
-                        "img_fprint": {"S": img_fprint},
-                    },
-                )
+                batch_id = str(int(batch_id.replace("batch-", "")))
+            except ValueError:
+                print(f"Invalid batch_id format: {batch_id}")
+                continue
 
-                # Check if the item exists in the response
-                if "Item" in response:
-                    item = {k: list(v.values())[0] for k, v in response["Item"].items()}
-
-                    # add some other identifying info to the result
-                    if self.debug:
-                        print("response", response)
-
-                    item["original_file_name"] = record["original_file_name"]
-                    #
+            # Fetch the item using the helper method
+            try:
+                item = self.get_item(batch_id, img_fprint)
+                if item:
+                    # Add additional identifying info
+                    item["original_file_name"] = record.get("original_file_name", "N/A")
                     results_list.append(item)
                 else:
                     print(
                         f"No record found for batch_id={batch_id}, img_fprint={img_fprint}"
                     )
-
             except ClientError as err:
                 print(
                     f"Error querying DynamoDB for batch_id={batch_id}, img_fprint={img_fprint}: {err}"

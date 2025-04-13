@@ -3,16 +3,22 @@ import logging
 from botocore.exceptions import ClientError
 
 # TODO: check logs propagate into dynamodb
-# use without __name__ cos this module will propagate logs to lambda root logger so we can use LogCollectorHandler
+# use without __name__ as this module will propagate logs to lambda root logger to enable LogCollectorHandler
 LOG = logging.getLogger()
 
 
 class DynamoDBHelper:
+    """Helper class for interacting with DynamoDB.
+
+    This class provides methods to write and update items in a DynamoDB table,
+    as well as utilities for converting Python dictionaries to DynamoDB item formats.
+    """
+
     def __init__(self, dyndb_client, table_name, required_keys):
-        """
-        Initialize the DynamoDBHelper class.
+        """Initializes the DynamoDBHelper class.
 
         Args:
+            dyndb_client (boto3.client): The DynamoDB client instance.
             table_name (str): The name of the DynamoDB table.
             required_keys (list): A list of required keys that must be present in the item_dict.
         """
@@ -38,18 +44,18 @@ class DynamoDBHelper:
         }
 
     def convert_value_to_dyndb_type(self, key, value):
-        """
-        Converts a single key-value pair to the correct DynamoDB type.
+        """Converts a Python value to a DynamoDB-compatible type.
 
         Args:
-            key (str): The attribute name.
-            value: The attribute value.
+            key (str): The attribute key.
+            value (Any): The value to be converted.
 
         Returns:
-            dict: A DynamoDB-compatible key-value pair.
+            dict: A dictionary representing the DynamoDB-compatible value.
 
         Raises:
-            ValueError: If the attribute type is unknown or the value is invalid.
+            ValueError: If the key is not found in `attribute_types` or if the value
+                cannot be converted to the expected type.
         """
         if key not in self.attribute_types:
             LOG.error("Key: <%s> not found in attribute_types dict", key)
@@ -86,17 +92,16 @@ class DynamoDBHelper:
             raise ValueError(f"Unsupported attribute type for key: {key}")
 
     def convert_pydict_to_dyndb_item(self, item_dict):
-        """
-        Converts a Python dictionary to a DynamoDB-compatible item format.
+        """Converts a Python dictionary to a DynamoDB item format.
 
         Args:
-            item_dict (dict): The dictionary containing the item data.
+            item_dict (dict): The Python dictionary to be converted.
 
         Returns:
-            dict: A DynamoDB-compatible item.
+            dict: A dictionary in DynamoDB item format.
 
         Raises:
-            ValueError: If a required key is missing or if an attribute type is unknown.
+            ValueError: If any required key is missing or if a value cannot be converted.
         """
         # Check for required keys
         for key in self.required_keys:
@@ -112,16 +117,17 @@ class DynamoDBHelper:
         return dyndb_item
 
     def write_item(self, item_dict):
-        """
-        Write an item to the DynamoDB table.
+        """Writes an item to the DynamoDB table.
 
         Args:
-            item_dict (dict): A dictionary containing the attributes to write to the table.
+            item_dict (dict): The item to be written to the table.
 
         Returns:
-            dict: The response from DynamoDB.
-        """
+            dict: The response from the DynamoDB `put_item` operation.
 
+        Raises:
+            RuntimeError: If the `put_item` operation fails.
+        """
         # TODO: Preprocess the `rek_resp` field if it exists
         # if "rek_resp" in item_dict:
         #     item_dict["rek_resp"] = DynamoDBHelper.preprocess_dynamodb_dict(item_dict["rek_resp"])
@@ -139,18 +145,20 @@ class DynamoDBHelper:
             return response
         except ClientError as err:
             LOG.error("Failed to write item to DynamoDB: %s", err)
-            raise
+            raise RuntimeError(f"Failed to write item to DynamoDB: {err}") from err
 
     def update_item(self, item_dict):
-        """
-        Update specific attributes in a DynamoDB item without deleting other attributes.
+        """Updates an item in the DynamoDB table.
 
         Args:
-            item_dict (dict): A dictionary containing the primary key and attributes to update.
-                              The primary key (partition key and sort key) must be included.
+            item_dict (dict): The item to be updated. Must include the primary key attributes
+                (`batch_id` and `img_fprint`) and any other attributes to update.
 
         Returns:
-            dict: The response from the UpdateItem operation.
+            dict: The response from the DynamoDB `update_item` operation.
+
+        Raises:
+            RuntimeError: If the `update_item` operation fails.
         """
         # Extract and convert the primary key attributes
         key = {
@@ -187,4 +195,6 @@ class DynamoDBHelper:
             return response
         except ClientError as err:
             LOG.error("Failed to update item in DynamoDB: %s", err)
-            raise
+            raise RuntimeError(
+                f"Failed to update item in table {self.table_name}"
+            ) from err
