@@ -167,7 +167,9 @@ class CatAPIClient:
     def result(self):
 
         dynamodb_helper = ClientDynamoDBHelper(
-            dyndb_client=dyndb_client, table_name=self.dynamodb_table_name, debug=True
+            dyndb_client=dyndb_client,
+            table_name=self.dynamodb_table_name,
+            debug=self.debug,
         )
 
         item = dynamodb_helper.get_item(
@@ -197,7 +199,9 @@ class CatAPIClient:
             print("batch_file_json:", batch_file_json)
 
         dynamodb_helper = ClientDynamoDBHelper(
-            dyndb_client=dyndb_client, table_name=self.dynamodb_table_name, debug=True
+            dyndb_client=dyndb_client,
+            table_name=self.dynamodb_table_name,
+            debug=self.debug,
         )
         batch_results = dynamodb_helper.get_multiple_items(
             batch_records=batch_file_json

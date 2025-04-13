@@ -83,7 +83,6 @@ class ClientDynamoDBHelper:
         results_list = []
 
         for record in batch_records:
-            # print("record", record)
 
             batch_id = str(int(record.get("batch_id").replace("batch-", "")))
             img_fprint = record.get("img_fprint")
