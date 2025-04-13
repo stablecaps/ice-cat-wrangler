@@ -430,6 +430,8 @@ The DB uses `batch_id` as the partition key and `img_fprint` as the sort key.
 
 logs: When uploading images, the client stores details of the uploads as a list of dicts in json format. This can be used to keep track of jobs via `batch_id`, and get PK & SK to query DynamoDB using the `result` subcommand. The entire log can be used as input into the `bulkresults` subcommand.
 
+debug logs: Debug logs from serverless are collected if the `--debug` arg is passed to the client. These are written to the logs folder.
+
 ```json
 [
     {
@@ -520,6 +522,10 @@ Note that both `api-client` and `serverless` virtual envs have pre-commit instal
   - Autoscaling to handle load.
 - **Lambda alerts**.
 - Handle deletion of items from the bucket: Delete corresponding entries from DynamoDB.
+- reduce logging to save costs
+- finish tests
+- atexit not behaving as expected in lambda env - investigate
+- Re-raise final exception to allow lambda to handle retries. need additional infra like SQS DLQ
 
 ---
 

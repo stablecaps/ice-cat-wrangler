@@ -120,21 +120,23 @@ class CLIArgs:
             parser.print_help()
             sys.exit(42)
 
+        self.debug = args.debug
+
         # Load environment variables
-        load_environment_variables(secretsfile=args.secretsfile, debug=args.debug)
+        load_environment_variables(secretsfile=args.secretsfile, debug=self.debug)
 
         print("All environment secrets set correctly")
 
         # Get the client ID
-        client_id = CLIArgs.get_client_id()
+        self.client_id = CLIArgs.get_client_id()
 
         # Dispatch to the appropriate subcommand
         if args.command == "bulkanalyse":
-            CLIArgs.bulkanalyse(args.folder, client_id, args.debug)
+            self.bulkanalyse(args.folder)
         elif args.command == "result":
-            CLIArgs.result(args.batch_id, args.img_fprint, args.debug)
+            self.result(args.batch_id, args.img_fprint)
         elif args.command == "bulkresults":
-            CLIArgs.bulkresults(args.batch_file, args.debug)
+            self.bulkresults(args.batch_file)
 
     @staticmethod
     def get_client_id():
@@ -174,8 +176,7 @@ class CLIArgs:
         print(f"Client ID loaded successfully: {client_id}\n")
         return client_id
 
-    @staticmethod
-    def bulkanalyse(folder, client_id, debug):
+    def bulkanalyse(self, folder):
         """
         Handles the 'bulkanalyse' subcommand. Uploads images from a local
         directory to an AWS S3 bucket.
@@ -186,11 +187,13 @@ class CLIArgs:
             debug (bool): Debug mode flag.
         """
         CatAPIClient(
-            action="bulkanalyse", folder_path=folder, client_id=client_id, debug=debug
+            action="bulkanalyse",
+            folder_path=folder,
+            client_id=self.client_id,
+            debug=self.debug,
         )
 
-    @staticmethod
-    def result(batch_id, img_fprint, debug):
+    def result(self, batch_id, img_fprint):
         """
         Handles the 'result' subcommand. Fetches results from dynamodb
         for a specific batch ID and image fingerprint.
@@ -201,11 +204,14 @@ class CLIArgs:
             debug (bool): Debug mode flag.
         """
         client = CatAPIClient(
-            action="result", batch_id=batch_id, img_fprint=img_fprint, debug=debug
+            action="result",
+            batch_id=batch_id,
+            img_fprint=img_fprint,
+            client_id=self.client_id,
+            debug=self.debug,
         )
 
-    @staticmethod
-    def bulkresults(batch_file, debug):
+    def bulkresults(self, batch_file):
         """
         Handles the 'bulkresults' subcommand. Processes a batch file (created by bulkanalyse)
         to upload images and fetch results.
@@ -214,7 +220,12 @@ class CLIArgs:
             batch_file (str): Path to the local batch logfile.
             debug (bool): Debug mode flag.
         """
-        client = CatAPIClient(action="bulkresults", batch_file=batch_file, debug=debug)
+        client = CatAPIClient(
+            action="bulkresults",
+            batch_file=batch_file,
+            client_id=self.client_id,
+            debug=self.debug,
+        )
 
 
 if __name__ == "__main__":

@@ -115,7 +115,11 @@ def gen_item_dict1_from_s3key(s3_key, s3_bucket):
         if len(epoch_timestamp_isdebug_check) == 2:
             is_debug = True
         global_context["is_debug"] = is_debug
-        LOG.debug("is_debug set to: %s", global_context["is_debug"])
+        LOG.info(
+            "in gen_item_dict1_from_s3key() is_debug set to: %s with type <%s>",
+            global_context["is_debug"],
+            type(global_context["is_debug"]),
+        )
 
         # set shared context (for atexit logging)
         global_context["batch_id"] = batch_id
@@ -193,20 +197,3 @@ def gen_item_dict2_from_rek_resp(rekog_results):
     except Exception as err:
         LOG.error("Failed to create item_dict2: %s", err)
         return {}
-
-
-# item_dict = {
-#     "batch_id": 12345, # s3path[2]
-#     "img_fprint": "unique_image_hash", # s3path[0]
-#     "client_id": "client123", # s3path[1]
-#     "s3img_key": "s3://bucket-name/path/to/image.jpg", # s3bucket + s3path
-#     "file_name": "image.jpg", # we can't get this yet
-#     "op_status": "success", # pending, success, fail
-#     "rek_resp": {"Labels": [{"Name": "Cat", "Confidence": 95}]}, # rekognition response
-#     "rek_iscat": True, # rekognition response
-#     "logs": {"debug": "Processed successfully"}, # logs (only if debug is supplied)
-#     "current_date": "2023-01-01-HH", # s3path[3]
-#     "upload_ts": 1672531200, # s3path[4]
-#     "rek_ts": 1672531300, # rekognition timestamp
-#     "ttl": 1675132800, # dyndb_ttl
-# }

@@ -1,4 +1,3 @@
-import atexit
 import logging
 import os
 
@@ -34,7 +33,7 @@ class LogCollectorHandler(logging.Handler):
 
 
 LOG = logging.getLogger()
-LOG.setLevel(logging.DEBUG)
+LOG.setLevel(logging.INFO)
 log_collector = LogCollectorHandler()
 LOG.addHandler(log_collector)
 
@@ -62,36 +61,34 @@ dynamodb_helper = DynamoDBHelper(
 
 
 ######################################################################
-def write_logs_to_dynamodb():
+def write_debug_logs_to_dynamodb():
+    LOG.info("in write_debug_logs_to_dynamodb()")
 
-    # Retrieve batch_id and img_fprint from global context
-    # will notwork if global_context pk & sk is None
-    batch_id = global_context.get("batch_id")
-    img_fprint = global_context.get("img_fprint")
-    if batch_id is None or img_fprint is None:
-        LOG.error("batch_id not set. Exiting")
-        return
+    if global_context.get("is_debug", False):
+        try:
+            # Retrieve batch_id and img_fprint from global context
+            # will notwork if global_context pk & sk is None
+            batch_id = global_context.get("batch_id")
+            img_fprint = global_context.get("img_fprint")
+            if batch_id is None or img_fprint is None:
+                LOG.error("batch_id not set. Exiting")
+                return
 
-    LOG.debug("Collected logs: %s", log_collector.logs)
+            # LOG.info("Collected logs: %s", log_collector.logs)
 
-    item_dict = {
-        "batch_id": batch_id,
-        "img_fprint": img_fprint,
-        "logs": convert_to_json(data=log_collector.logs),
-    }
+            item_dict = {
+                "batch_id": batch_id,
+                "img_fprint": img_fprint,
+                "logs": convert_to_json(data=log_collector.logs),
+            }
 
-    LOG.info("Writing logs to DynamoDB atexit: %s", item_dict)
-    dynamodb_helper.write_item(
-        item_dict=item_dict,
-    )
+            LOG.info("Writing logs to DynamoDB atexit: %s", item_dict)
 
-
-# use atexit to call write_logs_to_dynamodb function if program exits & writes logs if is_debug = True
-def register_atexit_if_debug():
-    is_debug = global_context.get("is_debug", False)
-    if is_debug:
-        LOG.info("Debug mode is enabled. Registering atexit function.")
-        atexit.register(write_logs_to_dynamodb)
+            dynamodb_helper.update_item(
+                item_dict=item_dict,
+            )
+        except Exception as err:
+            LOG.error("Failed to write logs to DynamoDB: %s", err)
 
 
 #############################################################
@@ -130,7 +127,7 @@ def run(event, context):
         dynamodb_helper.write_item(item_dict=item_dict1)
 
         # Register atexit after determining debug mode
-        register_atexit_if_debug()
+        # register_atexit_if_debug()
 
         # Step 3: Retrieve file bytes from S3
         file_bytes = get_filebytes_from_s3(
@@ -178,8 +175,6 @@ def run(event, context):
         LOG.info("item_dict3: <%s>", item_dict3)
         dynamodb_helper.update_item(item_dict=item_dict3)
 
-        LOG.info("Finished processing image from S3.")
-
     except Exception as err:
         # Catch any failure and update DynamoDB with failure status
         LOG.critical("Processing failed: %s", err)
@@ -187,5 +182,11 @@ def run(event, context):
             item_dict_if_fail["s3img_key"] = f"{s3bucket_source}/{s3_key}"
         dynamodb_helper.update_item(item_dict=item_dict_if_fail)
 
-        # TODO: Re-raise the exception to allow lambda to handle retries. need additional ifra like SQS DLQ
+        write_debug_logs_to_dynamodb()
+
+        # TODO: Re-raise the exception to allow lambda to handle retries. need additional infra like SQS DLQ
         # raise
+    finally:
+        write_debug_logs_to_dynamodb()
+
+        LOG.info("Finished processing image from S3.")

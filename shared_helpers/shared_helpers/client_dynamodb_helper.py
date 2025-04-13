@@ -43,7 +43,7 @@ class ClientDynamoDBHelper:
             if self.debug:
                 # TODO: sort this
                 rich_print(
-                    f"Getting logging info for batch_id: {batch_id} and img_fprint: {img_fprint}"
+                    f"Getting item info for batch_id: {batch_id} and img_fprint: {img_fprint}"
                 )
 
             response = self.dynamodb_client.get_item(

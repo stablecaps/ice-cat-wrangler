@@ -5,6 +5,23 @@ import os.path
 from rich import print
 
 
+def gen_batch_file_path(client_id, batch_id):
+    """
+    Generates a batch file path based on the client ID and batch ID.
+
+    Args:
+        client_id (str): The client ID.
+        batch_id (str): The batch ID.
+
+    Returns:
+        str: The generated batch file path.
+    """
+    logs_folder = os.path.join(os.getcwd(), "logs")
+    if not os.path.exists(logs_folder):
+        os.makedirs(logs_folder)
+    return os.path.join(logs_folder, f"{client_id}_{batch_id}.json")
+
+
 def calculate_file_hash(file_path):
     """
     Calculates the SHA256 hash of a file.
