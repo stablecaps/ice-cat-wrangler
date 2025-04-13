@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from boto3_helpers import check_bucket_exists
 from botocore.exceptions import ClientError
 from helpers.boto3_clients import s3_client
-from helpers.general import calculate_file_hash
+from helpers.general import calculate_file_hash, gen_batch_file_path, write_batch_file
 from rich import print
 
 
@@ -33,24 +33,27 @@ class BulkS3Uploader:
         #
         self.batch_id = f"batch-{int(time.time())}"
         #
-        logs_folder = BulkS3Uploader.ensure_logs_folder()
-        self.log_file_path = os.path.join(
-            logs_folder, f"{self.client_id}_{self.batch_id}.json"
+        # logs_folder = BulkS3Uploader.ensure_logs_folder()
+        # self.batch_file_path = os.path.join(
+        #     logs_folder, f"{self.client_id}_{self.batch_id}.json"
+        # )
+        self.batch_file_path = gen_batch_file_path(
+            client_id=client_id, batch_id=client_id
         )
         self.debug = debug
 
-    @staticmethod
-    def ensure_logs_folder():
-        """
-        Ensures the logs folder exists in the current working directory.
+    # @staticmethod
+    # def ensure_logs_folder():
+    #     """
+    #     Ensures the logs folder exists in the current working directory.
 
-        Returns:
-            str: The path to the logs folder.
-        """
-        logs_folder = os.path.join(os.getcwd(), "logs")
-        if not os.path.exists(logs_folder):
-            os.makedirs(logs_folder)
-        return logs_folder
+    #     Returns:
+    #         str: The path to the logs folder.
+    #     """
+    #     logs_folder = os.path.join(os.getcwd(), "logs")
+    #     if not os.path.exists(logs_folder):
+    #         os.makedirs(logs_folder)
+    #     return logs_folder
 
     def upload_image(self, file_path, batch_id):
         """
@@ -87,7 +90,7 @@ class BulkS3Uploader:
                 "s3_key": s3_key,
                 "original_file_name": file_name,
                 "upload_time": current_date,
-                "file_image_hash": file_hash,
+                "img_fprint": file_hash,
                 "epoch_timestamp": epoch_timestamp,
             }
         except ClientError as err:
@@ -120,9 +123,11 @@ class BulkS3Uploader:
                 if record:
                     upload_records.append(record)
 
+        if len(upload_records) == 0:
+            print("No images were found to upload.")
+            return
         # Write the upload records to the log file
-        with open(self.log_file_path, "w") as log_file:
-            json.dump(upload_records, log_file, indent=4)
+        write_batch_file(filepath=self.batch_file_path, batch_records=upload_records)
 
         print(f"\nAll eligible images have been uploaded successfully.")
-        print(f"Upload records saved to: {self.log_file_path}")
+        print(f"Upload records saved to: {self.batch_file_path}")

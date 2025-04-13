@@ -30,10 +30,21 @@ resource "aws_dynamodb_table" "image_cat" {
     type = "S"
   }
 
+  # attribute {
+  #   name = "rek_resp"
+  #   type = "S"
+  # }
+
   attribute {
     name = "rek_iscat"
     type = "S" # stringified boolean
   }
+
+  # attribute {
+  #   name = "logs"
+  #   type = "S"
+  # }
+
 
   attribute {
     name = "upload_ts"

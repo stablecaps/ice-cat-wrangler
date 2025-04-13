@@ -47,10 +47,11 @@ We need the following behaviors:
 
 I've tried to write code that sets-up avenues whereby we can minimise cost whilst maximising performance. Obviously, this is an iterative process that will materialise results as the requirements crystalise.
 
-The repository is divided into 3 major components:
+The repository is divided into 4 major components:
 1. **`infra-terra`:** Contains terraform code to create various AWS resources
 2. **`serverless`:** Contains a lambda function that handles image processing
-3. **`shared_helpers`:** Contains shared functions and classes that can be shared between infra-terra and serverless. I've tried to write the code to be easily abstracted to other use cases. That way it could potentially be split out into a separate repo so that other applications can also use this code.
+3. **`api-client`:** Contains amn api-client that can upload images and get the categorisation results from those uploads. Use `rich` print instead of logs for a better user experience.
+4. **`shared_helpers`:** Contains shared functions and classes that can be shared between infra-terra and serverless. I've tried to write the code to be easily abstracted to other use cases. That way it could potentially be split out into a separate repo so that other applications can also use this code.
 
 The solution relies upon using both terraform and serverless as deployment agents for the following reasons because each tool has its strengths & weaknesses.
 
@@ -429,6 +430,8 @@ The DB uses `batch_id` as the partition key and `img_fprint` as the sort key.
 
 logs: When uploading images, the client stores details of the uploads as a list of dicts in json format. This can be used to keep track of jobs via `batch_id`, and get PK & SK to query DynamoDB using the `result` subcommand. The entire log can be used as input into the `bulkresults` subcommand.
 
+debug logs: Debug logs from serverless are collected if the `--debug` arg is passed to the client. These are written to the logs folder.
+
 ```json
 [
     {
@@ -438,7 +441,7 @@ logs: When uploading images, the client stores details of the uploads as a list 
         "s3_key": "0eaf1da24040970c6396ca59488ad7fa739ef7ab4ee1f757f180dade9adc43cf/stablecaps900/batch-1744377772/2025-04-11-13/1744377772-debug.png",
         "original_file_name": "siberian-cats-for-sale-siberian-kitten-malechampion-bloodline-hampstead-garden-suburb-london-image-2.webp.png",
         "upload_time": "2025-04-11-13",
-        "file_image_hash": "0eaf1da24040970c6396ca59488ad7fa739ef7ab4ee1f757f180dade9adc43cf",
+        "img_fprint": "0eaf1da24040970c6396ca59488ad7fa739ef7ab4ee1f757f180dade9adc43cf",
         "epoch_timestamp": 1744377772
     }
 ]
@@ -500,7 +503,7 @@ Note that both `api-client` and `serverless` virtual envs have pre-commit instal
      - `batch_id`
      - `original_file_name`
      - `upload_time="YYYY-MM-DD-HH"`
-     - `file_image_hash`
+     - `img_fprint`
      - `epoch_timestamp`
    - For the database:
      - Multiple clients/customers should have unique IDs to assist with searching.
@@ -519,6 +522,10 @@ Note that both `api-client` and `serverless` virtual envs have pre-commit instal
   - Autoscaling to handle load.
 - **Lambda alerts**.
 - Handle deletion of items from the bucket: Delete corresponding entries from DynamoDB.
+- reduce logging to save costs
+- finish tests
+- atexit not behaving as expected in lambda env - investigate
+- Re-raise final exception to allow lambda to handle retries. need additional infra like SQS DLQ
 
 ---
 
