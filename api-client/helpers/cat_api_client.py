@@ -94,27 +94,6 @@ class CatAPIClient:
         return
 
     @staticmethod
-    def get_rek_iscat_status(item):
-        """
-        Extracts and returns the rek_iscat status from a DynamoDB item.
-
-        Args:
-            item (dict): The DynamoDB item retrieved.
-
-        Returns:
-            bool: True if rek_iscat is 'True', False otherwise.
-
-        Raises:
-            ValueError: If the rek_iscat field is missing in the item.
-        """
-        if "rek_iscat" not in item:
-            raise ValueError("The 'rek_iscat' field is missing in the item.")
-            return
-
-        # Convert the rek_iscat value to a boolean
-        return item["rek_iscat"] == "True"
-
-    @staticmethod
     def display_rek_iscat_table(iscat_results):
         """
         Displays multiple rows of rek_iscat, batch_id, and img_fprint values in a formatted table.
@@ -144,18 +123,20 @@ class CatAPIClient:
                 s3_key_short_last = "/".join(s3_key_split[2:])
 
             # Conditionally format rek_iscat color
-            rek_iscat_value = result_dict.get("rek_iscat", "N/A")
-            print("rek_iscat_value:", rek_iscat_value, type(rek_iscat_value))
+            rek_iscat = result_dict.get("rek_iscat", "N/A")
+            # print("rek_iscat:", rek_iscat, type(rek_iscat))
 
-            if rek_iscat_value.lower() == "true":
+            if rek_iscat == "N/A":
+                rek_iscat_color = "red"
+            elif rek_iscat.lower() == "true":
                 rek_iscat_color = "green"
-            elif rek_iscat_value.lower() == "false":
+            elif rek_iscat.lower() == "false":
                 rek_iscat_color = "red"
             else:
                 rek_iscat_color = "yellow"
 
             table.add_row(
-                f"[{rek_iscat_color}]{rek_iscat_value}[/]",
+                f"[{rek_iscat_color}]{rek_iscat}[/]",
                 str(result_dict.get("batch_id", "N/A")),
                 result_dict.get("img_fprint", "N/A"),
                 result_dict.get("original_file_name", "N/A"),
@@ -189,7 +170,7 @@ class CatAPIClient:
         if self.debug:
             print("Retrieved item:", item)
 
-        rek_iscat = self.get_rek_iscat_status(item)
+        rek_iscat = item.get("rek_iscat", "N/A")
 
         iscat_results = [
             {
@@ -217,6 +198,7 @@ class CatAPIClient:
         batch_results = dynamodb_helper.get_multiple_items(
             batch_records=batch_file_json
         )
+
         # write the upload records to a results log file
         write_batch_file(
             filepath=f"{self.batch_file.replace('.json', '-results.json')}",

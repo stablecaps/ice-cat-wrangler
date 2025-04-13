@@ -47,10 +47,11 @@ We need the following behaviors:
 
 I've tried to write code that sets-up avenues whereby we can minimise cost whilst maximising performance. Obviously, this is an iterative process that will materialise results as the requirements crystalise.
 
-The repository is divided into 3 major components:
+The repository is divided into 4 major components:
 1. **`infra-terra`:** Contains terraform code to create various AWS resources
 2. **`serverless`:** Contains a lambda function that handles image processing
-3. **`shared_helpers`:** Contains shared functions and classes that can be shared between infra-terra and serverless. I've tried to write the code to be easily abstracted to other use cases. That way it could potentially be split out into a separate repo so that other applications can also use this code.
+3. **`api-client`:** Contains amn api-client that can upload images and get the categorisation results from those uploads. Use `rich` print instead of logs for a better user experience.
+4. **`shared_helpers`:** Contains shared functions and classes that can be shared between infra-terra and serverless. I've tried to write the code to be easily abstracted to other use cases. That way it could potentially be split out into a separate repo so that other applications can also use this code.
 
 The solution relies upon using both terraform and serverless as deployment agents for the following reasons because each tool has its strengths & weaknesses.
 
