@@ -1,4 +1,40 @@
-import json
+"""
+boto3_bulk_s3_uploader.py
+
+This module provides the `BulkS3Uploader` class, which handles uploading images to an S3 bucket and logging
+metadata for each upload. It supports bulk uploads from a local folder and generates structured metadata
+for each uploaded file.
+
+Classes:
+    - BulkS3Uploader: A class to manage the upload of images to an S3 bucket and log metadata.
+
+Functions:
+    - check_bucket_exists: Verifies if the specified S3 bucket exists.
+    - calculate_file_hash: Computes a hash for a given file.
+    - gen_batch_file_path: Generates a file path for batch logs.
+    - write_batch_file: Writes batch metadata to a file.
+
+Usage:
+    The `BulkS3Uploader` class can be used to upload all images from a specified folder to an S3 bucket.
+
+    Example:
+        from boto3_bulk_s3_uploader import BulkS3Uploader
+
+        uploader = BulkS3Uploader(
+            folder_path="path/to/images",
+            s3bucket_source="my-s3-bucket",
+            client_id="client123",
+            debug=True
+        )
+        uploader.process_files()
+
+Dependencies:
+    - Python 3.12 or higher
+    - `boto3` for AWS S3 interactions
+    - `rich` for enhanced console output
+    - Custom helper modules for S3 and file operations
+"""
+
 import os
 import time
 from datetime import datetime, timezone
@@ -13,6 +49,15 @@ from rich import print
 class BulkS3Uploader:
     """
     A class to handle uploading images to an S3 bucket and logging metadata for each upload.
+
+    Attributes:
+        supported_extensions (tuple): Supported file extensions for upload.
+        folder_path (str): Path to the folder containing images to upload.
+        s3bucket_source (str): Name of the S3 bucket to upload images to.
+        client_id (str): Client ID to include in the S3 key.
+        batch_id (str): Unique batch ID for the current upload session.
+        batch_file_path (str): Path to the batch log file.
+        debug (bool): Whether debug mode is enabled.
     """
 
     def __init__(self, folder_path, s3bucket_source, client_id, debug=False):
@@ -20,21 +65,21 @@ class BulkS3Uploader:
         Initializes the BulkS3Uploader.
 
         Args:
+            folder_path (str): Path to the folder containing images to upload.
             s3bucket_source (str): The name of the S3 bucket.
             client_id (str): The client ID to include in the S3 key.
             debug (bool, optional): If True, enables debug output. Defaults to False.
         """
 
-        self.SUPPORTED_EXTENSIONS = (".png", ".jpg", ".jpeg")
+        self.supported_extensions = (".png", ".jpg", ".jpeg")
         self.folder_path = folder_path
 
         self.s3bucket_source = s3bucket_source
         check_bucket_exists(s3_client=s3_client, bucket_name=self.s3bucket_source)
 
         self.client_id = client_id
-        #
+
         self.batch_id = f"batch-{int(time.time())}"
-        #
 
         self.batch_file_path = gen_batch_file_path(
             client_id=client_id, batch_id=client_id
@@ -60,6 +105,13 @@ class BulkS3Uploader:
     def upload_image(self, file_path, batch_id):
         """
         Processes a single file by uploading it to S3 and generating metadata.
+
+        Args:
+            file_path (str): Path to the file to upload.
+            batch_id (str): The batch ID for the current upload session.
+
+        Returns:
+            dict: Metadata for the uploaded file, or None if the upload fails.
         """
         file_name = os.path.basename(file_path)
         file_hash = calculate_file_hash(file_path)
@@ -90,9 +142,6 @@ class BulkS3Uploader:
         """
         Uploads all images from a local folder to a specified S3 bucket and logs metadata for each upload.
 
-        Args:
-            folder_path (str): The path to the local folder containing images.
-
         Returns:
             None
         """
@@ -102,7 +151,7 @@ class BulkS3Uploader:
             for file in files:
                 file_path = os.path.join(root, file)
 
-                if not file.lower().endswith(self.SUPPORTED_EXTENSIONS):
+                if not file.lower().endswith(self.supported_extensions):
                     if self.debug:
                         print(f"Skipping non-image file: {file_path}")
                     continue
@@ -119,5 +168,5 @@ class BulkS3Uploader:
         # Write the upload records to the log file
         write_batch_file(filepath=self.batch_file_path, batch_records=upload_records)
 
-        print(f"\nAll eligible images have been uploaded successfully.")
+        print("\nAll eligible images have been uploaded successfully.")
         print(f"Upload records saved to: {self.batch_file_path}")

@@ -36,21 +36,15 @@ secret_vars = [
     "AWS_ACCESS_KEY_ID",
     "AWS_SECRET_ACCESS_KEY",
     "AWS_REGION",
-    # "SERVICE",
-    # "API_HOST",
-    # "FUNC_IMAGE_ANALYSER_NAME",
-    # "FUNC_IMAGE_RESULTS_NAME",
     "FUNC_BULKIMG_ANALYSER_NAME",
-    # "ANALYSE_ENDPOINT",
-    # "RESULTS_ENDPOINT",
     "S3BUCKET_SOURCE",
     "DYNAMODB_TABLE_NAME",
 ]
 
-ssm_excluded_keys = ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"]
-ssm_prefix = "/stablecaps/dev/cat-wrangler"
+SSM_EXCLUDED_KEYS = ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"]
+SSM_PREFIX = "/stablecaps/dev/cat-wrangler"
 ssm_keys = [
-    f"{ssm_prefix}/{key}" for key in secret_vars if key not in ssm_excluded_keys
+    f"{SSM_PREFIX}/{key}" for key in secret_vars if key not in SSM_EXCLUDED_KEYS
 ]
 
 
@@ -137,7 +131,6 @@ def load_environment_variables(secretsfile, debug=False):
             f"Loading environment variables from the specified secrets file: {secretsfile}"
         )
         dotenv_path = construct_secrets_path(secret_filename=secretsfile)
-        # load env variables
         load_dotenv(dotenv_path, override=True)
 
     has_env_vars = check_env_variables()

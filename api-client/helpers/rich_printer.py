@@ -1,49 +1,81 @@
-from rich import print
+"""
+rich_printer.py
+
+This module provides utility functions for displaying data in a formatted table using the `rich` library
+and for determining colors based on specific conditions. These utilities are used to enhance console
+output with visually appealing tables and color-coded information.
+
+Functions:
+    - get_rek_iscat_color: Determines the color for displaying Rekognition results.
+    - rich_display_table: Displays data in a formatted table using the `rich` library.
+
+Usage:
+    Import the required function from this module to display tables or determine colors.
+
+    Example:
+        from helpers.rich_printer import get_rek_iscat_color, rich_display_table
+
+        # Get a color for Rekognition results
+        color = get_rek_iscat_color("true")
+        print(color)
+
+        # Display a table
+        data = [{"name": "Alice", "age": 30}, {"name": "Bob", "age": 25}]
+        columns = [{"header": "Name", "key": "name"}, {"header": "Age", "key": "age"}]
+        rich_display_table(data, title="Example Table", columns=columns)
+
+Dependencies:
+    - Python 3.12 or higher
+    - `rich` library for enhanced console output
+"""
+
 from rich.console import Console
 from rich.table import Table
 
 
 def get_rek_iscat_color(rek_iscat):
     """
-    Determines the color for rek_iscat based on its value.
+    Determines the color for displaying Rekognition results based on the `rek_iscat` value.
 
     Args:
-        rek_iscat (str): The rekognition result indicating if the image contains a cat.
+        rek_iscat (str): The Rekognition result value. Expected values are "true", "false", or "N/A".
 
     Returns:
-        str: The color corresponding to the rek_iscat value.
+        str: The color name ("green", "red", or "yellow") based on the `rek_iscat` value.
     """
     if rek_iscat == "N/A":
         return "red"
-    elif rek_iscat.lower() == "true":
+
+    if rek_iscat.lower() == "true":
         return "green"
-    elif rek_iscat.lower() == "false":
+
+    if rek_iscat.lower() == "false":
         return "red"
-    else:
-        return "yellow"
+
+    return "yellow"
 
 
 def rich_display_table(data, title="Table", columns=None):
     """
-    Displays a formatted table using the Rich library.
+    Displays data in a formatted table using the `rich` library.
 
     Args:
-        data (list of dict): A list of dictionaries containing the data to display.
-        title (str): The title of the table.
-        columns (list of dict): A list of dictionaries defining the columns. Each dictionary should have:
+        data (list of dict): The data to display in the table. Each dictionary represents a row.
+        title (str, optional): The title of the table. Defaults to "Table".
+        columns (list of dict): A list of column definitions. Each column definition is a dictionary
+            with the following keys:
             - "header" (str): The column header.
-            - "key" (str): The key in the data dictionary corresponding to this column.
-            - "style" (str, optional): The style for the column (default is None).
-            - "justify" (str, optional): The justification for the column (default is "left").
-            - "no_wrap" (bool, optional): Whether to disable wrapping for the column (default is False).
+            - "key" (str): The key in the data dictionary to display in this column.
+            - "style" (str, optional): The style (color) of the column. Defaults to None.
+            - "justify" (str, optional): The justification of the column ("left", "center", "right").
+              Defaults to "left".
+            - "no_wrap" (bool, optional): Whether to disable text wrapping for the column. Defaults to False.
 
-    Example:
-        columns = [
-            {"header": "rek_iscat", "key": "rek_iscat", "style": "green"},
-            {"header": "batch_id", "key": "batch_id", "style": "magenta"},
-            {"header": "img_fprint", "key": "img_fprint", "style": "yellow"},
-        ]
-        rich_display_table(data=iscat_results, title="Rekognition Results", columns=columns)
+    Raises:
+        ValueError: If the `columns` argument is not provided.
+
+    Returns:
+        None
     """
     if columns is None:
         raise ValueError("Columns must be defined to display the table.")

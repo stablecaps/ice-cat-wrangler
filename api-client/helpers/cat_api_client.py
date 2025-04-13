@@ -1,34 +1,42 @@
-#!/usr/bin/env python3.12
-
 """
-AWS Request Signer Client
+cat_api_client.py
 
-This module provides functionality to sign AWS API requests using the AWS Signature Version 4 signing process.
-It includes a class `AWSRequestSigner` that handles the signing process and a command-line interface for making
-signed requests to AWS services.
+This module provides the `CatAPIClient` class, which facilitates interactions with AWS services such as
+DynamoDB and S3. It supports operations like bulk image uploads, retrieving results, and processing batch
+files.
 
 Classes:
-    AWSRequestSigner: Handles AWS Signature Version 4 signing for API requests.
+    - CatAPIClient: Manages operations for bulk uploads, result retrieval, and batch processing.
 
 Functions:
-    check_env_variables(dotenv_path): Verifies that all required environment variables are loaded from a dotenv file.
+    - gen_batch_file_path: Generates a file path for batch logs.
+    - read_batch_file: Reads a batch file and returns its contents as a dictionary.
+    - write_batch_file: Writes batch metadata to a file.
+    - get_rek_iscat_color: Determines the color for displaying Rekognition results.
+    - rich_display_table: Displays data in a formatted table using the `rich` library.
 
 Usage:
-    Run the script from the command line with the required arguments:
+    Import the `CatAPIClient` class and use it to perform operations like bulk uploads or retrieving results.
 
     Example:
-        $ python client.py --secretsfile dev_conf_secrets
+        from helpers.cat_api_client import CatAPIClient
 
-    The `--secretsfile` argument specifies the name of the secrets file (located in the `config` folder)
-    to load environment variables from.
+        client = CatAPIClient(
+            action="bulkanalyse",
+            folder_path="path/to/images",
+            client_id="client123",
+            debug=True
+        )
+        client.execute_action("bulkanalyse")
 
 Dependencies:
     - Python 3.12 or higher
-    - `requests` library for making HTTP requests
-    - `python-dotenv` library for loading environment variables from a `.env` file
-    - `rich` library for enhanced console output
+    - `boto3` for AWS interactions
+    - `rich` for enhanced console output
+    - Custom helper modules for S3, DynamoDB, and general utilities
 """
 
+import json
 import os
 
 from client_dynamodb_helper import ClientDynamoDBHelper
@@ -41,26 +49,42 @@ from rich import print
 
 class CatAPIClient:
     """
-    Handles AWS Signature Version 4 signing for API requests as well as boto3 requests to DynamoDB & S3.
+    Manages operations for interacting with AWS services such as DynamoDB and S3.
+
+    This class provides methods for bulk uploading images to S3, retrieving results from DynamoDB,
+    and processing batch files.
+
+    Attributes:
+        img_path (str): Path to the image file.
+        folder_path (str): Path to the folder containing images.
+        img_fprint (str): Image fingerprint hash.
+        batch_id (str): Batch ID for the operation.
+        batch_file (str): Path to the batch file.
+        client_id (str): Client ID for the operation.
+        debug (bool): Whether debug mode is enabled.
+        host (str): The API host URL.
+        func_image_analyser_name (str): Name of the AWS Lambda function for image analysis.
+        s3bucket_source (str): Name of the S3 bucket for uploads.
+        dynamodb_table_name (str): Name of the DynamoDB table for storing results.
     """
 
     def __init__(self, action, **kwargs):
         """
-        initialises the CatAPIClient with the specified parameters.
+        Initializes the CatAPIClient with the specified parameters.
 
         Args:
             action (str): The action to execute ('bulkanalyse', 'result', or 'bulkresults').
-            **kwargs: Additional keyword arguments for initialisation.
+            **kwargs: Additional keyword arguments for initialization.
         """
         self.initialise_client(**kwargs)
         self.execute_action(action)
 
     def initialise_client(self, **kwargs):
         """
-        initialises instance variables and validates environment variables.
+        Initializes instance variables and validates environment variables.
 
         Args:
-            **kwargs: Keyword arguments for initialisation. Supported keys:
+            **kwargs: Keyword arguments for initialization. Supported keys:
                 - img_path (str, optional): Path to the image file.
                 - folder_path (str, optional): Path to the folder containing images.
                 - batch_id (str, optional): Batch ID for the operation.
@@ -96,6 +120,15 @@ class CatAPIClient:
             print("initialised batch_file:", self.batch_file)
 
     def execute_action(self, action):
+        """
+        Executes the specified action by dispatching to the appropriate method.
+
+        Args:
+            action (str): The action to execute ('bulkanalyse', 'result', or 'bulkresults').
+
+        Raises:
+            ValueError: If the specified action is invalid.
+        """
         actions = {
             "bulkanalyse": self.bulkanalyse,
             "result": self.result,
@@ -110,6 +143,12 @@ class CatAPIClient:
 
     @staticmethod
     def display_rek_iscat_table(iscat_results):
+        """
+        Displays Rekognition results in a formatted table.
+
+        Args:
+            iscat_results (list of dict): List of Rekognition results to display.
+        """
         # Define table columns
         columns = [
             {"header": "rek_iscat", "key": "rek_iscat", "style": "green"},
@@ -133,17 +172,15 @@ class CatAPIClient:
         Writes debug logs to a file if debug mode is enabled.
 
         Args:
-            batch_file (str): The base batch file name (used to generate the debug log file name).
             dynamodb_results (list of dict): A list of DynamoDB result dictionaries.
-            debug (bool): Whether debug mode is enabled.
         """
-        import json
 
         if self.debug:
             debug_log_file = self.batch_file.replace(".json", "-debug-logs.json")
             print(f"Writing debug logs to file: {debug_log_file}")
 
             # deserialize debug logs from the DynamoDB results
+            deserialized_logs = None
             for item in dynamodb_results:
                 logs = item.get("logs", None)
                 if logs is not None:
@@ -163,7 +200,9 @@ class CatAPIClient:
                 print("No valid debug logs found in the provided DynamoDB results.")
 
     def bulkanalyse(self):
-        """Uploads images in a folder to S3 and logs metadata for each upload."""
+        """
+        Uploads images in a folder to S3 and logs metadata for each upload.
+        """
         s3_uploader = BulkS3Uploader(
             folder_path=self.folder_path,
             s3bucket_source=self.s3bucket_source,
@@ -173,7 +212,9 @@ class CatAPIClient:
         s3_uploader.process_files()
 
     def result(self):
-
+        """
+        Fetches and displays results for a specific batch ID and image fingerprint.
+        """
         dynamodb_helper = ClientDynamoDBHelper(
             dyndb_client=dyndb_client,
             table_name=self.dynamodb_table_name,
@@ -199,7 +240,6 @@ class CatAPIClient:
                 }
             ]
 
-            # print("* ", rek_iscat, self.batch_id, self.img_fprint)
             CatAPIClient.display_rek_iscat_table(iscat_results=iscat_results)
 
             # print debug logs to file
@@ -207,6 +247,9 @@ class CatAPIClient:
             self.write_debug_logs(dynamodb_results=item_list)
 
     def bulk_results(self):
+        """
+        Processes a batch file and retrieves results from DynamoDB.
+        """
         batch_file_json = read_batch_file(batch_file_path=self.batch_file)
 
         if self.debug:
