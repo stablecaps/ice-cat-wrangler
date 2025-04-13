@@ -34,7 +34,7 @@ import os
 from client_dynamodb_helper import ClientDynamoDBHelper
 from helpers.boto3_bulk_s3_uploader import BulkS3Uploader
 from helpers.boto3_clients import dyndb_client
-from helpers.general import read_batch_file
+from helpers.general import read_batch_file, write_batch_file
 from rich import print
 from rich.console import Console
 from rich.table import Table
@@ -131,8 +131,8 @@ class CatAPIClient:
         table.add_column("rek_iscat", justify="left", style="green")
         table.add_column("batch_id", justify="left", style="magenta")
         table.add_column("img_fprint", justify="left", style="yellow")
-        table.add_column("og_file", justify="left", style="cyan")
-        table.add_column("s3_key short", justify="left", style="blue")
+        table.add_column("og_file", justify="left", style="cyan", no_wrap=False)
+        table.add_column("s3_key short", justify="left", style="blue", no_wrap=False)
 
         # Add rows for each result in the list
         for result_dict in iscat_results:
@@ -143,8 +143,19 @@ class CatAPIClient:
                 s3_key_split = s3img_key.split("/")
                 s3_key_short_last = "/".join(s3_key_split[2:])
 
+            # Conditionally format rek_iscat color
+            rek_iscat_value = result_dict.get("rek_iscat", "N/A")
+            print("rek_iscat_value:", rek_iscat_value, type(rek_iscat_value))
+
+            if rek_iscat_value.lower() == "true":
+                rek_iscat_color = "green"
+            elif rek_iscat_value.lower() == "false":
+                rek_iscat_color = "red"
+            else:
+                rek_iscat_color = "yellow"
+
             table.add_row(
-                str(result_dict.get("rek_iscat", "N/A")),
+                f"[{rek_iscat_color}]{rek_iscat_value}[/]",
                 str(result_dict.get("batch_id", "N/A")),
                 result_dict.get("img_fprint", "N/A"),
                 result_dict.get("original_file_name", "N/A"),
@@ -205,5 +216,10 @@ class CatAPIClient:
         )
         batch_results = dynamodb_helper.get_multiple_items(
             batch_records=batch_file_json
+        )
+        # write the upload records to a results log file
+        write_batch_file(
+            filepath=f"{self.batch_file.replace('.json', '-results.json')}",
+            batch_records=batch_results,
         )
         CatAPIClient.display_rek_iscat_table(iscat_results=batch_results)

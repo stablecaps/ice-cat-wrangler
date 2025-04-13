@@ -38,6 +38,12 @@ def write_string_2file(filepath, filetext, mode="w"):
         outfile.write(filetext)
 
 
+def write_batch_file(filepath, batch_records):
+    # Write the upload records to the log file
+    with open(filepath, "w") as log_file:
+        json.dump(batch_records, log_file, indent=4)
+
+
 def read_batch_file(batch_file_path):
     """
     Reads a batch file in JSON format and converts it into a list of Python dictionaries.

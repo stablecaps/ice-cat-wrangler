@@ -56,10 +56,20 @@ class ClientDynamoDBHelper:
 
             item = response.get("Item", None)
 
-            rich_print(f"Retrieved item: {item}")
+            if self.debug:
+                rich_print(f"Retrieved item: {item}")
 
             # Convert the DynamoDB item format to a standard Python dictionary
-            return {k: list(v.values())[0] for k, v in item.items()} if item else None
+            # print({k: list(v.values())[0] for k, v in response["Item"].items()}[rek_iscat])
+            # import sys
+            # sys.exit(42)
+
+            # return {k: list(v.values())[0] for k, v in item.items()} if item else None
+            return (
+                {k: list(v.values())[0] for k, v in response["Item"].items()}
+                if item
+                else None
+            )
 
         except ClientError as e:
             rich_print(

@@ -9,7 +9,7 @@ from helpers.cat_api_client import CatAPIClient
 from helpers.config import (
     load_environment_variables,
 )
-from helpers.general import read_file_2string, write_string_2file
+from helpers.general import read_file_2string, write_batch_file, write_string_2file
 from rich import print
 
 

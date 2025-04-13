@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from boto3_helpers import check_bucket_exists
 from botocore.exceptions import ClientError
 from helpers.boto3_clients import s3_client
-from helpers.general import calculate_file_hash
+from helpers.general import calculate_file_hash, write_batch_file
 from rich import print
 
 
@@ -121,8 +121,9 @@ class BulkS3Uploader:
                     upload_records.append(record)
 
         # Write the upload records to the log file
-        with open(self.log_file_path, "w") as log_file:
-            json.dump(upload_records, log_file, indent=4)
+        write_batch_file(filepath=self.log_file_path, batch_records=upload_records)
+        # with open(, "w") as log_file:
+        #     json.dump(upload_records, log_file, indent=4)
 
         print(f"\nAll eligible images have been uploaded successfully.")
         print(f"Upload records saved to: {self.log_file_path}")
