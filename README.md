@@ -74,6 +74,8 @@ The article also discusses other aspects such as how to best organise terraform 
 
 ## Infrastructure Overview
 
+[![Infrastructure Diagram](docs/infrastructure.drawio.png)](docs/infrastructure.drawio.png)
+
 The `ice-cat-wrangler` application consists of the following AWS infrastructure components:
 
 ### 1. **S3 Buckets**
@@ -534,5 +536,6 @@ I assume that if performance is important, the program should implement or leave
 - Implement other api_client dynamodb query methods.
 - Implement lambda alarms in cloudwatch for errors, latency, timeouts, out of memory, etc.
 - Still need to store original filename attribute (before client rename)
+- Tighten up AWS perms.
 
 ---
