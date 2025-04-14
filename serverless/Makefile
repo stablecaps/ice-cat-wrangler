@@ -32,3 +32,7 @@ slsdeployfull:
 .PHONY: slsrm
 slsrm:
 	serverless remove
+
+.PHONY: pytest
+pytest:
+	pytest -vv

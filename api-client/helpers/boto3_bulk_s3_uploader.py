@@ -122,7 +122,7 @@ class BulkS3Uploader:
         )
 
         try:
-            print(f"Uploading {file_path} to s3://{self.s3bucket_source}/{s3_key}")
+            print(f"\nUploading {file_path} to s3://{self.s3bucket_source}/{s3_key}")
             s3_client.upload_file(file_path, self.s3bucket_source, s3_key)
             return {
                 "client_id": self.client_id,
@@ -146,6 +146,7 @@ class BulkS3Uploader:
             None
         """
 
+        print()
         upload_records = []
         for root, _, files in os.walk(self.folder_path):
             for file in files:
@@ -169,4 +170,4 @@ class BulkS3Uploader:
         write_batch_file(filepath=self.batch_file_path, batch_records=upload_records)
 
         print("\nAll eligible images have been uploaded successfully.")
-        print(f"Upload records saved to: {self.batch_file_path}")
+        print(f"\nUpload records saved to: {self.batch_file_path}")

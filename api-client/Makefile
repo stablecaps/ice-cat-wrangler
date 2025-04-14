@@ -2,6 +2,6 @@
 develop:
 	./.make/develop.sh
 
-.PHONY: test
-test:
-	python run pytest
+.PHONY: pytest
+pytest:
+	pytest -vv

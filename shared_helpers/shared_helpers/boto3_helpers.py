@@ -194,7 +194,6 @@ def copy_s3_object(s3_client, source_bucket, dest_bucket, s3_key, acl=DEFAULT_S3
         raise
 
 
-# TODO: return true/false from this so we can set op status to fail if copt fails
 def move_s3_object_based_on_rekog_response(
     s3_client, op_status, s3bucket_source, s3bucket_dest, s3bucket_fail, s3_key
 ):

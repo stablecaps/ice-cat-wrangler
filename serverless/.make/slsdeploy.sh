@@ -7,6 +7,9 @@ then
     exit 1
 fi
 
+source venv/bin/activate
+pip install -r requirements.txt -t modules
+
 echo -e "\nDeploying shared helpers layer"
 
 SERVICE_NAME=$(grep "service:" serverless.yml | tr ' ' '\n' | tail -1)

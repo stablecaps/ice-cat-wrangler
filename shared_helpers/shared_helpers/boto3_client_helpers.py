@@ -61,6 +61,10 @@ def fetch_values_from_ssm(ssm_client, ssm_keys):
             rich_print(
                 f"Warning: The following SSM keys are missing or invalid: {missing_keys}"
             )
+            rich_print(
+                "\nPlease make sure you have exported AWS_REGION using the command:\n"
+                "export AWS_REGION=$AWS_REGION\n"
+            )
             sys.exit(42)
 
     except ClientError as err:

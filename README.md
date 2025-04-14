@@ -349,6 +349,9 @@ make slsdeploy
 
 # The previous 2 command combined (use if shared_helpers have been edited).
 make slsdeployfull
+
+# test run:
+make pytest
 ```
 
 ---
@@ -364,8 +367,12 @@ The api-client uses Boto3 to:
 
 It also has a make file so you can run:
 
-```
+```shell
 make develop
+
+# test run:
+make pytest
+
 ```
 3. Prepare api-client env vars.
 
@@ -526,6 +533,8 @@ Note that both `api-client` and `serverless` virtual envs have pre-commit instal
 - finish tests
 - atexit not behaving as expected in lambda env - investigate
 - Re-raise final exception to allow lambda to handle retries. need additional infra like SQS DLQ
+- fix todo's
+- implement oth api-client dynamodb query methods
 
 ---
 

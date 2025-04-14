@@ -52,12 +52,15 @@ Error Handling:
 
 """
 
+import sys
+
+sys.path.insert(0, "modules")
 import json
 import logging
 import os
-import sys
-from datetime import datetime
+from datetime import datetime, timezone
 
+import pytz
 from functions.global_context import global_context
 
 from shared_helpers.boto3_helpers import check_bucket_exists, safeget
@@ -127,11 +130,31 @@ def get_s3_key_from_event(event):
     return s3_key
 
 
+# def convert_time_string_to_epoch(time_string, format_string="%a, %d %b %Y %H:%M:%S %Z"):
+#     """
+#     Convert a time string to epoch time.
+
+#     This function parses a time string in a specified format and converts it to epoch time.
+
+#     Args:
+#         time_string (str): The time string to convert.
+#         format_string (str): The format of the time string. Default is "%a, %d %b %Y %H:%M:%S %Z".
+
+#     Returns:
+#         int: The epoch time.
+
+#     Raises:
+#         ValueError: If the time string does not match the specified format.
+#     """
+#     dt_object = datetime.strptime(time_string, format_string)
+
+#     epoch_time = int(dt_object.timestamp())
+
+
+#     return epoch_time
 def convert_time_string_to_epoch(time_string, format_string="%a, %d %b %Y %H:%M:%S %Z"):
     """
     Convert a time string to epoch time.
-
-    This function parses a time string in a specified format and converts it to epoch time.
 
     Args:
         time_string (str): The time string to convert.
@@ -143,11 +166,26 @@ def convert_time_string_to_epoch(time_string, format_string="%a, %d %b %Y %H:%M:
     Raises:
         ValueError: If the time string does not match the specified format.
     """
-    dt_object = datetime.strptime(time_string, format_string)
+    try:
+        # Parse the time string into a naive datetime object
+        dt_object = datetime.strptime(time_string, format_string)
 
-    epoch_time = int(dt_object.timestamp())
+        # Handle timezone-aware strings
+        if "GMT" in time_string:
+            tz = pytz.timezone("GMT")
+            dt_object = tz.localize(dt_object)
+        # TODO: EST timezone not handled properly - investigate
+        elif "EST" in time_string:
+            tz = pytz.timezone("US/Eastern")
+            dt_object = tz.localize(dt_object)
+        else:
+            # Assume naive datetime objects are in UTC
+            dt_object = dt_object.replace(tzinfo=timezone.utc)
 
-    return epoch_time
+        # Convert to epoch time
+        return int(dt_object.timestamp())
+    except Exception as err:
+        raise ValueError(f"Error converting time string to epoch: {err}")
 
 
 def convert_to_json(data):
@@ -235,9 +273,7 @@ def gen_item_dict1_from_s3key(s3_key, s3_bucket):
         }
     except Exception as err:
         LOG.error("Failed to extract values from S3 key: %s", err)
-        raise ValueError(
-            f"Failed to extract values from S3 key: <{err}>" % err
-        ) from err
+        raise ValueError(f"Failed to extract values from S3 key: <{err}>") from err
 
 
 def gen_item_dict2_from_rek_resp(rekog_results):
@@ -266,6 +302,10 @@ def gen_item_dict2_from_rek_resp(rekog_results):
         # Extract Rekognition response details
         # TODO: rename rekog_resp to rek_labels in db schema
         rekog_resp = rekog_results.get("rekog_resp")
+        if not rekog_resp:
+            LOG.error("Missing rekog_resp in Rekognition results")
+            return {}
+
         rek_match = rekog_results.get("rek_match", None)
 
         rek_long_time_string = safeget(

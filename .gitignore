@@ -205,3 +205,5 @@ shared_helpers/create_layer
 shared_helpers/python
 shared_helpers/layer_content.zip
 **/.requirements.zip
+api-client/killme
+serverless/modules/
