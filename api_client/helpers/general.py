@@ -85,7 +85,7 @@ def read_file_2string(filepath, mode="r"):
         str or None: The content of the file as a string, or None if the file does not exist.
     """
     if not os.path.isfile(filepath):
-        print("File not found: %s", filepath)
+        print(f"File not found: {filepath}")
         return None
 
     with open(filepath, mode, encoding="utf-8") as infile:
@@ -106,7 +106,7 @@ def write_string_2file(filepath, filetext, mode="w"):
         None
     """
     with open(filepath, mode, encoding="utf-8") as outfile:
-        print("Writing file: %s", filepath)
+        print(f"Writing file: {filepath}")
         outfile.write(filetext)
 
 
