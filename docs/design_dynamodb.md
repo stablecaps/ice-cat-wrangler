@@ -4,14 +4,14 @@
 * Assume the user has a whole bunch of images they wish to categorise and they upload a single or multiple images to S3 bucket. We need to track image hash to avoid reprocessing and to cerate S3 file name. we also need to store logs in case debug flag is provided.
 
 
-1. batch_id: user would either want to retrieve the results for a small - medium submission. i.e. 1-20 images.
-2. batch_id: find by suceed, fail, pass.
-3. client_id: find by suceed, fail, pass.
-4. batch_id: track logs associated with a batch submission or a single submission.
-5. img_fprint: user would want to get the results associated with a specific image submission.
-6. img_fprint multiple: user would want to get the results associated with multiple image submissions.
-7. batch_id: Find all results sharing a given batch_id collected during a time range.
-8. client_id: Find all results sharing a given batch_id collected during a time range.
+1. `batch_id`: user would either want to retrieve the results for a small - medium submission. i.e. 1-20 images.
+2. `batch_id`: find by suceed, fail, pass.
+3. `client_id`: find by suceed, fail, pass.
+4. `batch_id`: track logs associated with a batch submission or a single submission.
+5. `img_fprint`: user would want to get the results associated with a specific image submission.
+6. `img_fprint` (multiple): user would want to get the results associated with multiple image submissions.
+7. `batch_id`: Find all results sharing a given batch_id collected during a time range.
+8. `client_id`: Find all results sharing a given batch_id collected during a time range.
 
 ~~9. Handle cases where the user does not know the hash or S3 filename.~~
 
