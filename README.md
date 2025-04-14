@@ -4,14 +4,11 @@
 
 In this task, we ask you to prepare a simple service that, for a given image file (JPEG/PNG), answers the question: **Does the image file contain the image of a cat?**
 
-**Problem**
-- **Does the image file provided contain a cat?**
+**Problem: Does the image file provided contain a cat?**
 
-**Input**
-- Picture file (JPG/PNG)
+**Input:** Picture file (JPG/PNG)
 
-**Output**
-- Yes or No
+**Output:** Yes or No
 
 ---
 
@@ -483,18 +480,20 @@ Note that both `api_client` and `serverless` virtual envs have pre-commit instal
 
 
 ## Axioms for S3 Design
+I assume that if performance is important, the program should implement or leave room for addition as a feature later on.
+1. [click for S3 performance](https://docs.aws.amazon.com/AmazonS3/latest/userguide/optimizing-performance.html):
+    - Multiple prefixes
+    - Multiple client connections to upload multiple images asynchronously increases throughput.
+    - Client should handle 503 slowdown messages.
+    - Check requests are being spread over a wide pool of Amazon S3 IP addresses
+    - If using CloudFront see if S3 transfer acceleration is beneficial.
+2. [click for S3 naming](https://aws.amazon.com/blogs/big-data/building-and-maintaining-an-amazon-S3-metadata-index-without-servers/):
+    - Name with high cardinality for performance.
+    - Save the hash of the file in the event we need the option to avoid reprocessing.
+    - Uniquely rename the file to prevent filename clashes in S3 (use the hash).
 
-1. S3 performance: https://docs.aws.amazon.com/AmazonS3/latest/userguide/optimizing-performance.html
-    * multiple prefixes
-    * multiple client connections
-    * handle 503 slowdown messages
-    * check requests are being spread over a wide pool of Amazon S3 IP addresses
-    * if using cloudfront - check S3 transfer acceleration
-2. S3 naming: https://aws.amazon.com/blogs/big-data/building-and-maintaining-an-amazon-S3-metadata-index-without-servers/
-    * name with high cardinality for performance
 
-
-### [Click for Detailed Design S3 keys](docs/design_s3_key_naming.md)
+### **[Click for Detailed Design S3 keys](docs/design_s3_key_naming.md)**
 
 ---
 
@@ -502,8 +501,8 @@ Note that both `api_client` and `serverless` virtual envs have pre-commit instal
 
 1. The image is kept in persistent storage.
 2. Scanning is a non-blocking operation:
-   - Results cannot be returned in the same POST call.
-   - A results endpoint is needed (should handle single and batch image submission results).
+   - Results cannot therefore be returned in the same POST call.
+   - A separate results call is needed (should handle single and batch image submission results).
 3. User can check the result of image scanning:
    - Assume this check can be performed at any time.
    - The client stores a record of:
@@ -515,90 +514,25 @@ Note that both `api_client` and `serverless` virtual envs have pre-commit instal
    - For the database:
      - Multiple clients/customers should have unique IDs to assist with searching.
 
-### [Click for Detailed Design DynamoDB](docs/design_dynamodb.md)
+### **[Click for Detailed Design DynamoDB](docs/design_dynamodb.md)**
 
 ---
 
-## things to do
-1. bump-version
----
-- **Pre-commit setup**
-- **S3 lifecycle**: Delete old objects (14 days).
-- **DynamoDB (DDB)**:
-  - TTL to delete old entries (14 days).
-  - Autoscaling to handle load.
-- **Lambda alerts**.
+## Things to do
+- bump app version automatically.
+- ~~Pre-commit setup.~~
+- S3 lifecycle: Delete old objects (14 days).
+- DynamoDB (DDB):
+  - ~~TTL to delete old entries (14 days).~~
+  - ~~Autoscaling to handle load. (To be done on provisioned setup)~~
 - Handle deletion of items from the bucket: Delete corresponding entries from DynamoDB.
-- reduce logging to save costs
-- finish tests
-- atexit not behaving as expected in lambda env - investigate
+- Reduce logging to save costs.
+- Finish tests.
+- ~~atexit not behaving as expected in lambda env - investigate~~
 - Re-raise final exception to allow lambda to handle retries. need additional infra like SQS DLQ
-- fix todo's
-- implement oth api_client dynamodb query methods
+- Fix todo's.
+- Implement other api_client dynamodb query methods.
+- Implement lambda alarms in cloudwatch for errors, latency, timeouts, out of memory, etc.
+- Still need to store original filename attribute (before client rename)
 
 ---
-
-## Backend Design (S3 & DynamoDB)
-
-### Workflow
-
-1. **User uploads an image** to `s3bucketSource` → triggers a Lambda function.
-2. Lambda:
-   - Submits the image to Amazon Rekognition (writes a DynamoDB record).
-   - Gets the Rekognition response (updates DynamoDB).
-   - On success:
-     - Moves the image to `s3bucketDest` (updates DynamoDB).
-   - On failure:
-     - Moves the image to `s3bucketFail` (updates DynamoDB).
-
-### Additional Notes
-
-1. Save the hash of the file to avoid reprocessing.
-2. Uniquely rename the file to prevent filename clashes in S3 (use the hash).
-
----
-
-## DynamoDB Entries
-
-| Field         | Type   | Description                                                                 |
-|---------------|--------|-----------------------------------------------------------------------------|
-| `<PK>`        | int    | `upload_id` - Groups images batch uploaded (for batch retrieval).          |
-| `<SK>`        | str    | `img_key` - Bucket location (updated with renaming process).               |
-| `img_fprint`  | str    | Hash of the image file.                                                    |
-| `op_status`   | str    | Operation status (`pending`, `success`, `fail`).                           |
-| `rek_resp`    | json   | Rekognition response as JSON.                                              |
-| `rek_iscat`   | bool   | Whether the image contains a cat.                                          |
-| `logs`        | json   | Debug logs for retrieval.                                                  |
-| `upload_ts`   | datetime | Timestamp of the upload.                                                 |
-| `rek_ts`      | datetime | Timestamp of the Rekognition response.                                   |
-
----
-
-## DynamoDB Use Cases
-
-1. Track image processing status.
-2. Track Rekognition response (is it a cat?).
-3. Track image location/filename (source, destination, failure).
-4. Track image hash (to avoid reprocessing).
-5. Track logs associated with each submission.
-
----
-
-## S3 Upload Filename Format
-
-```plaintext
-${file_hash}/${mach_host_name}-${YYYY-MM-DD-HH-MM}/${USERID}-${epoch_timestamp}.png
-
-
-1. S3 performance: https://docs.aws.amazon.com/AmazonS3/latest/userguide/optimizing-performance.html
-    * multiple prefixes
-    * multiple client connections
-    * handle 503 slowdown messages
-    * check requests are being spread over a wide pool of Amazon S3 IP addresses
-    * if using cloudfront - check S3 transfer acceleration
-2. S3 naming: https://aws.amazon.com/blogs/big-data/building-and-maintaining-an-amazon-S3-metadata-index-without-servers/
-    * name with high cardinality for performance
-3. DynamoDB: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-use-S3-too.html
-    * 400kb limit per item. utilize the ReturnConsumedCapacity parameter
-    * compress large attribute values
-    * object metadata support in Amazon S3 to provide a link back to the parent item in DynamoDB
