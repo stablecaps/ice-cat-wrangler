@@ -7,7 +7,14 @@ then
     exit 1
 fi
 
+
+if [ ! -d "venv" ]; then
+echo -e "making venv"
+    python -m venv venv
+fi
+
 source venv/bin/activate
+
 pip install -r requirements.txt -t modules
 
 echo -e "\nDeploying shared helpers layer"
