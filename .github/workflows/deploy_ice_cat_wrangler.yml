@@ -43,6 +43,11 @@ jobs:
       with:
         terraform_version: 1.11.3
 
+    - name: Install python3.12
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
     - name: Decrypt secrets
       run: |
         #!/bin/bash
