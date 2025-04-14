@@ -27,10 +27,11 @@ Dependencies:
 import os
 import sys
 
-from boto3_client_helpers import fetch_values_from_ssm
 from dotenv import load_dotenv
 from helpers.boto3_clients import ssm_client
 from rich import print
+
+from shared_helpers.shared_helpers.boto3_client_helpers import fetch_values_from_ssm
 
 secret_vars = [
     "AWS_ACCESS_KEY_ID",

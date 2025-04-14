@@ -154,7 +154,7 @@ class CLIArgs:
             dest="batch_file",
             type=str,
             required=True,
-            help="Path to the local batch logfile. Found in api-client/logs folder"
+            help="Path to the local batch logfile. Found in api_client/logs folder"
             "e.g.: logs/stablecaps900_batch-1744499247.json",
         )
 

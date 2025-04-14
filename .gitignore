@@ -191,12 +191,12 @@ cython_debug/
 **/config/uat.yml
 **/config/prod.yml
 #
-api-client/bulk_uploads/*.png
-api-client/bulk_uploads/*.jpg
-api-client/bulk_uploads/*.jpeg
+api_client/bulk_uploads/*.png
+api_client/bulk_uploads/*.jpg
+api_client/bulk_uploads/*.jpeg
 #
-api-client/config/client_id
-api-client/logs/*.json
+api_client/config/client_id
+api_client/logs/*.json
 #
 serverless/layer/shared/layer_content.zip
 **/deprecated*.*
@@ -205,5 +205,5 @@ shared_helpers/create_layer
 shared_helpers/python
 shared_helpers/layer_content.zip
 **/.requirements.zip
-api-client/killme
+api_client/killme
 serverless/modules/
