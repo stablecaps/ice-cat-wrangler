@@ -1,27 +1,53 @@
-import base64
-import json
+"""
+boto3_client_helpers.py
+
+This module provides helper functions for interacting with AWS services using boto3. It includes utilities
+for fetching parameters from AWS Systems Manager (SSM) Parameter Store.
+
+Functions:
+    - fetch_values_from_ssm: Fetches parameter values from AWS SSM Parameter Store.
+
+Usage:
+    Import the required function from this module to interact with AWS services.
+
+    Example:
+        from shared_helpers.boto3_client_helpers import fetch_values_from_ssm
+
+
+        # Fetch values from SSM
+        ssm_client = gen_boto3_client("ssm", "eu-west-1")
+        ssm_keys = ["key1", "key2"]
+        ssm_values = fetch_values_from_ssm(ssm_client, ssm_keys)
+        print(ssm_values)
+
+
+Dependencies:
+    - Python 3.12 or higher
+    - `boto3_helpers` for generating boto3 clients
+    - `rich` for enhanced console output
+"""
+
 import sys
 
-from boto3_helpers import gen_boto3_client
 from botocore.exceptions import ClientError
 from rich import print as rich_print
 
 
 def fetch_values_from_ssm(ssm_client, ssm_keys):
     """
-    Fetches environment variables from AWS SSM Parameter Store.
+    Fetches parameter values from AWS SSM Parameter Store.
 
     Args:
-        ssm_keys (list): A list of SSM parameter keys to fetch.
+        ssm_client (boto3.client): A boto3 client for AWS SSM.
+        ssm_keys (list of str): A list of parameter names to fetch from SSM.
 
     Returns:
-        dict: A dictionary containing the fetched environment variables.
+        dict: A dictionary containing the fetched parameter names and their values.
 
     Raises:
-        SystemExit: If any of the specified SSM keys are missing or invalid,
-        or if there is an error fetching parameters from SSM.
+        SystemExit: If any of the specified SSM keys are missing or invalid, or if there is an error
+        fetching parameters from SSM.
     """
-
     ssm_vars = {}
 
     try:
@@ -35,6 +61,10 @@ def fetch_values_from_ssm(ssm_client, ssm_keys):
             rich_print(
                 f"Warning: The following SSM keys are missing or invalid: {missing_keys}"
             )
+            rich_print(
+                "\nPlease make sure you have exported AWS_REGION using the command:\n"
+                "export AWS_REGION=$AWS_REGION\n"
+            )
             sys.exit(42)
 
     except ClientError as err:
@@ -42,48 +72,3 @@ def fetch_values_from_ssm(ssm_client, ssm_keys):
         sys.exit(1)
 
     return ssm_vars
-
-
-def upload_local_image_2rekog_blocking(img_path, function_name):
-    """
-    Uploads a local image to an AWS Lambda function and processes the response.
-
-    Args:
-        img_path (str): The file path of the image to upload.
-        function_name (str): The name of the AWS Lambda function to invoke.
-
-    Returns:
-        None
-
-    Raises:
-        SystemExit: If the Lambda function returns a non-200 status code.
-    """
-
-    lambda_client = gen_boto3_client("lambda", "eu-west-1")
-    rich_print(f"Uploading local image {img_path}.")
-
-    with open(img_path, "rb") as image_file:
-        image_bytes = image_file.read()
-        data = base64.b64encode(image_bytes).decode("utf8")
-
-        rich_print("Image data size:", len(data))
-        rich_print("Image data (truncated):", data[:50], "...")
-
-        lambda_payload = json.dumps({"image": data})
-
-        # Invoke the Lambda function with the event payload
-        response = lambda_client.invoke(
-            FunctionName=function_name, Payload=(lambda_payload)
-        )
-        rich_print("\nsubmit status code", response["StatusCode"])
-
-        rekog_decoded = json.loads(response["Payload"].read().decode())
-
-        if rekog_decoded["statusCode"] != 200:
-            print("\nrekog_decoded", rekog_decoded)
-            sys.exit(42)
-
-        rich_print("\nrekog_decoded", rekog_decoded["body"])
-        rich_print("\nrekog_decoded", rekog_decoded["statusCode"])
-
-        return

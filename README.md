@@ -50,7 +50,7 @@ I've tried to write code that sets-up avenues whereby we can minimise cost whils
 The repository is divided into 4 major components:
 1. **`infra-terra`:** Contains terraform code to create various AWS resources
 2. **`serverless`:** Contains a lambda function that handles image processing
-3. **`api-client`:** Contains amn api-client that can upload images and get the categorisation results from those uploads. Use `rich` print instead of logs for a better user experience.
+3. **`api_client`:** Contains amn api_client that can upload images and get the categorisation results from those uploads. Use `rich` print instead of logs for a better user experience.
 4. **`shared_helpers`:** Contains shared functions and classes that can be shared between infra-terra and serverless. I've tried to write the code to be easily abstracted to other use cases. That way it could potentially be split out into a separate repo so that other applications can also use this code.
 
 The solution relies upon using both terraform and serverless as deployment agents for the following reasons because each tool has its strengths & weaknesses.
@@ -62,7 +62,7 @@ The solution relies upon using both terraform and serverless as deployment agent
     - Resources are tightly coupled to application code changes which is helpful to developers.
     - Allows developers to deploy without requiring specialised DevOps knowledge.
 
-#### Resources are shared between terraform and serverless using SSM variables. The api-client also leverages the same SSM variables to auto-configure resource env vars.
+#### Resources are shared between terraform and serverless using SSM variables. The api_client also leverages the same SSM variables to auto-configure resource env vars.
 
 2. **Terraform**:
 It is good to deploy more fundamental resources such as S3 buckets, iam policies, etc using terraform because:
@@ -147,7 +147,7 @@ sequenceDiagram
 ### Installation order
 1. Terraform
 2. Serverless
-3. Api-client
+3. api_client
 
 ---
 
@@ -228,7 +228,7 @@ Parameters:
 * 03_cat_wrangler_backend: Creates DynamoDb Table.
 * 04_create_lambda_permissions: Creates IAM lambda role and permissions for cat-wrangler.
 
-Note SSM variables are exported at various stages so that `api-client` and `serverless` can grab variables such as ARNS, env-vars, etc created during TF deploys.
+Note SSM variables are exported at various stages so that `api_client` and `serverless` can grab variables such as ARNS, env-vars, etc created during TF deploys.
 
 5. Setting up TF remote backend
 On first run comment out the S3 backend section. This will generate a local .tfstate file. Do this by editing `entrypoints/00_setup_terraform_remote_s3_backend_dev/provider.tf`:
@@ -296,7 +296,7 @@ serverless update
 
 3. Prepare python3.12 development environment with `shared_helpers`.
 
-There is Makefile in the `serverless` directory that will help us install packages. We need to also install the `shared_helpers` module which is shared with `api-client` in editable mode (allows code changes to be reflected immediately without having to redo a pip install).
+There is Makefile in the `serverless` directory that will help us install packages. We need to also install the `shared_helpers` module which is shared with `api_client` in editable mode (allows code changes to be reflected immediately without having to redo a pip install).
 
 ```shell
 make develop
@@ -349,13 +349,16 @@ make slsdeploy
 
 # The previous 2 command combined (use if shared_helpers have been edited).
 make slsdeployfull
+
+# test run:
+make pytest
 ```
 
 ---
 
-### D. Api-Client
+### D. api_client
 
-The api-client uses Boto3 to:
+The api_client uses Boto3 to:
 - Upload images to S3.
 - Fetch results from DynamoDB.
 
@@ -364,16 +367,20 @@ The api-client uses Boto3 to:
 
 It also has a make file so you can run:
 
-```
+```shell
 make develop
+
+# test run:
+make pytest
+
 ```
-3. Prepare api-client env vars.
+3. Prepare api_client env vars.
 
 ```shell
-cd api-client
+cd api_client
 cp config/dev_conf_secrets.template config/dev_conf_secrets
 
-# Then edit api-client/config/dev_conf_secrets to change env vars.
+# Then edit api_client/config/dev_conf_secrets to change env vars.
 ```
 Notes:
 - Instead of passing the secretsfile to the program to read the config file, you can instead use SSM.
@@ -383,7 +390,7 @@ Notes:
 export AWS_REGION=eu-west-1
 ```
 
-4. Running the api-client
+4. Running the api_client
 
 The client uses the dispatch pattern to read CLI args and has several modes.
 
@@ -419,13 +426,13 @@ options:
 /client_launcher.py --secretsfile SSM result --imgfprint 0eaf1da24040970c6396ca59488ad7fa739ef7ab4ee1f757f180dade9adc43cf --batchid 1744481929
 ```
 
-5. How the api-client integrates with DynamoDB:
+5. How the api_client integrates with DynamoDB:
 
 The DB uses `batch_id` as the partition key and `img_fprint` as the sort key.
 
 - batch_id: Every time the client is run a new random `batch_id` gets created.
 - img_fprint: This is the file hash of the image (sha256).
-- client_id: Each instance of the client has a `client_id`. This id can be manually set at `api-client/config/client_id`. If this file is not present, the program will automatically generate one using the format `stablecaps_$random_3digits` on first run.
+- client_id: Each instance of the client has a `client_id`. This id can be manually set at `api_client/config/client_id`. If this file is not present, the program will automatically generate one using the format `stablecaps_$random_3digits` on first run.
 - debug: When a power user adds the debug flag. the s3 key has debug added to it so that the lambda processing s3 files added to the source bucket saves the logs for that particular file.
 
 logs: When uploading images, the client stores details of the uploads as a list of dicts in json format. This can be used to keep track of jobs via `batch_id`, and get PK & SK to query DynamoDB using the `result` subcommand. The entire log can be used as input into the `bulkresults` subcommand.
@@ -470,7 +477,7 @@ We need to run CI, but we do not want to store unencrypted secrets or config val
 ---
 
 ### F. Pre-commit hooks
-Note that both `api-client` and `serverless` virtual envs have pre-commit installed to perform various checks to make sure code follows best practices.
+Note that both `api_client` and `serverless` virtual envs have pre-commit installed to perform various checks to make sure code follows best practices.
 - The root of the repo contains the config for this in `.pre-commit-config.yaml`.
 - When you run `make develop` for either environment the build script automatically runs `pre-commit install`
 
@@ -526,6 +533,8 @@ Note that both `api-client` and `serverless` virtual envs have pre-commit instal
 - finish tests
 - atexit not behaving as expected in lambda env - investigate
 - Re-raise final exception to allow lambda to handle retries. need additional infra like SQS DLQ
+- fix todo's
+- implement oth api_client dynamodb query methods
 
 ---
 

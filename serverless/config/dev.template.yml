@@ -4,4 +4,4 @@ aws_region: eu-west-1
 deployment_bucket: <enter serverless deployment bucket>
 stage: dev
 iam_role_arn: <enter arn>
-version: 0.4.0
+version: 0.5.0

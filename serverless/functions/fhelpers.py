@@ -1,9 +1,66 @@
+"""
+Module: fhelpers
+
+This module contains helper functions for processing S3 events, generating metadata,
+and interacting with AWS Rekognition and DynamoDB. It includes utilities for validating
+S3 buckets, extracting metadata from S3 keys, converting data to JSON, and handling
+Rekognition responses.
+
+Functions:
+    - validate_s3bucket(s3_client): Validates the existence of S3 buckets specified in environment variables.
+    - get_s3_key_from_event(event): Extracts the S3 key from an S3 event.
+    - convert_time_string_to_epoch(time_string, format_string): Converts a time string to epoch time.
+    - convert_to_json(data): Converts a Python object to a JSON string.
+    - gen_item_dict1_from_s3key(s3_key, s3_bucket): Generates a dictionary of metadata from an S3 key.
+    - gen_item_dict2_from_rek_resp(rekog_results): Generates a dictionary for updating DynamoDB with
+        Rekognition results.
+
+Dependencies:
+    - AWS Services: S3, DynamoDB, Rekognition
+    - Shared Helpers: boto3_helpers (e.g., `check_bucket_exists`, `safeget`)
+    - Global Context: `global_context` for shared state management
+
+Environment Variables:
+    - dynamoDBTTL: The TTL (Time-to-Live) value for DynamoDB records.
+    - s3bucketSource: The name of the source S3 bucket.
+    - s3bucketDest: The name of the destination S3 bucket.
+    - s3bucketFail: The name of the failure S3 bucket.
+
+Usage:
+    This module is used in AWS Lambda functions to process S3 events, extract metadata,
+    and interact with AWS services. It provides utility functions for common tasks such
+    as validating S3 buckets, parsing S3 keys, and handling Rekognition responses.
+
+Example:
+    # Validate S3 buckets
+    s3bucket_source, s3bucket_dest, s3bucket_fail = validate_s3bucket(s3_client)
+
+    # Extract S3 key from event
+    s3_key = get_s3_key_from_event(event)
+
+    # Generate metadata from S3 key
+    item_dict1 = gen_item_dict1_from_s3key(s3_key, s3bucket_source)
+
+    # Process Rekognition response
+    item_dict2 = gen_item_dict2_from_rek_resp(rekog_results)
+
+Error Handling:
+    - Logs critical errors and exits the program if required environment variables are unset
+      or S3 buckets do not exist.
+    - Handles serialization errors when converting data to JSON.
+    - Logs and raises exceptions for invalid S3 keys or Rekognition responses.
+
+"""
+
+import sys
+
+sys.path.insert(0, "modules")
 import json
 import logging
 import os
-import sys
-from datetime import datetime
+from datetime import datetime, timezone
 
+import pytz
 from functions.global_context import global_context
 
 from shared_helpers.boto3_helpers import check_bucket_exists, safeget
@@ -14,6 +71,22 @@ dyndb_ttl = os.getenv("dynamoDBTTL")
 
 
 def validate_s3bucket(s3_client):
+    """
+    Validate the existence of S3 buckets specified in environment variables.
+
+    This function checks if the source, destination, and failure S3 buckets exist.
+    If any of the buckets are not set in the environment variables or do not exist,
+    the function logs a critical error and exits the program.
+
+    Args:
+        s3_client (boto3.client): The S3 client used to check bucket existence.
+
+    Returns:
+        tuple: A tuple containing the names of the source, destination, and failure S3 buckets.
+
+    Raises:
+        SystemExit: If any of the required environment variables are unset or the buckets do not exist.
+    """
     s3bucket_env_list = (
         os.getenv("s3bucketSource"),
         os.getenv("s3bucketDest"),
@@ -30,6 +103,22 @@ def validate_s3bucket(s3_client):
 
 
 def get_s3_key_from_event(event):
+    """
+    Extract the S3 key from an S3 event.
+
+    This function retrieves the S3 object key from the event data passed to the Lambda function.
+    If the event does not contain the required information, the function logs a critical error
+    and exits the program.
+
+    Args:
+        event (dict): The event data passed to the Lambda function.
+
+    Returns:
+        str: The S3 object key.
+
+    Raises:
+        SystemExit: If the event does not contain the required S3 key information.
+    """
     record_list = event.get("Records")
     if record_list is None:
         LOG.critical("record_list not set. Exiting")
@@ -41,9 +130,31 @@ def get_s3_key_from_event(event):
     return s3_key
 
 
+# def convert_time_string_to_epoch(time_string, format_string="%a, %d %b %Y %H:%M:%S %Z"):
+#     """
+#     Convert a time string to epoch time.
+
+#     This function parses a time string in a specified format and converts it to epoch time.
+
+#     Args:
+#         time_string (str): The time string to convert.
+#         format_string (str): The format of the time string. Default is "%a, %d %b %Y %H:%M:%S %Z".
+
+#     Returns:
+#         int: The epoch time.
+
+#     Raises:
+#         ValueError: If the time string does not match the specified format.
+#     """
+#     dt_object = datetime.strptime(time_string, format_string)
+
+#     epoch_time = int(dt_object.timestamp())
+
+
+#     return epoch_time
 def convert_time_string_to_epoch(time_string, format_string="%a, %d %b %Y %H:%M:%S %Z"):
     """
-    Convert a time string in a format like "Fri, 11 Apr 2025 02:20:18 GMT" to epoch time.
+    Convert a time string to epoch time.
 
     Args:
         time_string (str): The time string to convert.
@@ -51,15 +162,30 @@ def convert_time_string_to_epoch(time_string, format_string="%a, %d %b %Y %H:%M:
 
     Returns:
         int: The epoch time.
+
+    Raises:
+        ValueError: If the time string does not match the specified format.
     """
+    try:
+        # Parse the time string into a naive datetime object
+        dt_object = datetime.strptime(time_string, format_string)
 
-    # Parse the input string into a datetime object
-    dt_object = datetime.strptime(time_string, format_string)
+        # Handle timezone-aware strings
+        if "GMT" in time_string:
+            tz = pytz.timezone("GMT")
+            dt_object = tz.localize(dt_object)
+        # TODO: EST timezone not handled properly - investigate
+        elif "EST" in time_string:
+            tz = pytz.timezone("US/Eastern")
+            dt_object = tz.localize(dt_object)
+        else:
+            # Assume naive datetime objects are in UTC
+            dt_object = dt_object.replace(tzinfo=timezone.utc)
 
-    # Convert the datetime object to epoch time
-    epoch_time = int(dt_object.timestamp())
-
-    return epoch_time
+        # Convert to epoch time
+        return int(dt_object.timestamp())
+    except Exception as err:
+        raise ValueError(f"Error converting time string to epoch: {err}")
 
 
 def convert_to_json(data):
@@ -82,7 +208,11 @@ def convert_to_json(data):
 
 def gen_item_dict1_from_s3key(s3_key, s3_bucket):
     """
-    Extract key-value pairs from the S3 key format:
+    Generate a dictionary of metadata from an S3 key.
+
+    This function parses an S3 key to extract metadata such as file hash, client ID,
+    batch ID, current date, and upload timestamp. It also updates the global context
+    with the extracted batch ID and file hash.
 
     without debug:
         "{file_hash}/{self.client_id}/{batch_id}/{current_date}/{epoch_timestamp}.png"
@@ -92,10 +222,16 @@ def gen_item_dict1_from_s3key(s3_key, s3_bucket):
         0               1              2            3                4
 
     Args:
+
+    Args:
         s3_key (str): The S3 key to parse.
+        s3_bucket (str): The name of the S3 bucket.
 
     Returns:
-        dict: A dictionary with extracted key-value pairs.
+        dict: A dictionary containing metadata extracted from the S3 key.
+
+    Raises:
+        ValueError: If the S3 key does not match the expected format.
     """
     try:
         parts = s3_key.split("/")
@@ -137,20 +273,25 @@ def gen_item_dict1_from_s3key(s3_key, s3_bucket):
         }
     except Exception as err:
         LOG.error("Failed to extract values from S3 key: %s", err)
-        raise ValueError("Failed to extract values from S3 key: %s" % err)
+        raise ValueError(f"Failed to extract values from S3 key: <{err}>") from err
 
 
 def gen_item_dict2_from_rek_resp(rekog_results):
     """
-    Create item_dict2 for updating DynamoDB with Rekognition results.
+    Generate a dictionary for updating DynamoDB with Rekognition results.
+
+    This function processes the Rekognition response to extract relevant metadata,
+    such as operation status, Rekognition labels, and timestamps. It also retrieves
+    the batch ID and file hash from the global context.
 
     Args:
         rekog_results (dict): The response from Rekognition, including rekog_resp, rek_match, and rek_ts.
-        s3_key (str): The S3 key of the object.
-        s3_bucket (str): The S3 bucket name.
 
     Returns:
-        dict: A dictionary representing item_dict2.
+        dict: A dictionary containing metadata for updating DynamoDB.
+
+    Raises:
+        Exception: If there is an error while processing the Rekognition response.
     """
     try:
 
@@ -161,6 +302,10 @@ def gen_item_dict2_from_rek_resp(rekog_results):
         # Extract Rekognition response details
         # TODO: rename rekog_resp to rek_labels in db schema
         rekog_resp = rekog_results.get("rekog_resp")
+        if not rekog_resp:
+            LOG.error("Missing rekog_resp in Rekognition results")
+            return {}
+
         rek_match = rekog_results.get("rek_match", None)
 
         rek_long_time_string = safeget(

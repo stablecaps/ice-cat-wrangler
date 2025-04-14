@@ -1,5 +1,40 @@
 #!/usr/bin/env python3.12
 
+"""
+client_launcher.py
+
+This module serves as the entry point for the ICE Cat API Client application. It provides
+a command-line interface (CLI) for interacting with AWS services such as S3, DynamoDB,
+and Lambda. The CLI supports multiple subcommands for bulk image uploads, retrieving
+results, and processing batch files.
+
+Subcommands:
+    - bulkanalyse: Uploads images from a local directory to an S3 bucket.
+    - result: Retrieves results for a specific batch ID and image fingerprint.
+    - bulkresults: Processes a batch file and retrieves results from DynamoDB.
+
+Classes:
+    - CLIArgs: Handles argument parsing and dispatches subcommands to the appropriate handlers.
+
+Functions:
+    - load_environment_variables: Loads environment variables from a secrets file or AWS SSM.
+    - read_file_2string: Reads the content of a file into a string.
+    - write_string_2file: Writes a string to a file.
+
+Usage:
+    Run the script from the command line with the required arguments.
+
+    Example:
+        $ python client_launcher.py --secretsfile ssm bulkanalyse --folder bulk_uploads/
+        $ python client_launcher.py --secretsfile ssm result --batchid 1234567890 --imgfprint abc123...
+        $ python client_launcher.py --secretsfile ssm bulkresults --batchfile logs/batch.json
+
+Dependencies:
+    - Python 3.12 or higher
+    - `rich` library for enhanced console output
+    - Custom helper modules for AWS interactions and file operations
+"""
+
 import argparse
 import os
 import random
@@ -9,7 +44,7 @@ from helpers.cat_api_client import CatAPIClient
 from helpers.config import (
     load_environment_variables,
 )
-from helpers.general import read_file_2string, write_batch_file, write_string_2file
+from helpers.general import read_file_2string, write_string_2file
 from rich import print
 
 
@@ -31,15 +66,21 @@ class CLIArgs:
         """
 
         help_banner = (
-            "./client_launcher.py --secretsfile ssm --debug bulkanalyse --folder bulk_uploads/\n"
-            "./client_launcher.py --secretsfile ssm result --imgfprint f54c84046c5ad95fa2f0f686db515bada71951cb0dde2ed37f76708a173033f7 --batchid 1744370618\n"
-            "./client_launcher.py --secretsfile ssm bulkresults --batchfile logs/stablecaps900_batch-1744377772.json\n"
+            "./client_launcher.py --secretsfile ssm --debug bulkanalyse --folder_path bulk_uploads/\n"
+            "./client_launcher.py --secretsfile ssm result --imgfprint f54c84046c5ad9... "
+            "--batchid 1744370618\n"
+            "./client_launcher.py --secretsfile ssm bulkresults --batchfile "
+            "logs/stablecaps900_batch-1744377772.json\n"
         )
 
+        ########################################
+        usage = (
+            ".e.g: ./client_launcher.py {--secretsfile [ssm|dev_conf_secrets]} [--debug] "
+            "{bulkanalyse|result|bulkresults} [<args>]\n"
+        )
         parser = argparse.ArgumentParser(
             description="ICE Cat API Client",
-            usage=".e.g: ./client_launcher.py {--secretsfile [ssm|dev_conf_secrets]} [--debug] {bulkanalyse|result|bulkresults} [<args>]\n"
-            + help_banner,
+            usage=usage + help_banner,
         )
         # Global args
         parser.add_argument(
@@ -47,7 +88,10 @@ class CLIArgs:
             "-s",
             type=str,
             required=True,
-            help="Secrets file name located in config folder to load environment variables from, or 'ssm' to fetch from AWS SSM Parameter Store.",
+            help=(
+                "Secrets file name located in config folder_path to load environment variables from, "
+                + " or 'ssm' to fetch from AWS SSM Parameter Store.",
+            ),
         )
         parser.add_argument(
             "--debug",
@@ -70,6 +114,7 @@ class CLIArgs:
         bulk_analyse_parser.add_argument(
             "--folder",
             "-f",
+            dest="folder_path",
             type=str,
             required=True,
             default="./bulk_images",
@@ -109,14 +154,16 @@ class CLIArgs:
             dest="batch_file",
             type=str,
             required=True,
-            help="Path to the local batch logfile. Found in api-client/logs folder. e.g.: logs/stablecaps900_batch-1744499247.json",
+            help="Path to the local batch logfile. Found in api_client/logs folder"
+            "e.g.: logs/stablecaps900_batch-1744499247.json",
         )
 
         ########################################
         args = parser.parse_args()
+        print("args:", args)
 
-        if not hasattr(CLIArgs, args.command):
-            print("Unrecognized command")
+        if args.command not in ["bulkanalyse", "result", "bulkresults"]:
+            print()
             parser.print_help()
             sys.exit(42)
 
@@ -130,20 +177,19 @@ class CLIArgs:
         # Get the client ID
         self.client_id = CLIArgs.get_client_id()
 
-        # Dispatch to the appropriate subcommand
-        if args.command == "bulkanalyse":
-            self.bulkanalyse(args.folder)
-        elif args.command == "result":
-            self.result(args.batch_id, args.img_fprint)
-        elif args.command == "bulkresults":
-            self.bulkresults(args.batch_file)
+        CatAPIClient(
+            action=args.command,
+            client_id=self.client_id,
+            # debug=args.debug,
+            **vars(args),
+        )
 
     @staticmethod
     def get_client_id():
         """
-        Searches for a file named 'client_id' in the 'config' folder.
-        If found, reads and returns the client ID from the file. If the file
-        does not exist, it creates one with a randomly generated client ID.
+        Searches for a file named 'client_id' in the 'config' folder. If found,
+        reads and returns the client ID from the file. If the file does not exist,
+        it creates one with a randomly generated client ID.
 
         Returns:
             str: The client ID read from the file.
@@ -165,71 +211,17 @@ class CLIArgs:
             print(f"'client_id' file created with ID: {client_id}")
 
         else:
-            read_file_2string(filepath=client_id_file, mode="r")
-            with open(client_id_file, "r") as file:
-                client_id = file.read().strip()
+            client_id = read_file_2string(filepath=client_id_file, mode="r")
 
         if not client_id:
-            print(f"Error: 'client_id' not found. Exiting...")
+            print("Error: 'client_id' not found. Exiting...")
             sys.exit(42)
 
         print(f"Client ID loaded successfully: {client_id}\n")
         return client_id
 
-    def bulkanalyse(self, folder):
-        """
-        Handles the 'bulkanalyse' subcommand. Uploads images from a local
-        directory to an AWS S3 bucket.
-
-        Args:
-            folder (str): Path to the local folder containing images.
-            client_id (str): The client ID for authentication.
-            debug (bool): Debug mode flag.
-        """
-        CatAPIClient(
-            action="bulkanalyse",
-            folder_path=folder,
-            client_id=self.client_id,
-            debug=self.debug,
-        )
-
-    def result(self, batch_id, img_fprint):
-        """
-        Handles the 'result' subcommand. Fetches results from dynamodb
-        for a specific batch ID and image fingerprint.
-
-        Args:
-            batch_id (str): The batch ID to fetch results for.
-            img_fprint (str): The image fingerprint hash.
-            debug (bool): Debug mode flag.
-        """
-        client = CatAPIClient(
-            action="result",
-            batch_id=batch_id,
-            img_fprint=img_fprint,
-            client_id=self.client_id,
-            debug=self.debug,
-        )
-
-    def bulkresults(self, batch_file):
-        """
-        Handles the 'bulkresults' subcommand. Processes a batch file (created by bulkanalyse)
-        to upload images and fetch results.
-
-        Args:
-            batch_file (str): Path to the local batch logfile.
-            debug (bool): Debug mode flag.
-        """
-        client = CatAPIClient(
-            action="bulkresults",
-            batch_file=batch_file,
-            client_id=self.client_id,
-            debug=self.debug,
-        )
-
 
 if __name__ == "__main__":
-
     CLIArgs()
 
     print("\nFinished")

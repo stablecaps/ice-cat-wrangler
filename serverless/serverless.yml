@@ -43,8 +43,10 @@ custom:
     number: 2
 
   pythonRequirements:
-    dockerizePip: true
+    # dockerizePip: true
     zip: true
+    usePoetry: false
+    fileName: requirements.txt
 
 stages:
   default:
@@ -91,6 +93,7 @@ functions:
         - functions/global_context.py
         - requirements.txt
         - __init__.py
+        - modules/**
     events:
       - s3:
           bucket: ${ssm:${self:custom.sourcebucketSsmKey}}
