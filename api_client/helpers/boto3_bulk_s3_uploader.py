@@ -82,7 +82,7 @@ class BulkS3Uploader:
         self.batch_id = f"batch-{int(time.time())}"
 
         self.batch_file_path = gen_batch_file_path(
-            client_id=client_id, batch_id=client_id
+            client_id=client_id, batch_id=self.batch_id
         )
         self.debug = debug
 
