@@ -28,6 +28,7 @@ import os
 import sys
 
 from boto3_client_helpers import fetch_values_from_ssm
+from botocore.exceptions import ClientError
 from dotenv import load_dotenv
 from helpers.boto3_clients import ssm_client
 from rich import print
@@ -118,29 +119,33 @@ def load_environment_variables(secretsfile, debug=False):
     Raises:
         SystemExit: If environment variables are not set up properly.
     """
-    if secretsfile == "ssm":
-        print("\nFetching environment variables from AWS SSM Parameter Store...")
-        env_vars = fetch_values_from_ssm(ssm_client, ssm_keys)
+    try:
+        if secretsfile == "ssm":
+            print("\nFetching environment variables from AWS SSM Parameter Store...")
+            env_vars = fetch_values_from_ssm(ssm_client, ssm_keys)
 
-        # Set environment variables
-        for key, value in env_vars.items():
-            os.environ[key.split("/")[-1]] = value
+            # Set environment variables
+            for key, value in env_vars.items():
+                os.environ[key.split("/")[-1]] = value
 
-    else:
-        print(
-            f"Loading environment variables from the specified secrets file: {secretsfile}"
-        )
-        dotenv_path = construct_secrets_path(secret_filename=secretsfile)
-        load_dotenv(dotenv_path, override=True)
+        else:
+            print(
+                f"Loading environment variables from the specified secrets file: {secretsfile}"
+            )
+            dotenv_path = construct_secrets_path(secret_filename=secretsfile)
+            load_dotenv(dotenv_path, override=True)
 
-    has_env_vars = check_env_variables()
-    if not has_env_vars:
-        print("\nEnv variables not set up properly. Exiting...")
-        sys.exit(1)
+        has_env_vars = check_env_variables()
+        if not has_env_vars:
+            print("\nEnv variables not set up properly. Exiting...")
+            sys.exit(1)
 
-    if debug:
-        print("\n Retrieved env vars")
-        for key in secret_vars:
-            print("**{key}**: ", os.environ[key])
+        if debug:
+            print("\n Retrieved env vars")
+            for key in secret_vars:
+                print("**{key}**: ", os.environ[key])
 
-    print("\nEnvironment variables loaded successfully.")
+        print("\nEnvironment variables loaded successfully.")
+    except ClientError as err:
+        print(f"Error fetching SSM parameters: {err}")
+        raise SystemExit(1)
