@@ -9,3 +9,19 @@ sys.path.insert(0, repo_root)
 # Add the shared_helpers directory to sys.path
 shared_helpers_path = os.path.abspath(os.path.join(repo_root, "shared_helpers"))
 sys.path.insert(0, shared_helpers_path)
+
+
+import os
+import sys
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
+sys.path.insert(
+    0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../shared_helpers"))
+)
+sys.path.insert(
+    0,
+    os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "../../shared_helpers/shared_helpers")
+    ),
+)
