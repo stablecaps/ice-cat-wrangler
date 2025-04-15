@@ -48,7 +48,7 @@ jobs:
         #!/bin/bash
         set -e
 
-        export AWS_REGION="eu-west-1"
+        export AWS_DEFAULT_REGION="eu-west-1"
         for mypackage in api_client serverless ; do # shared_helpers
           cd $mypackage
             echo -e "\n\n\n################################################" RUNNING $mypackage ################################################""
@@ -65,7 +65,7 @@ jobs:
         set -e
 
 
-        export AWS_REGION="eu-west-1"
+        export AWS_DEFAULT_REGION="eu-west-1"
         for mypackage in api_client serverless shared_helpers; do
           cd $mypackage
             echo -e "\n\n\n################################################" TESTING $mypackage ################################################""
