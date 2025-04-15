@@ -487,6 +487,9 @@ options:
 
 # Get the results for a single uploaded image (you need to know imgfprint & batchid).
 /client_launcher.py --secretsfile SSM result --imgfprint 0eaf1da24040970c6396ca59488ad7fa739ef7ab4ee1f757f180dade9adc43cf --batchid 1744481929
+
+# Get the results for multiple uploaded images from a previou run of bulkanalyse (you need the bulkanalyse batch file).
+./client_launcher.py --secretsfile ssm bulkresults --batchfile logs/stablecaps900_batch-1744377772.json result
 ```
 
 5. How the api_client integrates with DynamoDB:
@@ -496,13 +499,14 @@ The DB uses `batch_id` as the partition key and `img_fprint` as the sort key.
 - batch_id: Every time the client is run a new random `batch_id` gets created.
 - img_fprint: This is the file hash of the image (sha256).
 - client_id: Each instance of the client has a `client_id`. This id can be manually set at `api_client/config/client_id`. If this file is not present, the program will automatically generate one using the format `stablecaps_$random_3digits` on first run.
-- debug: When a power user adds the debug flag. the s3 key has debug added to it so that the lambda processing s3 files added to the source bucket saves the logs for that particular file.
+- debug: When a power user adds the debug flag, the s3 key has a `-debug` string added to the end. This allows the cat-wrangler-lambda to know that logs should be saved in the DB for that particular file.
 
-logs: When uploading images, the client stores details of the uploads as a list of dicts in json format. This can be used to keep track of jobs via `batch_id`, and get PK & SK to query DynamoDB using the `result` subcommand. The entire log can be used as input into the `bulkresults` subcommand.
+**logs folder:** When uploading images, the client stores details of the uploads as a list of dicts in json format. This can be used to keep track of jobs via `batch_id`. Effectively, the DB partition key & sort key is logged per image upload. If desired, the PK & SK can then be retreived for specific files to query DynamoDB using the `result` subcommand. Additonally, the entire log can be used as input itonto the `bulkresults` subcommand to get multiple results in one go.
 
-debug logs: Debug logs from serverless are collected if the `--debug` arg is passed to the client. These are written to the logs folder.
+**debug logs:** When the `--debug` flag is supplied, debug logs from serverless are collected and written to the logs folder. e.g.: `api_client/logs/stablecaps900_1744561671-debug-logs.json`
 
 ```json
+# Batch file example:
 [
     {
         "client_id": "stablecaps900",
