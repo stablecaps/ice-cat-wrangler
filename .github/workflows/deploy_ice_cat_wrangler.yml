@@ -5,10 +5,10 @@ on:
     branches:
       - main
   workflow_dispatch:
-    inputs:
-      icecat_tag:
-        type: string
-        required: true
+    # inputs:
+    #   icecat_tag:
+    #     type: string
+    #     required: true
 
 # permission can be added at job level or workflow level
 permissions:
@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Check out code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Setup node
       uses: actions/setup-node@v4
@@ -119,7 +119,7 @@ jobs:
       uses: MishaKav/pytest-coverage-comment@main
       with:
         pytest-xml-coverage-path: api_client/coverage.xml
-        # junitxml-path: api_client/api_client_pytest.xml
+        junitxml-path: api_client/api_client_pytest.xml
         junitxml-title: API Client Coverage
         title: API Client Coverage
         badge-title: API Client Coverage
@@ -131,15 +131,20 @@ jobs:
         remove-link-from-badge: false
         unique-id-for-comment: python3.12
 
-    # - name: Update Readme with Coverage Html
-    #   run: |
-    #     sed -i '/<!-- Pytest Coverage Comment:Begin -->/,/<!-- Pytest Coverage Comment:End -->/c\<!-- Pytest Coverage Comment:Begin -->\n\${{ steps.coverageComment.outputs.coverageHtml }}\n<!-- Pytest Coverage Comment:End -->' ./README.md
+    - name: Update Readme with Coverage Html
+      run: |
+        #!/bin/bash
+        set -e
 
-    # - name: Commit & Push changes to Readme
-    #   uses: actions-js/push@master
-    #   with:
-    #     message: Update coverage on Readme
-    #     github_token: ${{ secrets.GITHUB_TOKEN }}
+        sed -i '/<!-- Pytest Coverage Comment:Begin -->/,/<!-- Pytest Coverage Comment:End -->/c\<!-- Pytest Coverage Comment:Begin -->\n\${{ steps.coverageComment.outputs.coverageHtml }}\n<!-- Pytest Coverage Comment:End -->' ./README.md
+
+        git status
+
+    - name: Commit & Push changes to Readme
+      uses: actions-js/push@master
+      with:
+        message: Update coverage on Readme
+        github_token: ${{ secrets.GITHUB_TOKEN }}
 
     # - name: Deploy serverless
     #   env:
