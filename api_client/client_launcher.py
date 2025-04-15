@@ -90,8 +90,8 @@ class CLIArgs:
             required=True,
             help=(
                 "Secrets file name located in config folder_path to load environment variables from, "
-                + " or 'ssm' to fetch from AWS SSM Parameter Store.",
-            ),
+                "or 'ssm' to fetch from AWS SSM Parameter Store."
+            ),  # Removed the trailing comma
         )
         parser.add_argument(
             "--debug",

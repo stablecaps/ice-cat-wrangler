@@ -47,23 +47,23 @@ I've tried to write code that sets-up avenues whereby we can minimise cost whils
 The repository is divided into 4 major components:
 1. **`infra-terra`:** Contains terraform code to create various AWS resources
 2. **`serverless`:** Contains a lambda function that handles image processing
-3. **`api_client`:** Contains amn api_client that can upload images and get the categorisation results from those uploads. Use `rich` print instead of logs for a better user experience.
-4. **`shared_helpers`:** Contains shared functions and classes that can be shared between infra-terra and serverless. I've tried to write the code to be easily abstracted to other use cases. That way it could potentially be split out into a separate repo so that other applications can also use this code.
+3. **`api_client`:** Contains an api_client that can upload images and get the categorisation results from uploaded files. Uses `rich` print instead of logs for a better user experience.
+4. **`shared_helpers`:** Contains shared functions and classes that can be shared between `infra-terra` and serverless. I've tried to write the code to be easily abstracted to other use cases. That way it could potentially be split out into a separate repo so that other applications can also use this code.
 
-The solution relies upon using both terraform and serverless as deployment agents for the following reasons because each tool has its strengths & weaknesses.
+The solution relies upon using both terraform and serverless as deployment agents because each tool has its strengths & weaknesses. Note the following reasons:
 
 1. **Serverless**:
     - Ideal for deploying Lambdas and API Gateways.
-    - `sls deploy` uses easily definable configurations from the `serverless.yml` file.
+    - `sls deploy` leverages easily definable configurations in the `serverless.yml` file.
     - Requires less code to deploy things such as an API Gateway compared to Terraform.
     - Resources are tightly coupled to application code changes which is helpful to developers.
     - Allows developers to deploy without requiring specialised DevOps knowledge.
 
-#### Resources are shared between terraform and serverless using SSM variables. The api_client also leverages the same SSM variables to auto-configure resource env vars.
+#### Resources are shared between terraform and serverless using SSM variables. The api_client also leverages the same SSM variables to auto-configure env vars.
 
 2. **Terraform**:
 It is good to deploy more fundamental resources such as S3 buckets, iam policies, etc using terraform because:
-    - It involves less code in some cases. (have you seen an IAM policy in serverless.yml?)
+    - It involves less code in some cases. (have you seen an IAM policy in `serverless.yml`?)
     - The terraform deployment role in most companies usually ends up getting more & more permissions added to it till it converges to administrator perms. Allowing many devs to have admin access is a security issue. Thus, things like IAM, route53, etc should be restricted.
     - As we would like to promote the app between identical dev --> uat --> prod stages, it would make sense to let devs create the app in a dev AWS account with admin perms. These perms would not be available in uat and prod AWS accounts.
 
@@ -164,13 +164,16 @@ cd ice-cat-wrangler/
 3. Note you need to use terraform v1.11.3 binary
 
 ```shell
-# Remove encrypted secrets file. This is for the repo pipeline (used by `secrets_decryptor.sh`) - you won't need this unless you want to run the pipeline.
+# Remove encrypted secrets file. This is for the repo pipeline (used by `secrets_decryptor.sh`)
+# - you won't need this unless you want to run the pipeline.
 rm -f infra-terra/envs/dev/dev.backend.hcl.enc
 
 cp infra-terra/envs/dev/dev.template.backend.hcl infra-terra/envs/dev/dev.backend.hcl
 cp infra-terra/envs/dev/dev.template.tfvars infra-terra/envs/dev/dev.tfvars
 
-# Now edit dev.tfvars & dev.backend.hcl with your preferred vars. Note you should change the number at the end of `ice1` to something random because S3 buckets need to be globally unique. Also change unique string to something random
+# Now edit dev.tfvars & dev.backend.hcl with your preferred vars. Note you should change the
+# number at the end of `ice1` to something random because S3 buckets need to be globally unique.
+# Also change unique string to something random
 ```
 
 3. Run terraform code using `infra-terra/xxx_tfhelperv3.sh`
@@ -222,7 +225,7 @@ Parameters:
 4. Entrypoint descriptions:
 * 00_setup_terraform_remote_s3_backend_dev: Sets up TF remotestate backend with DynamoDB & S3.
 * 01b_github_actions_oidc: Sets-up a [Github OIDC Role](https://docs.github.com/en/actions/security-for-github-actions/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services) so that pipelines can deploy into AWS via Github actions. This is optional as it is only used if running the github actions pipeline.
-* 01_sls_deployment_bucket: Creates a serverless deployment bucket into the root of S3. Ensures the root of S3 does not get cluttered with various deploys.
+* 01_sls_deployment_bucket: Creates a serverless deployment bucket into the root of S3. Ensures the root of S3 does not get cluttered with various serverless deploys.
 * 02_cat_wrangler_s3_buckets: Creates S3 buckets for uploaded images - source, success (dest) & fail buckets.
 * 03_cat_wrangler_backend: Creates DynamoDb Table.
 * 04_create_lambda_permissions: Creates IAM lambda role and permissions for cat-wrangler.
@@ -304,9 +307,7 @@ make develop
 The make command basically:
 - Creates a virtual env called `venv`.
 - Installs pip-requirements-dev.
-- Installs shared_helpers module (which contains Boto3 dependency) in editable mode `pip install -e ../shared_helpers`.
-
-Note: In the local dev shared_helpers can be imported using this syntaxL `from boto3_helpers import gen_boto3_session`
+- Installs `shared_helpers` module (which contains Boto3 dependency) in editable mode `pip install -e ../shared_helpers`.
 
 4. Prepare serverless env vars.
 
@@ -314,23 +315,24 @@ Note: In the local dev shared_helpers can be imported using this syntaxL `from b
 cd serverless
 cp serverless/config/dev.template.yml serverless/config/dev.yml
 
-# Then edit serverless/config/dev.yml to change env vars. We will get the iam_role_arn from SSM. So you can leave this as some string.
+# Then edit serverless/config/dev.yml to change env vars. We will get the iam_role_arn
+# from SSM. So you can leave this as some string.
 ```
 
-Note: The serverless.yml file is setup to automatically download the following variables from SSM.
-- Deployment_bucket'
-- IAM_role_arn'
-- Image upload bucket'
-- Image success bucket'
-- Image fail bucket'
-- DynamoDb table name.
+Note: The `serverless.yml` file is setup to automatically download the following variables from SSM.
+- Deployment_bucket
+- IAM_role_arn
+- Image upload bucket
+- Image success bucket
+- Image fail bucket
+- DynamoDb table name
 
 If you want to read from config file instead of SSM, uncomment code under the string:
-`"# re-enable to get the deployment bucket from the config file instead of the SSM parameter"`.
+`"# re-enable to get the deployment bucket from the config file instead of the SSM parameter"` in `serverless.yml`.
 
 5. Install serverless plugins
 
-This installs plugins specified in serverless.yml.
+This installs plugins specified in `serverless.yml`.
 ```shell
 make slsplugins
 ```
@@ -343,14 +345,18 @@ When deploying our serverless package we also need to created a layer to hold th
 # Build layer from ../shared_helpers.
 make slslayer
 
-# Deploy just serverless without rebuilding layer (use if edits only occur in serverless src files).
+# Deploy just serverless without rebuilding layer (use if edits only occur
+# in serverless src files).
 make slsdeploy
 
 # The previous 2 command combined (use if shared_helpers have been edited).
 make slsdeployfull
 
-# test run:
+# run pytest:
 make pytest
+
+# Generate pytest local coverage files:
+make pytestcov
 ```
 
 ---
@@ -369,8 +375,11 @@ It also has a make file so you can run:
 ```shell
 make develop
 
-# test run:
+# run pytest:
 make pytest
+
+# Generate pytest local coverage files:
+make pytestcov
 
 ```
 3. Prepare api_client env vars.
@@ -395,12 +404,12 @@ The client uses the dispatch pattern to read CLI args and has several modes.
 
 ```
 # show help
-./client_launcher.py --help
+$ ./client_launcher.py --help
 
-usage: .e.g: ./client_launcher.py {--secretsfile [SSM|dev_conf_secrets]} [--debug] {bulkanalyse|result|bulkresults} [<args>]
-./client_launcher.py --secretsfile SSM --debug bulkanalyse --folder bulk_uploads/
-./client_launcher.py --secretsfile SSM result --imgfprint f54c84046c5ad95fa2f0f686db515bada71951cb0dde2ed37f76708a173033f7 --batchid 1744370618
-./client_launcher.py --secretsfile SSM bulkresults --batchfile logs/stablecaps900_batch-1744377772.json
+usage: .e.g: ./client_launcher.py {--secretsfile [ssm|dev_conf_secrets]} [--debug] {bulkanalyse|result|bulkresults} [<args>]
+./client_launcher.py --secretsfile ssm --debug bulkanalyse --folder_path bulk_uploads/
+./client_launcher.py --secretsfile ssm result --imgfprint f54c84046c5ad9... --batchid 1744370618
+./client_launcher.py --secretsfile ssm bulkresults --batchfile logs/stablecaps900_batch-1744377772.json
 
 ICE Cat API Client
 
@@ -413,9 +422,57 @@ positional arguments:
 options:
   -h, --help            show this help message and exit
   --secretsfile SECRETSFILE, -s SECRETSFILE
-                        Secrets file name located in config folder to load environment variables from, or 'SSM' to fetch from AWS SSM
+                        Secrets file name located in config folder_path to load environment variables from, or 'ssm' to fetch from AWS SSM
                         Parameter Store.
   --debug, -d           Debug mode. Set to True to enable debug output.
+
+#####################
+
+# bulkanalyse subcommand help
+$ ./client_launcher.py bulkanalyse --help
+
+usage: .e.g: ./client_launcher.py {--secretsfile [ssm|dev_conf_secrets]} [--debug] {bulkanalyse|result|bulkresults} [<args>]
+./client_launcher.py --secretsfile ssm --debug bulkanalyse --folder_path bulk_uploads/
+./client_launcher.py --secretsfile ssm result --imgfprint f54c84046c5ad9... --batchid 1744370618
+./client_launcher.py --secretsfile ssm bulkresults --batchfile logs/stablecaps900_batch-1744377772.json bulkanalyse
+       [-h] --folder FOLDER_PATH
+
+options:
+  -h, --help            show this help message and exit
+  --folder FOLDER_PATH, -f FOLDER_PATH
+                        Path to the local folder containing images to upload.
+
+# result subcommand help
+$ ./client_launcher.py bulkanalyse --help
+
+usage: .e.g: ./client_launcher.py {--secretsfile [ssm|dev_conf_secrets]} [--debug] {bulkanalyse|result|bulkresults} [<args>]
+./client_launcher.py --secretsfile ssm --debug bulkanalyse --folder_path bulk_uploads/
+./client_launcher.py --secretsfile ssm result --imgfprint f54c84046c5ad9... --batchid 1744370618
+./client_launcher.py --secretsfile ssm bulkresults --batchfile logs/stablecaps900_batch-1744377772.json result
+       [-h] --batchid BATCH_ID --imgfprint IMG_FPRINT
+
+options:
+  -h, --help            show this help message and exit
+  --batchid BATCH_ID, -b BATCH_ID
+                        Batch ID to get results for. e.g. 1234567890
+  --imgfprint IMG_FPRINT, -p IMG_FPRINT
+                        Image fingerprint hash to get results for. e.g. a91c54f1f00...
+
+# bulkesults subcommand help
+$ /client_launcher.py result --help
+
+usage: .e.g: ./client_launcher.py {--secretsfile [ssm|dev_conf_secrets]} [--debug] {bulkanalyse|result|bulkresults} [<args>]
+./client_launcher.py --secretsfile ssm --debug bulkanalyse --folder_path bulk_uploads/
+./client_launcher.py --secretsfile ssm result --imgfprint f54c84046c5ad9... --batchid 1744370618
+./client_launcher.py --secretsfile ssm bulkresults --batchfile logs/stablecaps900_batch-1744377772.json result
+       [-h] --batchid BATCH_ID --imgfprint IMG_FPRINT
+
+options:
+  -h, --help            show this help message and exit
+  --batchid BATCH_ID, -b BATCH_ID
+                        Batch ID to get results for. e.g. 1234567890
+  --imgfprint IMG_FPRINT, -p IMG_FPRINT
+                        Image fingerprint hash to get results for. e.g. a91c54f1f00...
 
 # Bulk upload files to S3 source/incoming bucket.
 ./client_launcher.py --secretsfile SSM --debug bulkanalyse --folder bulk_uploads/
