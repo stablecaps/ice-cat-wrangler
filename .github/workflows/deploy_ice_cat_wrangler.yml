@@ -97,8 +97,9 @@ jobs:
         #!/bin/bash
         set -e
 
-        for mypackage in api_client serverless shared_helpers; do
+        for mypackage in api_client serverless ; do # shared_helpers
           cd $mypackage
+            echo -e "\n\n\n################################################" RUNNING $mypackage ################################################""
             pip install -r requirements-dev.txt
 
             echo ""
@@ -113,6 +114,7 @@ jobs:
 
         for mypackage in api_client serverless shared_helpers; do
           cd $mypackage
+            echo -e "\n\n\n################################################" TESTING $mypackage ################################################""
             pytest --cov=${mypackage} tests/ --junitxml=${mypackage}_pytest.xml --cov-report=term-missing:skip-covered --cov-report=xml
           cd -
         done
