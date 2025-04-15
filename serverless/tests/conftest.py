@@ -11,9 +11,6 @@ shared_helpers_path = os.path.abspath(os.path.join(repo_root, "shared_helpers"))
 sys.path.insert(0, shared_helpers_path)
 
 
-import os
-import sys
-
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../")))
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
 sys.path.insert(
@@ -25,3 +22,35 @@ sys.path.insert(
         os.path.join(os.path.dirname(__file__), "../../shared_helpers/shared_helpers")
     ),
 )
+import pytest
+
+from serverless.functions.global_context import global_context
+
+### Fixtures
+
+
+@pytest.fixture(autouse=True)
+def reset_global_context():
+    """
+    Reset the global_context before each test to avoid test interference.
+    """
+    global_context["batch_id"] = None
+    global_context["img_fprint"] = None
+    global_context["is_debug"] = False
+
+
+@pytest.fixture(autouse=True)
+def set_env_vars():
+    """Fixture to set environment variables for tests."""
+    # Set the required environment variables
+    os.environ["s3bucketSource"] = "source-bucket"
+    os.environ["s3bucketDest"] = "dest-bucket"
+    os.environ["s3bucketFail"] = "fail-bucket"
+
+    # Yield to allow the test to run
+    yield
+
+    # Cleanup: Remove the environment variables after the test
+    del os.environ["s3bucketSource"]
+    del os.environ["s3bucketDest"]
+    del os.environ["s3bucketFail"]

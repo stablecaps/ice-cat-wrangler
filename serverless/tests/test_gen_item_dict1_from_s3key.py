@@ -4,15 +4,14 @@ import pytest
 from serverless.functions.fhelpers import gen_item_dict1_from_s3key
 from serverless.functions.global_context import global_context
 
-
-@pytest.fixture(autouse=True)
-def reset_global_context():
-    """
-    Reset the global_context before each test to avoid test interference.
-    """
-    global_context["batch_id"] = None
-    global_context["img_fprint"] = None
-    global_context["is_debug"] = False
+# @pytest.fixture(autouse=True)
+# def reset_global_context():
+#     """
+#     Reset the global_context before each test to avoid test interference.
+#     """
+#     global_context["batch_id"] = None
+#     global_context["img_fprint"] = None
+#     global_context["is_debug"] = False
 
 
 class TestGenItemDict1FromS3key:
