@@ -98,7 +98,7 @@ jobs:
         set -e
 
         for mypackage in api_client serverless shared_helpers; do
-          cd cd $mypackage
+          cd $mypackage
             pip install -r requirements-dev.txt
 
             echo ""
