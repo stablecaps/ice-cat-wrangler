@@ -1,7 +1,7 @@
 # DynamoDB Table design
 
 ## Use cases
-* Assume the user has a whole bunch of images they wish to categorise and they upload a single or multiple images to S3 bucket. We need to track image hash to avoid reprocessing and to cerate S3 file name. we also need to store logs in case debug flag is provided.
+* Assume the user has a whole bunch of images they wish to categorise and they upload a single or multiple images to S3 bucket. We need to track image hash to avoid reprocessing and to cerate S3 file name. We also need to store logs in case debug flag is provided.
 
 
 1. `batch_id`: user would either want to retrieve the results for a small - medium submission. i.e. 1-20 images.
@@ -152,7 +152,7 @@ print(response['Items'])
 
 **RCUs:** Single-item retrieval consumes 0.5 RCUs for items up to 4 KB.
 
-**Latency:** Sub-millise
+**Latency:** Sub-millisecond
 
 ### Use Case 5: Retrieve results for multiple images by img_fprint.
 
@@ -228,13 +228,13 @@ print(response['Items'])
 
 ### General Notes on Performance
 1. RCU/WCU Optimization:
-    * Use ProjectionExpression to retrieve only necessary attributes, reducing RCUs.
-    * Use batch_get_item for bulk retrievals to minimize latency and costs.
+    - Use ProjectionExpression to retrieve only necessary attributes, reducing RCUs.
+    - Use batch_get_item for bulk retrievals to minimize latency and costs.
 
 2. Index Design:
-    * GSIs are optimized for specific queries (e.g., time-based retrievals using upload_ts as the sort key).
-    * Sparse indexes (e.g., SparseLogs) reduce storage costs and improve query efficiency.
-    * Note GSIs increase cost. So edge case GSIs can be eliminated if use cases are rarely used.
+    - GSIs are optimized for specific queries (e.g., time-based retrievals using upload_ts as the sort key).
+    - Sparse indexes (e.g., SparseLogs) reduce storage costs and improve query efficiency.
+    - *Note: GSIs increase cost. So edge case GSIs can be eliminated if use cases are rarely used.*
 
 3. **Latency:**
-    * DynamoDB queries are typically sub-millisecond to single-digit milliseconds, depending on the size of the dataset and the complexity of the query.
+    - DynamoDB queries are typically sub-millisecond to single-digit milliseconds, depending on the size of the dataset and the complexity of the query.
