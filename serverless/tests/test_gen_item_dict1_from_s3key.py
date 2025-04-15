@@ -4,15 +4,6 @@ import pytest
 from serverless.functions.fhelpers import gen_item_dict1_from_s3key
 from serverless.functions.global_context import global_context
 
-# @pytest.fixture(autouse=True)
-# def reset_global_context():
-#     """
-#     Reset the global_context before each test to avoid test interference.
-#     """
-#     global_context["batch_id"] = None
-#     global_context["img_fprint"] = None
-#     global_context["is_debug"] = False
-
 
 class TestGenItemDict1FromS3key:
 
@@ -59,14 +50,7 @@ class TestGenItemDict1FromS3key:
     def test_debug_suffix_handling(self, mocker):
         # Arrange
         mocker.patch("serverless.functions.fhelpers.dyndb_ttl", "1234567890")
-        mocker.patch(
-            "serverless.functions.fhelpers.global_context",
-            {
-                "batch_id": None,
-                "img_fprint": None,
-                "is_debug": False,
-            },
-        )
+
         log_mock = mocker.patch("serverless.functions.fhelpers.LOG")
         s3_key = "hash123/client456/batch-303/2023-07-15/1689465600-debug.png"
         s3_bucket = "test-bucket"
@@ -107,14 +91,6 @@ class TestGenItemDict1FromS3key:
     def test_batch_prefix_removal(self, mocker):
         # Arrange
         mocker.patch("serverless.functions.fhelpers.dyndb_ttl", "1234567890")
-        mocker.patch(
-            "serverless.functions.fhelpers.global_context",
-            {
-                "batch_id": None,
-                "img_fprint": None,
-                "is_debug": False,
-            },
-        )
 
         # Test with batch- prefix
         s3_key_with_prefix = "hash123/client456/batch-789/2023-08-01/1690934400.png"

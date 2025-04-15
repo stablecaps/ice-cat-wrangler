@@ -1,31 +1,26 @@
-import json
-import unittest
-from datetime import datetime
-from unittest.mock import MagicMock, patch
+import pytest
 
-from serverless.functions.fhelpers import (
-    convert_time_string_to_epoch,
-    convert_to_json,
-    gen_item_dict1_from_s3key,
-    gen_item_dict2_from_rek_resp,
-    get_s3_key_from_event,
-    validate_s3bucket,
-)
+from serverless.functions.fhelpers import validate_s3bucket
 
 
-class TestFHelpers(unittest.TestCase):
+class TestFHelpers:
 
-    @patch("serverless.functions.fhelpers.check_bucket_exists")
-    @patch("os.getenv")
-    def test_validate_s3bucket(self, mock_getenv, mock_check_bucket_exists):
-        mock_getenv.side_effect = ["source-bucket", "dest-bucket", "fail-bucket"]
-        s3_client = MagicMock()
+    def test_validate_s3bucket(self, mocker, mock_aws_clients):
+        # Arrange
+        s3_client_mock, _, _ = mock_aws_clients
 
-        result = validate_s3bucket(s3_client)
+        mock_check_bucket_exists = mocker.patch(
+            "serverless.functions.fhelpers.check_bucket_exists"
+        )
 
-        self.assertEqual(result, ("source-bucket", "dest-bucket", "fail-bucket"))
+        # Act
+        result = validate_s3bucket(s3_client_mock)
 
+        # Assert
+        assert result == ("source-bucket", "dest-bucket", "fail-bucket")
         mock_check_bucket_exists.assert_called()
+
+    # TODO: convert tests below to pytest-style test functions.
 
     # @patch('serverless.functions.fhelpers.safeget')
     # def test_get_s3_key_from_event(self, mock_safeget):

@@ -4,11 +4,13 @@ import pytest
 class TestWriteDebugLogsToDynamodb:
 
     # Function writes logs to DynamoDB when is_debug is True and batch_id/img_fprint are set
-    def test_writes_logs_to_dynamodb_when_debug_enabled(self, mocker):
+    def test_writes_logs_to_dynamodb_when_debug_enabled(
+        self, mocker, mock_dynamodb_helper
+    ):
         # Arrange
-        mock_dynamodb_helper = mocker.patch(
-            "functions.func_s3_bulkimg_analyse.dynamodb_helper"
-        )
+        # mock_dynamodb_helper = mocker.patch(
+        #     "functions.func_s3_bulkimg_analyse.dynamodb_helper"
+        # )
         mock_log_collector = mocker.patch(
             "functions.func_s3_bulkimg_analyse.log_collector"
         )
@@ -44,11 +46,13 @@ class TestWriteDebugLogsToDynamodb:
         )
 
     # Function correctly retrieves batch_id and img_fprint from global_context
-    def test_retrieves_batch_id_and_img_fprint_from_global_context(self, mocker):
+    def test_retrieves_batch_id_and_img_fprint_from_global_context(
+        self, mocker, mock_dynamodb_helper
+    ):
         # Arrange
-        mock_dynamodb_helper = mocker.patch(
-            "functions.func_s3_bulkimg_analyse.dynamodb_helper"
-        )
+        # mock_dynamodb_helper = mocker.patch(
+        #     "functions.func_s3_bulkimg_analyse.dynamodb_helper"
+        # )
         mock_log_collector = mocker.patch(
             "functions.func_s3_bulkimg_analyse.log_collector"
         )
@@ -83,11 +87,11 @@ class TestWriteDebugLogsToDynamodb:
         assert call_args["item_dict"]["img_fprint"] == test_img_fprint
 
     # Function successfully converts logs to JSON using convert_to_json
-    def test_converts_logs_to_json(self, mocker):
+    def test_converts_logs_to_json(self, mocker, mock_dynamodb_helper):
         # Arrange
-        mock_dynamodb_helper = mocker.patch(
-            "functions.func_s3_bulkimg_analyse.dynamodb_helper"
-        )
+        # mock_dynamodb_helper = mocker.patch(
+        #     "functions.func_s3_bulkimg_analyse.dynamodb_helper"
+        # )
         mock_log_collector = mocker.patch(
             "functions.func_s3_bulkimg_analyse.log_collector"
         )
@@ -124,11 +128,13 @@ class TestWriteDebugLogsToDynamodb:
         )
 
     # Function correctly calls dynamodb_helper.update_item with proper item_dict
-    def test_calls_dynamodb_helper_update_item_with_correct_parameters(self, mocker):
+    def test_calls_dynamodb_helper_update_item_with_correct_parameters(
+        self, mocker, mock_dynamodb_helper
+    ):
         # Arrange
-        mock_dynamodb_helper = mocker.patch(
-            "functions.func_s3_bulkimg_analyse.dynamodb_helper"
-        )
+        # mock_dynamodb_helper = mocker.patch(
+        #     "functions.func_s3_bulkimg_analyse.dynamodb_helper"
+        # )
         mock_log_collector = mocker.patch(
             "functions.func_s3_bulkimg_analyse.log_collector"
         )
@@ -166,11 +172,13 @@ class TestWriteDebugLogsToDynamodb:
         )
 
     # Function logs appropriate messages during successful execution
-    def test_logs_appropriate_messages_during_execution(self, mocker):
+    def test_logs_appropriate_messages_during_execution(
+        self, mocker, mock_dynamodb_helper
+    ):
         # Arrange
-        mock_dynamodb_helper = mocker.patch(
-            "functions.func_s3_bulkimg_analyse.dynamodb_helper"
-        )
+        # mock_dynamodb_helper = mocker.patch(
+        #     "functions.func_s3_bulkimg_analyse.dynamodb_helper"
+        # )
         mock_log_collector = mocker.patch(
             "functions.func_s3_bulkimg_analyse.log_collector"
         )
@@ -212,11 +220,11 @@ class TestWriteDebugLogsToDynamodb:
         ), "Expected log message about writing to DynamoDB was not found"
 
     # Function exits early when is_debug is False
-    def test_exits_early_when_debug_disabled(self, mocker):
+    def test_exits_early_when_debug_disabled(self, mocker, mock_dynamodb_helper):
         # Arrange
-        mock_dynamodb_helper = mocker.patch(
-            "functions.func_s3_bulkimg_analyse.dynamodb_helper"
-        )
+        # mock_dynamodb_helper = mocker.patch(
+        #     "functions.func_s3_bulkimg_analyse.dynamodb_helper"
+        # )
         mock_log_collector = mocker.patch(
             "functions.func_s3_bulkimg_analyse.log_collector"
         )
@@ -246,11 +254,11 @@ class TestWriteDebugLogsToDynamodb:
         mock_convert_to_json.assert_not_called()
 
     # Function exits early when batch_id is None
-    def test_exits_early_when_batch_id_is_none(self, mocker):
+    def test_exits_early_when_batch_id_is_none(self, mocker, mock_dynamodb_helper):
         # Arrange
-        mock_dynamodb_helper = mocker.patch(
-            "functions.func_s3_bulkimg_analyse.dynamodb_helper"
-        )
+        # mock_dynamodb_helper = mocker.patch(
+        #     "functions.func_s3_bulkimg_analyse.dynamodb_helper"
+        # )
         mock_log_collector = mocker.patch(
             "functions.func_s3_bulkimg_analyse.log_collector"
         )
@@ -276,11 +284,11 @@ class TestWriteDebugLogsToDynamodb:
         mock_convert_to_json.assert_not_called()
 
     # Function exits early when img_fprint is None
-    def test_exits_early_when_img_fprint_is_none(self, mocker):
+    def test_exits_early_when_img_fprint_is_none(self, mocker, mock_dynamodb_helper):
         # Arrange
-        mock_dynamodb_helper = mocker.patch(
-            "functions.func_s3_bulkimg_analyse.dynamodb_helper"
-        )
+        # mock_dynamodb_helper = mocker.patch(
+        #     "functions.func_s3_bulkimg_analyse.dynamodb_helper"
+        # )
         mock_log_collector = mocker.patch(
             "functions.func_s3_bulkimg_analyse.log_collector"
         )

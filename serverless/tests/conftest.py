@@ -22,13 +22,21 @@ sys.path.insert(
         os.path.join(os.path.dirname(__file__), "../../shared_helpers/shared_helpers")
     ),
 )
+from unittest.mock import MagicMock
+
 import pytest
 
 from serverless.functions.global_context import global_context
 
+### constants
+bucket_names = {
+    "s3bucketSource": "source-bucket",
+    "s3bucketDest": "dest-bucket",
+    "s3bucketFail": "fail-bucket",
+}
+
+
 ### Fixtures
-
-
 @pytest.fixture(autouse=True)
 def reset_global_context():
     """
@@ -54,3 +62,70 @@ def set_env_vars():
     del os.environ["s3bucketSource"]
     del os.environ["s3bucketDest"]
     del os.environ["s3bucketFail"]
+
+
+@pytest.fixture
+def mock_aws_clients(mocker):
+    """
+    Mock AWS clients (S3, Rekognition, DynamoDB).
+    """
+    mock_s3_client = mocker.Mock()
+    mock_rekog_client = mocker.Mock()
+    mock_dyndb_client = mocker.Mock()
+
+    mocker.patch(
+        "functions.func_s3_bulkimg_analyse.gen_boto3_client",
+        side_effect=lambda service, region=None: {
+            "s3": mock_s3_client,
+            "rekognition": mock_rekog_client,
+            "dynamodb": mock_dyndb_client,
+        }[service],
+    )
+
+    return mock_s3_client, mock_rekog_client, mock_dyndb_client
+
+
+@pytest.fixture
+def mock_dynamodb_helper(mocker):
+    """
+    Mock the DynamoDBHelper object.
+    """
+    return mocker.patch("functions.func_s3_bulkimg_analyse.dynamodb_helper")
+
+
+# @pytest.fixture
+# def mock_common_functions(mocker):
+#     """
+#     Mock common helper functions used in tests.
+#     """
+#     mocker.patch(
+#         "functions.func_s3_bulkimg_analyse.validate_s3bucket",
+#         return_value=("source-bucket", "dest-bucket", "fail-bucket"),
+#     )
+#     mocker.patch(
+#         "functions.func_s3_bulkimg_analyse.get_s3_key_from_event",
+#         return_value="hash123/client456/batch-789/20230101/1609459200.png",
+#     )
+#     mocker.patch(
+#         "functions.func_s3_bulkimg_analyse.gen_item_dict1_from_s3key",
+#         return_value={"batch_id": "789", "img_fprint": "hash123"},
+#     )
+#     mocker.patch(
+#         "functions.func_s3_bulkimg_analyse.get_filebytes_from_s3",
+#         return_value={"Body": MagicMock(read=lambda: b"filebytes")},
+#     )
+#     mocker.patch(
+#         "functions.func_s3_bulkimg_analyse.rekog_image_categorise",
+#         return_value={
+#             "rekog_resp": {"ResponseMetadata": {"HTTPStatusCode": 200}},
+#             "rek_match": True,
+#         },
+#     )
+#     mocker.patch(
+#         "functions.func_s3_bulkimg_analyse.gen_item_dict2_from_rek_resp",
+#         return_value={"op_status": "success"},
+#     )
+#     mocker.patch(
+#         "functions.func_s3_bulkimg_analyse.move_s3_object_based_on_rekog_response",
+#         return_value=True,
+#     )

@@ -13,12 +13,11 @@ from functions.func_s3_bulkimg_analyse import run
 class TestRun:
 
     # Successfully processes an S3 event with valid image data
-    def test_successful_processing_of_valid_s3_event(self, mocker):
+    def test_successful_processing_of_valid_s3_event(
+        self, mocker, mock_aws_clients, mock_dynamodb_helper
+    ):
         # Mock AWS services and helpers
-        mock_s3_client = mocker.Mock()
-        # mock_rekog_client = mocker.Mock()
-        # mock_dyndb_client = mocker.Mock()
-        mock_dynamodb_helper = mocker.Mock()
+        mock_s3_client, _, _ = mock_aws_clients
 
         # Mock the validate_s3bucket function
         mock_validate = mocker.patch(
@@ -56,9 +55,6 @@ class TestRun:
         mock_s3_client.get_object.return_value = {
             "Body": mocker.Mock(read=lambda: b"fake_image_bytes")
         }
-
-        # Patch the S3 client used in the code
-        mocker.patch("boto3.client", return_value=mock_s3_client)
 
         # Mock rekog_image_categorise
         mock_rekog = mocker.patch(
@@ -102,11 +98,6 @@ class TestRun:
             "functions.func_s3_bulkimg_analyse.write_debug_logs_to_dynamodb"
         )
 
-        # Mock DynamoDBHelper
-        mocker.patch(
-            "functions.func_s3_bulkimg_analyse.dynamodb_helper", mock_dynamodb_helper
-        )
-
         # Create test event and context
         event = {
             "Records": [
@@ -140,8 +131,6 @@ class TestRun:
 
     # Correctly extracts S3 key from event and validates S3 buckets
     def test_s3_key_extraction_and_bucket_validation(self, mocker):
-        # Mock AWS services
-        mock_s3_client = mocker.Mock()
 
         # Mock the validate_s3bucket function
         mock_validate = mocker.patch(
@@ -201,10 +190,11 @@ class TestRun:
         )
 
     # Successfully analyzes image with Rekognition and detects a cat
-    def test_successful_rekognition_cat_detection(self, mocker):
+    def test_successful_rekognition_cat_detection(
+        self, mocker, mock_aws_clients, mock_dynamodb_helper
+    ):
         # Mock AWS services
-        mock_s3_client = mocker.Mock()
-        # mock_rekog_client = mocker.Mock()
+        mock_s3_client, mock_rekog_client, _ = mock_aws_clients
 
         # Mock helper functions
         mocker.patch(
@@ -274,9 +264,9 @@ class TestRun:
             {"batch_id": "789", "img_fprint": "hash123", "is_debug": False},
         )
         mocker.patch("functions.func_s3_bulkimg_analyse.write_debug_logs_to_dynamodb")
-        mock_dynamodb_helper = mocker.patch(
-            "functions.func_s3_bulkimg_analyse.dynamodb_helper"
-        )
+        # mock_dynamodb_helper = mocker.patch(
+        #     "functions.func_s3_bulkimg_analyse.dynamodb_helper"
+        # )
 
         # Create test event and context
         event = {
@@ -313,9 +303,10 @@ class TestRun:
         )
 
     # Successfully moves image to destination bucket after successful analysis
-    # def test_successful_image_move_to_destination(self, mocker):
+    # def test_successful_image_move_to_destination(self, mocker, mock_aws_clients):
     #     # Mock the S3 client and its head_bucket method
-    #     mock_s3_client = mocker.Mock()
+    #     # mock_s3_client = mocker.Mock()
+    #   mock_s3_client, _, _ = mock_aws_clients
     #     mock_s3_client.head_bucket.return_value = {}  # Simulate successful bucket check
 
     #     # Patch gen_boto3_client to return the mocked S3 client
@@ -403,7 +394,7 @@ class TestRun:
     # # Properly handles debug mode by writing logs to DynamoDB when is_debug is true
     # def test_debug_mode_logs_written_to_dynamodb(self, mocker):
     #     # Set global context to debug mode
-    #     from serverless.functions.global_context import global_context
+    #     # from serverless.functions.global_context import global_context
     #     global_context['is_debug'] = True
 
     #     # Mock dependencies

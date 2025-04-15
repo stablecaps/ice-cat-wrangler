@@ -6,16 +6,6 @@ from serverless.functions.fhelpers import gen_item_dict2_from_rek_resp
 # from serverless.functions.global_context import global_context
 
 
-# @pytest.fixture(autouse=True)
-# def reset_global_context():
-#     """
-#     Reset the global_context before each test to avoid test interference.
-#     """
-#     global_context["batch_id"] = None
-#     global_context["img_fprint"] = None
-#     global_context["is_debug"] = False
-
-
 class TestGenItemDict2FromRekResp:
 
     # Successfully processes a valid Rekognition response with all required fields
