@@ -5,16 +5,17 @@ on:
     branches:
       - main
   workflow_dispatch:
-    inputs:
-      icecat_tag:
-        type: string
-        required: true
+    # inputs:
+    #   icecat_tag:
+    #     type: string
+    #     required: true
 
 # permission can be added at job level or workflow level
 permissions:
   id-token: write   # This is required for requesting the JWT (oidc)
-  contents: read    # This is required for actions/checkout
+  contents: write    # This is required for actions/checkout &* coverage
   pull-requests: write
+  checks: write # coverage - https://github.com/marketplace/actions/pytest-coverage-comment
 
 jobs:
   build:
@@ -22,13 +23,91 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Check out code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
+    #####################################################
     - name: Setup node
       uses: actions/setup-node@v4
       with:
         node-version: 18.20.8
 
+    - name: Install python3.12
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Decrypt secrets
+      run: |
+        #!/bin/bash
+
+        ./secrets_decryptor.sh ${{ secrets.iccat_decryptor_key }}
+
+    #####################################################
+    - name: Run pytest for api_client, serverless, and shared_helpers
+      run: |
+        #!/bin/bash
+        set -e
+
+        export AWS_DEFAULT_REGION="eu-west-1"
+        for mypackage in shared_helpers api_client serverless ; do #
+          cd $mypackage
+            echo -e "\n\n\n################################################" RUNNING $mypackage ################################################""
+            pip install -r requirements-dev.txt
+
+            echo ""
+            pytest
+          cd -
+        done
+
+    - name: Build coverage file for api_client, serverless, and shared_helpers
+      run: |
+        #!/bin/bash
+        set -e
+
+        export AWS_DEFAULT_REGION="eu-west-1"
+        for mypackage in api_client serverless shared_helpers; do
+          cd $mypackage
+            echo -e "\n\n\n################################################" TESTING $mypackage ################################################""
+            pytest --cov=${mypackage} tests/ --junitxml=${mypackage}_pytest.xml --cov-report=term-missing:skip-covered --cov-report=xml
+          cd -
+        done
+
+    - name: Pytest coverage comment
+      id: coverageComment
+      uses: MishaKav/pytest-coverage-comment@main
+      with:
+        # multiple-files: |
+        pytest-xml-coverage-path: api_client/coverage.xml
+        junitxml-path: api_client/api_client_pytest.xml
+        junitxml-title: API Client Coverage
+        title: API Client Coverage
+        badge-title: API Client Coverage
+        hide-badge: false
+        hide-report: false
+        create-new-comment: false
+        hide-comment: false
+        report-only-changed-files: false
+        remove-link-from-badge: false
+        unique-id-for-comment: python3.12
+
+    - name: Update Readme with Coverage Html
+      run: |
+        #!/bin/bash
+        set -e
+
+        sed -i '/<!-- Pytest Coverage Comment:Begin -->/,/<!-- Pytest Coverage Comment:End -->/c\<!-- Pytest Coverage Comment:Begin -->\n\${{ steps.coverageComment.outputs.coverageHtml }}\n<!-- Pytest Coverage Comment:End -->' ./README.md
+
+        git status
+        git pull
+
+    # - name: Commit & Push changes to Readme
+    #   uses: actions-js/push@master
+    #   with:
+    #     message: Update coverage on Readme
+    #     github_token: ${{ secrets.GITHUB_TOKEN }}
+
+
+    #####################################################
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4 # More information on this action can be found below in the 'AWS Credentials' section
       with:
@@ -43,16 +122,7 @@ jobs:
       with:
         terraform_version: 1.11.3
 
-    - name: Install python3.12
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.12'
 
-    - name: Decrypt secrets
-      run: |
-        #!/bin/bash
-
-        ./secrets_decryptor.sh ${{ secrets.iccat_decryptor_key }}
 
     - name: Deploy s3 buckets
       run: |
@@ -90,6 +160,8 @@ jobs:
           ./xxx_tfhelperv3.sh terraform 04_create_lambda_permissions yes dev full
         cd -
 
+
+    ####################################################
     - name: Deploy serverless
       env:
         SERVERLESS_ACCESS_KEY: ${{ secrets.serverless_ci_secret }}

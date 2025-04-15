@@ -63,12 +63,15 @@ class TestGenBoto3Client:
         mocker.patch(
             "shared_helpers.boto3_helpers.gen_boto3_session", return_value=mock_session
         )
+        mocker.patch.dict("os.environ", {}, clear=True)  # Clear environment variables
 
         # Act
         result = gen_boto3_client("s3")
 
         # Assert
-        mock_session.client.assert_called_once_with("s3", "eu-west-1")
+        mock_session.client.assert_called_once_with(
+            "s3", "eu-west-1"
+        )  # Update if needed
         assert result == mock_client
 
     # Creates a boto3 client with a specified service name and custom region

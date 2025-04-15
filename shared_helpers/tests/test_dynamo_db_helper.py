@@ -60,7 +60,7 @@ class TestDynamoDBHelper:
             - The `attribute_types` dictionary contains expected keys.
         """
         # Arrange
-        dyndb_client = boto3.client("dynamodb")
+        dyndb_client = boto3.client("dynamodb", region_name="eu-west-1")
         table_name = "test_table"
         required_keys = ["batch_id", "img_fprint"]
 
@@ -85,7 +85,7 @@ class TestDynamoDBHelper:
             - The values are correctly converted to DynamoDB-compatible formats.
         """
         # Arrange
-        dyndb_client = boto3.client("dynamodb")
+        dyndb_client = boto3.client("dynamodb", region_name="eu-west-1")
         helper = DynamoDBHelper(dyndb_client, "test_table", ["batch_id", "img_fprint"])
         item_dict = {"batch_id": 123, "img_fprint": "abc123", "client_id": "client_1"}
 
@@ -174,7 +174,7 @@ class TestDynamoDBHelper:
             - Boolean values are converted to type `S` (stored as strings in this implementation).
         """
         # Arrange
-        dyndb_client = boto3.client("dynamodb")
+        dyndb_client = boto3.client("dynamodb", region_name="eu-west-1")
         helper = DynamoDBHelper(dyndb_client, "test_table", ["batch_id", "img_fprint"])
 
         # Act & Assert
@@ -198,7 +198,7 @@ class TestDynamoDBHelper:
             - A `ValueError` is raised with the expected error message.
         """
         # Arrange
-        dyndb_client = boto3.client("dynamodb")
+        dyndb_client = boto3.client("dynamodb", region_name="eu-west-1")
         helper = DynamoDBHelper(dyndb_client, "test_table", ["batch_id", "img_fprint"])
         item_dict = {
             "batch_id": 123,
@@ -221,7 +221,7 @@ class TestDynamoDBHelper:
             - A `ValueError` is raised with the expected error message.
         """
         # Arrange
-        dyndb_client = boto3.client("dynamodb")
+        dyndb_client = boto3.client("dynamodb", region_name="eu-west-1")
         helper = DynamoDBHelper(dyndb_client, "test_table", ["batch_id", "img_fprint"])
 
         # Act & Assert
@@ -239,7 +239,7 @@ class TestDynamoDBHelper:
             - A `ValueError` is raised with the expected error message.
         """
         # Arrange
-        dyndb_client = boto3.client("dynamodb")
+        dyndb_client = boto3.client("dynamodb", region_name="eu-west-1")
         helper = DynamoDBHelper(dyndb_client, "test_table", ["batch_id", "img_fprint"])
 
         # Act & Assert
@@ -257,7 +257,7 @@ class TestDynamoDBHelper:
             - A `ValueError` is raised with the expected error message.
         """
         # Arrange
-        dyndb_client = boto3.client("dynamodb")
+        dyndb_client = boto3.client("dynamodb", region_name="eu-west-1")
         helper = DynamoDBHelper(dyndb_client, "test_table", ["batch_id", "img_fprint"])
 
         # Act & Assert
