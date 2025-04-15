@@ -13,8 +13,9 @@ on:
 # permission can be added at job level or workflow level
 permissions:
   id-token: write   # This is required for requesting the JWT (oidc)
-  contents: read    # This is required for actions/checkout
+  contents: write    # This is required for actions/checkout &* coverage
   pull-requests: write
+  checks: write # coverage - https://github.com/marketplace/actions/pytest-coverage-comment
 
 jobs:
   build:
@@ -29,87 +30,104 @@ jobs:
       with:
         node-version: 18.20.8
 
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v4 # More information on this action can be found below in the 'AWS Credentials' section
-      with:
-        aws-region: eu-west-1
-        # role arn is output from 01b_github_actions_oidc/voutputs.tf
-        role-to-assume: ${{ secrets.AWS_GHA_ASSUME_ROLE_ARN }}
-        role-session-name: GitHubActions985dtd968
+    # - name: Configure AWS credentials
+    #   uses: aws-actions/configure-aws-credentials@v4 # More information on this action can be found below in the 'AWS Credentials' section
+    #   with:
+    #     aws-region: eu-west-1
+    #     # role arn is output from 01b_github_actions_oidc/voutputs.tf
+    #     role-to-assume: ${{ secrets.AWS_GHA_ASSUME_ROLE_ARN }}
+    #     role-session-name: GitHubActions985dtd968
 
 
-    - name: Install Terraform
-      uses: hashicorp/setup-terraform@v3
-      with:
-        terraform_version: 1.11.3
+    # - name: Install Terraform
+    #   uses: hashicorp/setup-terraform@v3
+    #   with:
+    #     terraform_version: 1.11.3
 
-    - name: Install python3.12
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.12'
+    # - name: Install python3.12
+    #   uses: actions/setup-python@v5
+    #   with:
+    #     python-version: '3.12'
 
-    - name: Decrypt secrets
+    # - name: Decrypt secrets
+    #   run: |
+    #     #!/bin/bash
+
+    #     ./secrets_decryptor.sh ${{ secrets.iccat_decryptor_key }}
+
+    # - name: Deploy s3 buckets
+    #   run: |
+    #     #!/bin/bash
+
+    #     cd infra-terra
+    #       ./xxx_tfhelperv3.sh terraform 02_cat_wrangler_s3_buckets yes dev full
+    #     cd -
+
+    # - name: Deploy dynamodb table
+    #   run: |
+    #     #!/bin/bash
+
+    #     set -e
+    #     cd infra-terra
+    #       ./xxx_tfhelperv3.sh terraform 03_cat_wrangler_backend yes dev full
+    #     cd -
+
+
+    # - name: Deploy lambda permissions
+    #   run: |
+    #     #!/bin/bash
+
+    #     set -e
+    #     cd infra-terra
+    #       ./xxx_tfhelperv3.sh terraform 04_create_lambda_permissions yes dev full
+    #     cd -
+
+    # - name: Deploy lambda permissions
+    #   run: |
+    #     #!/bin/bash
+
+    #     set -e
+    #     cd infra-terra
+    #       ./xxx_tfhelperv3.sh terraform 04_create_lambda_permissions yes dev full
+    #     cd -
+
+    - name: Run pytest api_client
       run: |
         #!/bin/bash
-
-        ./secrets_decryptor.sh ${{ secrets.iccat_decryptor_key }}
-
-    - name: Deploy s3 buckets
-      run: |
-        #!/bin/bash
-
-        cd infra-terra
-          ./xxx_tfhelperv3.sh terraform 02_cat_wrangler_s3_buckets yes dev full
-        cd -
-
-    - name: Deploy dynamodb table
-      run: |
-        #!/bin/bash
-
-        set -e
-        cd infra-terra
-          ./xxx_tfhelperv3.sh terraform 03_cat_wrangler_backend yes dev full
-        cd -
-
-
-    - name: Deploy lambda permissions
-      run: |
-        #!/bin/bash
-
-        set -e
-        cd infra-terra
-          ./xxx_tfhelperv3.sh terraform 04_create_lambda_permissions yes dev full
-        cd -
-
-    - name: Deploy lambda permissions
-      run: |
-        #!/bin/bash
-
-        set -e
-        cd infra-terra
-          ./xxx_tfhelperv3.sh terraform 04_create_lambda_permissions yes dev full
-        cd -
-
-    - name: Deploy serverless
-      env:
-        SERVERLESS_ACCESS_KEY: ${{ secrets.serverless_ci_secret }}
-      run: |
-        #!/bin/bash
-
         set -e
 
-        export ${{ secrets.serverless_ci_secret}}
-
-        cd serverless
-          npm ci
-          #
-          npm i serverless -g
-          serverless update
-          serverless login
-          #
-          make slsplugins
-          make slsdeployfull
+        cd api_client
+          pip install -r requirements.txt
+          pytest
         cd -
+
+    - name: Build coverage file api_client
+      run: |
+        #!/bin/bash
+        set -e
+        pytest --junitxml=pytest.xml --cov-report=term-missing:skip-covered --cov=app tests/ | tee pytest-coverage.txt
+
+
+    # - name: Deploy serverless
+    #   env:
+    #     SERVERLESS_ACCESS_KEY: ${{ secrets.serverless_ci_secret }}
+    #   run: |
+    #     #!/bin/bash
+
+    #     set -e
+
+    #     export ${{ secrets.serverless_ci_secret}}
+
+    #     cd serverless
+    #       npm ci
+    #       #
+    #       npm i serverless -g
+    #       serverless update
+    #       serverless login
+    #       #
+    #       make slsplugins
+    #       make slsdeployfull
+    #     cd -
 
     - name: Delete unecrypted secrets from build agent
       if: always()
