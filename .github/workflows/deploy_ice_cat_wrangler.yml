@@ -111,15 +111,16 @@ jobs:
         set -e
 
         cd api_client
-          pytest --junitxml=api_client_pytest.xml --cov-report=term-missing:skip-covered --cov=api_client tests/ | tee pytest_coverage_api_client.txt
+          pytest --cov=api_client tests/ --junitxml=api_client_pytest.xml --cov-report=term-missing:skip-covered --cov-report=xml #| tee pytest_coverage_api_client.txt
         cd -
 
     - name: Pytest coverage comment
       id: coverageComment
       uses: MishaKav/pytest-coverage-comment@main
       with:
-        pytest-coverage-path: api_client/pytest_coverage_api_client.txt
+        pytest-coverage-path: api_client/coverage.xml
         junitxml-path: api_client/api_client_pytest.xml
+        junitxml-title: API Client Coverage
 
     - name: Update Readme with Coverage Html
       run: |
