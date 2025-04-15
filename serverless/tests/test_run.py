@@ -1,12 +1,3 @@
-import os
-import sys
-
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../")))
-# sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
-sys.path.insert(
-    0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../shared_helpers"))
-)
-import pytest
 from functions.func_s3_bulkimg_analyse import run
 
 
@@ -264,9 +255,6 @@ class TestRun:
             {"batch_id": "789", "img_fprint": "hash123", "is_debug": False},
         )
         mocker.patch("functions.func_s3_bulkimg_analyse.write_debug_logs_to_dynamodb")
-        # mock_dynamodb_helper = mocker.patch(
-        #     "functions.func_s3_bulkimg_analyse.dynamodb_helper"
-        # )
 
         # Create test event and context
         event = {

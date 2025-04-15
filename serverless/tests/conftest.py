@@ -1,6 +1,32 @@
-# filepath: /media/bsgt/jogi/XX_local_PSYNC_linux2/000_GIT_REPOS/0000_STABLECAPS_GITREPOS/ice-cat-wrangler/serverless/tests/conftest.py
+"""
+Module: conftest
+
+This module provides shared configurations, fixtures, and setup logic for the test suite.
+It is automatically loaded by pytest and is used to configure the test environment,
+mock dependencies, and provide reusable fixtures for tests.
+
+The configurations and fixtures in this module ensure that:
+- The global context is reset before each test to avoid interference between tests.
+- Required environment variables are set and cleaned up after each test.
+- AWS clients (S3, Rekognition, DynamoDB) are mocked for isolated testing.
+- Common helper functions and dependencies are mocked where necessary.
+
+Dependencies:
+- pytest: For test execution and fixture management.
+- mocker: For mocking dependencies and environment variables.
+- serverless.functions.global_context: The global context used across the application.
+
+Fixtures:
+- `reset_global_context`: Resets the global context before each test.
+- `set_env_vars`: Sets required environment variables for tests.
+- `mock_aws_clients`: Provides mocked AWS clients for S3, Rekognition, and DynamoDB.
+- `mock_dynamodb_helper`: Mocks the DynamoDBHelper object.
+"""
+
 import os
 import sys
+
+import pytest
 
 # Add the project root directory to sys.path
 repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
@@ -10,21 +36,18 @@ sys.path.insert(0, repo_root)
 shared_helpers_path = os.path.abspath(os.path.join(repo_root, "shared_helpers"))
 sys.path.insert(0, shared_helpers_path)
 
+# Add the serverless directory to sys.path
+serverless_path = os.path.abspath(os.path.join(repo_root, "serverless"))
+sys.path.insert(0, serverless_path)
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../")))
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
-sys.path.insert(
-    0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../shared_helpers"))
-)
-sys.path.insert(
-    0,
-    os.path.abspath(
-        os.path.join(os.path.dirname(__file__), "../../shared_helpers/shared_helpers")
-    ),
-)
-from unittest.mock import MagicMock
+# Add the tests directory to sys.path
+tests_path = os.path.abspath(os.path.dirname(__file__))
+sys.path.insert(0, tests_path)
 
-import pytest
+# Add the modules directory to sys.path (if needed)
+modules_path = os.path.abspath(os.path.join(repo_root, "modules"))
+sys.path.insert(0, modules_path)
+
 
 from serverless.functions.global_context import global_context
 
@@ -41,6 +64,12 @@ bucket_names = {
 def reset_global_context():
     """
     Reset the global_context before each test to avoid test interference.
+
+    This fixture ensures that the `global_context` dictionary is reset to its default
+    state before each test, preventing data leakage between tests.
+
+    Modifies:
+        - `global_context`: Resets `batch_id`, `img_fprint`, and `is_debug` to their default values.
     """
     global_context["batch_id"] = None
     global_context["img_fprint"] = None
@@ -49,7 +78,23 @@ def reset_global_context():
 
 @pytest.fixture(autouse=True)
 def set_env_vars():
-    """Fixture to set environment variables for tests."""
+    """
+    Set required environment variables for tests.
+
+    This fixture sets the necessary environment variables for the test suite and
+    ensures they are cleaned up after each test.
+
+    Environment Variables:
+        - `s3bucketSource`: The source S3 bucket name.
+        - `s3bucketDest`: The destination S3 bucket name.
+        - `s3bucketFail`: The failure S3 bucket name.
+
+    Yields:
+        None: Allows the test to run with the environment variables set.
+
+    Cleans Up:
+        - Removes the environment variables after the test.
+    """
     # Set the required environment variables
     os.environ["s3bucketSource"] = "source-bucket"
     os.environ["s3bucketDest"] = "dest-bucket"
@@ -68,6 +113,15 @@ def set_env_vars():
 def mock_aws_clients(mocker):
     """
     Mock AWS clients (S3, Rekognition, DynamoDB).
+
+    This fixture provides mocked AWS clients for S3, Rekognition, and DynamoDB,
+    allowing tests to simulate AWS interactions without making actual API calls.
+
+    Args:
+        mocker: The pytest-mock fixture for mocking dependencies.
+
+    Returns:
+        tuple: A tuple containing mocked S3, Rekognition, and DynamoDB clients.
     """
     mock_s3_client = mocker.Mock()
     mock_rekog_client = mocker.Mock()
@@ -89,6 +143,15 @@ def mock_aws_clients(mocker):
 def mock_dynamodb_helper(mocker):
     """
     Mock the DynamoDBHelper object.
+
+    This fixture provides a mocked DynamoDBHelper object, allowing tests to simulate
+    DynamoDB interactions without making actual API calls.
+
+    Args:
+        mocker: The pytest-mock fixture for mocking dependencies.
+
+    Returns:
+        MagicMock: A mocked DynamoDBHelper object.
     """
     return mocker.patch("functions.func_s3_bulkimg_analyse.dynamodb_helper")
 
