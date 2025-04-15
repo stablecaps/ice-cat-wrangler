@@ -41,3 +41,4 @@ pytest:
 pytestcov:
 	pytest --cov=functions tests/ --cov-report=xml
 	pytest --cov=functions tests/ --cov-report=html
+	pytest --cov=functions tests/
