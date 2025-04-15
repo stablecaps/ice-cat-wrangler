@@ -101,11 +101,11 @@ jobs:
         git status
         git pull
 
-    - name: Commit & Push changes to Readme
-      uses: actions-js/push@master
-      with:
-        message: Update coverage on Readme
-        github_token: ${{ secrets.GITHUB_TOKEN }}
+    # - name: Commit & Push changes to Readme
+    #   uses: actions-js/push@master
+    #   with:
+    #     message: Update coverage on Readme
+    #     github_token: ${{ secrets.GITHUB_TOKEN }}
 
 
     #####################################################
