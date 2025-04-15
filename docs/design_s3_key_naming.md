@@ -19,7 +19,7 @@ Better key name 1: `file_hash/client_id/batchid/YYYY-MM-DD/epoch_timestamp-debug
 
 e.g. `cat-wrangler-dest-ice666-dev/0eaf1da24040970c6396ca59488ad7fa739ef7ab4ee1f757f180dade9adc43cf/stablecaps900/batch-1744481929/2025-04-12-18/1744481929-debug.png`
 
-Note: The `-debug` part of the key is added by the client so that the lambda can store logs for power users.
+*Note: The `-debug` part of the key is added by the client so that the lambda can store logs for power users.*
 
 #### Why key name 1 is a good choice for better partition distribution, scalability, and performance for high-volume workloads:
 

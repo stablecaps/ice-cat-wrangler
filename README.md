@@ -261,11 +261,11 @@ terraform_exec init -backend-config ../../envs/dev/dev.backend.hcl -migrate-stat
 rm terraform.tfstate*
 ```
 
-Note: When destroying the backend, you should download the remote tfstate file to the local directory. Then comment the S3 backend block again. Then run the destroy using the local tfstate.
+*Note: When destroying the backend, you should download the remote tfstate file to the local directory. Then comment the S3 backend block again. Then run the destroy using the local tfstate.*
 
 5. After this, install rest of TF infrastructure using folder numbers as an order guide.
 
-Note: The permissions in 04_create_lambda_permissions are somewhat broad as this is a dev environment. These permissions would be tightened up via granular permissions in UAT before being deployed to PROD. I would utilise cloudtrail to create [restrictive policies](https://skildops.com/blog/generate-restricted-aws-iam-policy-via-cloudtrail).
+*Note: The permissions in 04_create_lambda_permissions are somewhat broad as this is a dev environment. These permissions would be tightened up via granular permissions in UAT before being deployed to PROD. I would utilise cloudtrail to create [restrictive policies](https://skildops.com/blog/generate-restricted-aws-iam-policy-via-cloudtrail).*
 
 6. `infra-terra` has a `Makefile`. It contains a convenience function to create terraform docs. Run using:
 
@@ -319,7 +319,7 @@ cp serverless/config/dev.template.yml serverless/config/dev.yml
 # from SSM. So you can leave this as some string.
 ```
 
-Note: The `serverless.yml` file is setup to automatically download the following variables from SSM.
+The `serverless.yml` file is setup to automatically download the following variables from SSM:
 - Deployment_bucket
 - IAM_role_arn
 - Image upload bucket
@@ -612,15 +612,15 @@ I assume that if performance is important, the program should implement or add t
 - DynamoDB (DDB):
   - ~~TTL to delete old entries (14 days).~~
   - ~~Autoscaling to handle load. (To be done on provisioned setup)~~
-- Handle deletion of items from the bucket: Delete corresponding entries from DynamoDB.
+  - Handle deletion of items from the bucket: Delete corresponding entries from DynamoDB.
+  - Implement other api_client dynamodb query methods.
+  - Still need to store original filename attribute (before client rename)
 - Reduce logging to save costs.
 - Finish tests.
 - ~~atexit not behaving as expected in lambda env - investigate~~
 - Re-raise final exception to allow lambda to handle retries. need additional infra like SQS DLQ
 - Fix todo's.
-- Implement other api_client dynamodb query methods.
 - Implement lambda alarms in cloudwatch for errors, latency, timeouts, out of memory, etc.
-- Still need to store original filename attribute (before client rename)
 - Tighten up AWS perms.
 
 ---
