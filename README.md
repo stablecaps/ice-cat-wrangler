@@ -402,7 +402,7 @@ export AWS_REGION=eu-west-1
 
 The client uses the dispatch pattern to read CLI args and has several modes.
 
-```
+```shell
 # show help
 $ ./client_launcher.py --help
 
@@ -425,10 +425,10 @@ options:
                         Secrets file name located in config folder_path to load environment variables from, or 'ssm' to fetch from AWS SSM
                         Parameter Store.
   --debug, -d           Debug mode. Set to True to enable debug output.
+```
 
-#####################
-
-# bulkanalyse subcommand help
+#### bulkanalyse subcommand help
+```shell
 $ ./client_launcher.py bulkanalyse --help
 
 usage: .e.g: ./client_launcher.py {--secretsfile [ssm|dev_conf_secrets]} [--debug] {bulkanalyse|result|bulkresults} [<args>]
@@ -441,8 +441,10 @@ options:
   -h, --help            show this help message and exit
   --folder FOLDER_PATH, -f FOLDER_PATH
                         Path to the local folder containing images to upload.
+```
 
-# result subcommand help
+#### result subcommand help
+```shell
 $ ./client_launcher.py bulkanalyse --help
 
 usage: .e.g: ./client_launcher.py {--secretsfile [ssm|dev_conf_secrets]} [--debug] {bulkanalyse|result|bulkresults} [<args>]
@@ -457,8 +459,10 @@ options:
                         Batch ID to get results for. e.g. 1234567890
   --imgfprint IMG_FPRINT, -p IMG_FPRINT
                         Image fingerprint hash to get results for. e.g. a91c54f1f00...
+```
 
-# bulkesults subcommand help
+#### bulkesults subcommand help
+```shell
 $ /client_launcher.py result --help
 
 usage: .e.g: ./client_launcher.py {--secretsfile [ssm|dev_conf_secrets]} [--debug] {bulkanalyse|result|bulkresults} [<args>]
@@ -473,7 +477,10 @@ options:
                         Batch ID to get results for. e.g. 1234567890
   --imgfprint IMG_FPRINT, -p IMG_FPRINT
                         Image fingerprint hash to get results for. e.g. a91c54f1f00...
+```
 
+#### Command examples
+```shell
 # Bulk upload files to S3 source/incoming bucket.
 ./client_launcher.py --secretsfile SSM --debug bulkanalyse --folder bulk_uploads/
 
