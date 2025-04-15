@@ -91,6 +91,8 @@ jobs:
     #       ./xxx_tfhelperv3.sh terraform 04_create_lambda_permissions yes dev full
     #     cd -
 
+    #####################################################
+    # Test api_client
     - name: Run pytest api_client
       run: |
         #!/bin/bash
@@ -98,6 +100,8 @@ jobs:
 
         cd api_client
           pip install -r requirements-dev.txt
+
+          echo ""
           pytest
         cd -
 
@@ -105,8 +109,29 @@ jobs:
       run: |
         #!/bin/bash
         set -e
-        pytest --junitxml=pytest.xml --cov-report=term-missing:skip-covered --cov=app tests/ | tee pytest-coverage.txt
 
+        cd api_client
+          pytest --junitxml=api_client_pytest.xml --cov-report=term-missing:skip-covered --cov=app tests/ | tee pytest_coverage_api_client.txt
+        cd -
+
+    - name: Pytest coverage comment
+      id: coverageComment
+      uses: MishaKav/pytest-coverage-comment@main
+      with:
+        pytest-coverage-path: api_client/pytest_coverage_api_client.txt
+        junitxml-path: api_client/api_client_pytest.xml
+
+    - name: Update Readme with Coverage Html
+      if: ${{ github.ref == 'refs/heads/main' }}
+      run: |
+        sed -i '/<!-- Pytest Coverage Comment:Begin -->/,/<!-- Pytest Coverage Comment:End -->/c\<!-- Pytest Coverage Comment:Begin -->\n\${{ steps.coverageComment.outputs.coverageHtml }}\n<!-- Pytest Coverage Comment:End -->' ./README.md
+
+    - name: Commit & Push changes to Readme
+      if: ${{ github.ref == 'refs/heads/main' }}
+      uses: actions-js/push@master
+      with:
+        message: Update coverage on Readme
+        github_token: ${{ secrets.GITHUB_TOKEN }}
 
     # - name: Deploy serverless
     #   env:
