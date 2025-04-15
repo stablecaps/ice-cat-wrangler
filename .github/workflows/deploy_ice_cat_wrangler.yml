@@ -118,7 +118,7 @@ jobs:
       id: coverageComment
       uses: MishaKav/pytest-coverage-comment@main
       with:
-        pytest-coverage-path: api_client/coverage.xml
+        pytest-xml-coverage-path: api_client/coverage.xml
         junitxml-path: api_client/api_client_pytest.xml
         junitxml-title: API Client Coverage
 
