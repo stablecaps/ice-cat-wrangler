@@ -43,13 +43,13 @@ jobs:
         ./secrets_decryptor.sh ${{ secrets.iccat_decryptor_key }}
 
     #####################################################
-    - name: Run pytest for api_client serverless and shared_helpers
+    - name: Run pytest for api_client, serverless, and shared_helpers
       run: |
         #!/bin/bash
         set -e
 
         export AWS_DEFAULT_REGION="eu-west-1"
-        for mypackage in api_client serverless ; do # shared_helpers
+        for mypackage in shared_helpers api_client serverless ; do #
           cd $mypackage
             echo -e "\n\n\n################################################" RUNNING $mypackage ################################################""
             pip install -r requirements-dev.txt
@@ -59,11 +59,10 @@ jobs:
           cd -
         done
 
-    - name: Build coverage file for api_client serverless and shared_helpers
+    - name: Build coverage file for api_client, serverless, and shared_helpers
       run: |
         #!/bin/bash
         set -e
-
 
         export AWS_DEFAULT_REGION="eu-west-1"
         for mypackage in api_client serverless shared_helpers; do
@@ -109,80 +108,80 @@ jobs:
 
 
     #####################################################
-    # - name: Configure AWS credentials
-    #   uses: aws-actions/configure-aws-credentials@v4 # More information on this action can be found below in the 'AWS Credentials' section
-    #   with:
-    #     aws-region: eu-west-1
-    #     # role arn is output from 01b_github_actions_oidc/voutputs.tf
-    #     role-to-assume: ${{ secrets.AWS_GHA_ASSUME_ROLE_ARN }}
-    #     role-session-name: GitHubActions985dtd968
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4 # More information on this action can be found below in the 'AWS Credentials' section
+      with:
+        aws-region: eu-west-1
+        # role arn is output from 01b_github_actions_oidc/voutputs.tf
+        role-to-assume: ${{ secrets.AWS_GHA_ASSUME_ROLE_ARN }}
+        role-session-name: GitHubActions985dtd968
 
 
-    # - name: Install Terraform
-    #   uses: hashicorp/setup-terraform@v3
-    #   with:
-    #     terraform_version: 1.11.3
+    - name: Install Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.11.3
 
 
 
-    # - name: Deploy s3 buckets
-    #   run: |
-    #     #!/bin/bash
+    - name: Deploy s3 buckets
+      run: |
+        #!/bin/bash
 
-    #     cd infra-terra
-    #       ./xxx_tfhelperv3.sh terraform 02_cat_wrangler_s3_buckets yes dev full
-    #     cd -
+        cd infra-terra
+          ./xxx_tfhelperv3.sh terraform 02_cat_wrangler_s3_buckets yes dev full
+        cd -
 
-    # - name: Deploy dynamodb table
-    #   run: |
-    #     #!/bin/bash
+    - name: Deploy dynamodb table
+      run: |
+        #!/bin/bash
 
-    #     set -e
-    #     cd infra-terra
-    #       ./xxx_tfhelperv3.sh terraform 03_cat_wrangler_backend yes dev full
-    #     cd -
-
-
-    # - name: Deploy lambda permissions
-    #   run: |
-    #     #!/bin/bash
-
-    #     set -e
-    #     cd infra-terra
-    #       ./xxx_tfhelperv3.sh terraform 04_create_lambda_permissions yes dev full
-    #     cd -
-
-    # - name: Deploy lambda permissions
-    #   run: |
-    #     #!/bin/bash
-
-    #     set -e
-    #     cd infra-terra
-    #       ./xxx_tfhelperv3.sh terraform 04_create_lambda_permissions yes dev full
-    #     cd -
+        set -e
+        cd infra-terra
+          ./xxx_tfhelperv3.sh terraform 03_cat_wrangler_backend yes dev full
+        cd -
 
 
-    #####################################################
-    # - name: Deploy serverless
-    #   env:
-    #     SERVERLESS_ACCESS_KEY: ${{ secrets.serverless_ci_secret }}
-    #   run: |
-    #     #!/bin/bash
+    - name: Deploy lambda permissions
+      run: |
+        #!/bin/bash
 
-    #     set -e
+        set -e
+        cd infra-terra
+          ./xxx_tfhelperv3.sh terraform 04_create_lambda_permissions yes dev full
+        cd -
 
-    #     export ${{ secrets.serverless_ci_secret}}
+    - name: Deploy lambda permissions
+      run: |
+        #!/bin/bash
 
-    #     cd serverless
-    #       npm ci
-    #       #
-    #       npm i serverless -g
-    #       serverless update
-    #       serverless login
-    #       #
-    #       make slsplugins
-    #       make slsdeployfull
-    #     cd -
+        set -e
+        cd infra-terra
+          ./xxx_tfhelperv3.sh terraform 04_create_lambda_permissions yes dev full
+        cd -
+
+
+    ####################################################
+    - name: Deploy serverless
+      env:
+        SERVERLESS_ACCESS_KEY: ${{ secrets.serverless_ci_secret }}
+      run: |
+        #!/bin/bash
+
+        set -e
+
+        export ${{ secrets.serverless_ci_secret}}
+
+        cd serverless
+          npm ci
+          #
+          npm i serverless -g
+          serverless update
+          serverless login
+          #
+          make slsplugins
+          make slsdeployfull
+        cd -
 
     - name: Delete unecrypted secrets from build agent
       if: always()
