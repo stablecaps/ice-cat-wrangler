@@ -111,7 +111,7 @@ jobs:
         set -e
 
         cd api_client
-          pytest --junitxml=api_client_pytest.xml --cov-report=term-missing:skip-covered --cov=app tests/ | tee pytest_coverage_api_client.txt
+          pytest --junitxml=api_client_pytest.xml --cov-report=term-missing:skip-covered --cov=api_client tests/ | tee pytest_coverage_api_client.txt
         cd -
 
     - name: Pytest coverage comment
