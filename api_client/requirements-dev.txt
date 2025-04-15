@@ -29,3 +29,4 @@ PyYAML==6.0.2
 tomlkit==0.13.2
 virtualenv==20.30.0
 pytest-mock==3.14.0
+pytest-cov==6.1.1

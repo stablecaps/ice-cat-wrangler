@@ -453,10 +453,25 @@ debug logs: Debug logs from serverless are collected if the `--debug` arg is pas
 ]
 ```
 
+---
+
+### E. Tests
+Tests are run using pytest in `serverless`, `api_client` & `shared_helpers` directories using the following make commands
+
+```shell
+# Run tests
+make pytest
+
+# generate html and xml coverage reports
+make pytestcov
+
+# view coverage by running from serverless api_client & shared_helpers directories:
+google-chrome htmlcov/index.html
+```
 
 ---
 
-### E. Github Actions Pipeline
+### F. Github Actions Pipeline
 The deployment pipeline file is located at `.github/workflows/deploy_ice_cat_wrangler.yml`.
 - Deploys all terraform & serverless components.
 - Seals with secrets by leveraging ``secrets.txt`, `secrets_encryptor.sh` & `secrets_decryptor.sh` located in root of repo.
@@ -475,13 +490,13 @@ We need to run CI, but we do not want to store unencrypted secrets or config val
 
 ---
 
-### F. Pre-commit hooks
+### G. Pre-commit hooks
 Note that both `api_client` and `serverless` virtual envs have pre-commit installed to perform various checks to make sure code follows best practices.
 - The root of the repo contains the config for this in `.pre-commit-config.yaml`.
 - When you run `make develop` for either environment the build script automatically runs `pre-commit install`
 
 
-## Axioms for S3 Design
+### H. Axioms for S3 Design
 I assume that if performance is important, the program should implement or leave room for addition as a feature later on.
 1. [click for S3 performance](https://docs.aws.amazon.com/AmazonS3/latest/userguide/optimizing-performance.html):
     - Multiple prefixes
@@ -499,7 +514,7 @@ I assume that if performance is important, the program should implement or leave
 
 ---
 
-## Axioms for DB Design
+### I. Axioms for DB Design
 
 1. The image is kept in persistent storage.
 2. Scanning is a non-blocking operation:

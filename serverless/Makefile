@@ -1,7 +1,3 @@
-.PHONY: test
-test:
-	poetry run pytest
-
 .PHONY: develop
 develop:
 	./.make/develop.sh
@@ -36,3 +32,9 @@ slsrm:
 .PHONY: pytest
 pytest:
 	pytest -vv
+
+.PHONY: pytestcov - cov=tests
+pytestcov:
+	pytest --cov=functions tests/ --cov-report=xml
+	pytest --cov=functions tests/ --cov-report=html
+	pytest --cov=functions tests/

@@ -1,31 +1,62 @@
-import json
-import unittest
-from datetime import datetime
-from unittest.mock import MagicMock, patch
+"""
+Module: test_fhelpers
 
-from serverless.functions.fhelpers import (
-    convert_time_string_to_epoch,
-    convert_to_json,
-    gen_item_dict1_from_s3key,
-    gen_item_dict2_from_rek_resp,
-    get_s3_key_from_event,
-    validate_s3bucket,
-)
+This module contains unit tests for various helper functions in the
+`serverless.functions.fhelpers` module. These helper functions are responsible
+for tasks such as validating S3 buckets, converting time strings to epoch timestamps,
+generating item dictionaries from S3 keys, and converting data to JSON.
+
+The tests in this module ensure that:
+- S3 buckets are validated correctly.
+- Time strings are converted to epoch timestamps accurately.
+- Item dictionaries are generated correctly from S3 keys and Rekognition responses.
+- Data structures are properly converted to JSON strings.
+
+Dependencies:
+- pytest: For test execution and assertions.
+- mocker: For mocking dependencies and environment variables.
+- serverless.functions.fhelpers: The module under test.
+
+TODO:
+- Convert remaining tests to pytest-style test functions.
+"""
+
+from serverless.functions.fhelpers import validate_s3bucket
 
 
-class TestFHelpers(unittest.TestCase):
+class TestFHelpers:
+    """
+    Test suite for helper functions in the `serverless.functions.fhelpers` module.
+    """
 
-    @patch("serverless.functions.fhelpers.check_bucket_exists")
-    @patch("os.getenv")
-    def test_validate_s3bucket(self, mock_getenv, mock_check_bucket_exists):
-        mock_getenv.side_effect = ["source-bucket", "dest-bucket", "fail-bucket"]
-        s3_client = MagicMock()
+    def test_validate_s3bucket(self, mocker, mock_aws_clients):
+        """
+        Test that `validate_s3bucket` correctly validates S3 buckets and retrieves
+        their names from environment variables.
 
-        result = validate_s3bucket(s3_client)
+        Args:
+            mocker: The pytest-mock fixture for mocking dependencies.
+            mock_aws_clients: The fixture providing mocked AWS clients.
 
-        self.assertEqual(result, ("source-bucket", "dest-bucket", "fail-bucket"))
+        Asserts:
+            - The returned bucket names match the expected values.
+            - The `check_bucket_exists` function is called to validate the buckets.
+        """
+        # Arrange
+        s3_client_mock, _, _ = mock_aws_clients
 
+        mock_check_bucket_exists = mocker.patch(
+            "serverless.functions.fhelpers.check_bucket_exists"
+        )
+
+        # Act
+        result = validate_s3bucket(s3_client_mock)
+
+        # Assert
+        assert result == ("source-bucket", "dest-bucket", "fail-bucket")
         mock_check_bucket_exists.assert_called()
+
+    # TODO: convert tests below to pytest-style test functions.
 
     # @patch('serverless.functions.fhelpers.safeget')
     # def test_get_s3_key_from_event(self, mock_safeget):
@@ -96,5 +127,5 @@ class TestFHelpers(unittest.TestCase):
     #     self.assertEqual(result, expected_result)
 
 
-if __name__ == "__main__":
-    unittest.main()
+# if __name__ == "__main__":
+#     unittest.main()
