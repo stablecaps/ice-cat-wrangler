@@ -1,17 +1,60 @@
-import os
-import sys
+"""
+Module: test_load_environment_variables
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../")))
+This module contains unit tests for the `load_environment_variables` function in the
+`api_client.helpers.config` module. The `load_environment_variables` function is responsible
+for loading environment variables from either a dotenv file or AWS SSM Parameter Store.
+
+The tests in this module ensure that:
+- The function correctly loads environment variables from SSM when `secretsfile` is "ssm".
+- The function correctly loads environment variables from a dotenv file when `secretsfile` is not "ssm".
+- The function sets environment variables correctly after loading.
+- The function handles edge cases such as missing or invalid SSM parameters, non-existent dotenv files, and malformed dotenv files.
+- The function prints debug information when the `debug` flag is set to `True`.
+
+Dependencies:
+- pytest: For test execution and assertions.
+- unittest.mock: For mocking dependencies and environment variables.
+- api_client.helpers.config.load_environment_variables: The function under test.
+
+Test Cases:
+- `test_load_from_ssm`: Verifies that the function loads environment variables from SSM when `secretsfile` is "ssm".
+- `test_load_from_dotenv_file`: Ensures the function loads environment variables from a dotenv file when `secretsfile` is not "ssm".
+- `test_setting_env_vars_from_ssm`: Verifies that the function sets environment variables correctly after loading from SSM.
+- `test_successful_dotenv_loading`: Ensures the function sets environment variables correctly after loading from a dotenv file.
+- `test_debug_output`: Verifies that the function prints debug information when the `debug` flag is set to `True`.
+- `test_handling_missing_ssm_parameters`: Ensures the function handles missing SSM parameters gracefully.
+- `test_handling_invalid_ssm_parameters`: Verifies that the function handles invalid SSM parameters and raises an appropriate exception.
+- `test_handling_nonexistent_dotenv_file`: Ensures the function handles non-existent dotenv files gracefully.
+- `test_handling_malformed_dotenv_file`: Verifies that the function handles empty or malformed dotenv files gracefully.
+- `test_handling_missing_required_env_vars`: Ensures the function handles missing required environment variables after loading.
+"""
+
+import os
 
 import pytest
+from botocore.exceptions import ClientError
 
 from api_client.helpers.config import load_environment_variables
 
 
 class TestLoadEnvironmentVariables:
+    """
+    Test suite for the `load_environment_variables` function.
+    """
 
     # Loading environment variables from SSM when secretsfile is "ssm"
     def test_load_from_ssm(self, mocker):
+        """
+        Test that the function loads environment variables from SSM when `secretsfile` is "ssm".
+
+        Args:
+            mocker: The pytest-mock fixture for mocking dependencies.
+
+        Asserts:
+            - The `fetch_values_from_ssm` function is called with the correct parameters.
+            - The environment variables are set correctly after loading.
+        """
         # Arrange
         mock_ssm_client = mocker.Mock()
         mock_fetch = mocker.patch(
@@ -51,6 +94,16 @@ class TestLoadEnvironmentVariables:
 
     # Loading environment variables from a dotenv file when secretsfile is not "ssm"
     def test_load_from_dotenv_file(self, mocker):
+        """
+        Test that the function loads environment variables from a dotenv file when `secretsfile` is not "ssm".
+
+        Args:
+            mocker: The pytest-mock fixture for mocking dependencies.
+
+        Asserts:
+            - The `construct_secrets_path` function is called with the correct filename.
+            - The `load_dotenv` function is called with the correct path.
+        """
         # Arrange
         mock_construct_path = mocker.patch(
             "api_client.helpers.config.construct_secrets_path",
@@ -68,6 +121,15 @@ class TestLoadEnvironmentVariables:
 
     # Successfully setting environment variables from SSM parameters
     def test_setting_env_vars_from_ssm(self, mocker):
+        """
+        Test that the function sets environment variables correctly after loading from SSM.
+
+        Args:
+            mocker: The pytest-mock fixture for mocking dependencies.
+
+        Asserts:
+            - The environment variables are set correctly for each key-value pair.
+        """
         # Arrange
         ssm_response = {
             "prefix/AWS_ACCESS_KEY_ID": "test_key",
@@ -93,6 +155,15 @@ class TestLoadEnvironmentVariables:
 
     # Successfully loading environment variables from dotenv file
     def test_successful_dotenv_loading(self, mocker):
+        """
+        Test that the function sets environment variables correctly after loading from a dotenv file.
+
+        Args:
+            mocker: The pytest-mock fixture for mocking dependencies.
+
+        Asserts:
+            - The environment variables are set correctly for each key-value pair.
+        """
         # Arrange
         mock_construct_path = mocker.patch(
             "api_client.helpers.config.construct_secrets_path",
@@ -127,6 +198,15 @@ class TestLoadEnvironmentVariables:
 
     # Printing debug information when debug flag is True
     def test_debug_output(self, mocker):
+        """
+        Test that the function prints debug information when the `debug` flag is set to `True`.
+
+        Args:
+            mocker: The pytest-mock fixture for mocking dependencies.
+
+        Asserts:
+            - Debug information is printed for each environment variable.
+        """
         # Arrange
         mocker.patch(
             "api_client.helpers.config.fetch_values_from_ssm",
@@ -160,6 +240,15 @@ class TestLoadEnvironmentVariables:
 
     # Handling missing SSM parameters
     def test_handling_missing_ssm_parameters(self, mocker):
+        """
+        Test that the function handles missing SSM parameters gracefully.
+
+        Args:
+            mocker: The pytest-mock fixture for mocking dependencies.
+
+        Asserts:
+            - The function raises a `SystemExit` exception with the correct exit code.
+        """
         # Arrange
         mocker.patch(
             "api_client.helpers.config.fetch_values_from_ssm",
@@ -175,10 +264,17 @@ class TestLoadEnvironmentVariables:
 
     # Handling invalid SSM parameters
     def test_handling_invalid_ssm_parameters(self, mocker):
+        """
+        Test that the function handles invalid SSM parameters and raises an appropriate exception.
+
+        Args:
+            mocker: The pytest-mock fixture for mocking dependencies.
+
+        Asserts:
+            - The function raises a `SystemExit` exception with the correct exit code.
+        """
         # Arrange
         # Simulate ClientError from boto3
-        from botocore.exceptions import ClientError
-
         mock_error = ClientError(
             {"Error": {"Code": "InvalidParameter", "Message": "Parameter not found"}},
             "GetParameters",
@@ -196,6 +292,15 @@ class TestLoadEnvironmentVariables:
 
     # Handling non-existent dotenv file path
     def test_handling_nonexistent_dotenv_file(self, mocker):
+        """
+        Test that the function handles non-existent dotenv files gracefully.
+
+        Args:
+            mocker: The pytest-mock fixture for mocking dependencies.
+
+        Asserts:
+            - The function raises a `SystemExit` exception with the correct exit code.
+        """
         # Arrange
         mocker.patch(
             "api_client.helpers.config.construct_secrets_path",
@@ -210,6 +315,15 @@ class TestLoadEnvironmentVariables:
 
     # Handling empty or malformed dotenv file
     def test_handling_malformed_dotenv_file(self, mocker):
+        """
+        Test that the function handles empty or malformed dotenv files gracefully.
+
+        Args:
+            mocker: The pytest-mock fixture for mocking dependencies.
+
+        Asserts:
+            - The function raises a `SystemExit` exception with the correct exit code.
+        """
         # Arrange
         mocker.patch(
             "api_client.helpers.config.construct_secrets_path",
@@ -230,6 +344,15 @@ class TestLoadEnvironmentVariables:
 
     # Handling missing required environment variables after loading
     def test_handling_missing_required_env_vars(self, mocker):
+        """
+        Test that the function handles missing required environment variables after loading.
+
+        Args:
+            mocker: The pytest-mock fixture for mocking dependencies.
+
+        Asserts:
+            - The function raises a `SystemExit` exception with the correct exit code.
+        """
         # Arrange
         mocker.patch(
             "api_client.helpers.config.construct_secrets_path",
