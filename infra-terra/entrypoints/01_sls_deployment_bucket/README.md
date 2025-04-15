@@ -11,7 +11,9 @@
 
 ## Providers
 
-No providers.
+| Name | Version |
+|------|---------|
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.94.1 |
 
 ## Modules
 
@@ -21,7 +23,9 @@ No providers.
 
 ## Resources
 
-No resources.
+| Name | Type |
+|------|------|
+| [aws_ssm_parameter.sls_deploy_bucket](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ssm_parameter) | resource |
 
 ## Inputs
 

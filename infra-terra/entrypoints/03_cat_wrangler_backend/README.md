@@ -24,7 +24,7 @@ No modules.
 | Name | Type |
 |------|------|
 | [aws_dynamodb_table.image_cat](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/dynamodb_table) | resource |
-| [aws_ssm_parameter.s3buckets](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ssm_parameter) | resource |
+| [aws_ssm_parameter.dyndb_table_name](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ssm_parameter) | resource |
 
 ## Inputs
 
