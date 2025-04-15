@@ -542,39 +542,41 @@ google-chrome htmlcov/index.html
 ### F. Github Actions Pipeline
 The deployment pipeline file is located at `.github/workflows/deploy_ice_cat_wrangler.yml`.
 - Deploys all terraform & serverless components.
-- Seals with secrets by leveraging ``secrets.txt`, `secrets_encryptor.sh` & `secrets_decryptor.sh` located in root of repo.
+- Seals with secrets by leveraging `secrets.txt`, `secrets_encryptor.sh` & `secrets_decryptor.sh` located in root of repo.
 
-**secrets:**
+**Secrets:**
 
-We need to run CI, but we do not want to store unencrypted secrets or config values in the repository. so
+We need to run CI, but do not want to store unencrypted secrets or config values in the repository. So
 
 ```shell
 # 1. Populate secrets.txt with config file paths.
+
+# 2. Run the following on local to encrypt secrets intoa fikle with .enc extension.
 ./secrets_encryptor.sh path/to/ice-cat-secrets-pass.txt
 
-# The ci/cd system will run.
+# 3. When the ci/cd system runs, it decrypts the secrets as the correct config file using:
 ./secrets_decryptor.sh path/to/ice-cat-secrets-pass.txt
 ```
 
 ---
 
 ### G. Pre-commit hooks
-Note that both `api_client` and `serverless` virtual envs have pre-commit installed to perform various checks to make sure code follows best practices.
+Note that `api_client`, `shared_helpers,` and `serverless` virtual envs have pre-commit installed to perform various checks to make sure code follows best practices.
 - The root of the repo contains the config for this in `.pre-commit-config.yaml`.
 - When you run `make develop` for either environment the build script automatically runs `pre-commit install`
 
 
 ### H. Axioms for S3 Design
-I assume that if performance is important, the program should implement or leave room for addition as a feature later on.
-1. [click for S3 performance](https://docs.aws.amazon.com/AmazonS3/latest/userguide/optimizing-performance.html):
-    - Multiple prefixes
-    - Multiple client connections to upload multiple images asynchronously increases throughput.
+I assume that if performance is important, the program should implement or add the following features:
+1. [Click for S3 performance](https://docs.aws.amazon.com/AmazonS3/latest/userguide/optimizing-performance.html):
+    - Multiple prefixes.
+    - Increase throughput via multiple client connections to upload multiple images asynchronously.
     - Client should handle 503 slowdown messages.
-    - Check requests are being spread over a wide pool of Amazon S3 IP addresses
-    - If using CloudFront see if S3 transfer acceleration is beneficial.
-2. [click for S3 naming](https://aws.amazon.com/blogs/big-data/building-and-maintaining-an-amazon-S3-metadata-index-without-servers/):
+    - Check that requests are being spread over a wide pool of Amazon S3 IP addresses
+    - If using CloudFront, see if S3 transfer acceleration is beneficial.
+2. [Click for S3 naming](https://aws.amazon.com/blogs/big-data/building-and-maintaining-an-amazon-S3-metadata-index-without-servers/):
     - Name with high cardinality for performance.
-    - Save the hash of the file in the event we need the option to avoid reprocessing.
+    - Save the hash of the file in the event that we need an option to avoid reprocessing.
     - Uniquely rename the file to prevent filename clashes in S3 (use the hash).
 
 
