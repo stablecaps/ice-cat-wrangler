@@ -265,6 +265,7 @@ def rekog_image_categorise(rekog_client, image_bytes, label_pattern="cat"):
         )
 
         # Print labels detected
+        label_pattern = label_pattern.lower()
         labels = [label["Name"].lower() for label in rekog_resp["Labels"]]
 
         rek_match = "False"
