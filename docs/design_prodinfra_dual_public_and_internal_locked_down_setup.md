@@ -140,3 +140,42 @@ EC2Client → VPC Endpoint (execute-api) → API Gateway (HTTP API) → Internal
 ```
 EC2Client → VPC Endpoint (S3) → Amazon S3 (Upload) → S3 Event Trigger → Lambda
 ```
+
+### 9. Removing Public Internet Access (Private-Only Deployment)
+
+If the `cat-detector` service is intended **only for internal use**, we can simplify the infrastructure by removing:
+
+- **Route53** – No need for public DNS.
+- **API Gateway (HTTP API)** – No public HTTP interface required.
+- **VPC Endpoint for execute-api** – Not needed if EC2 isn't calling Lambda via API Gateway.
+- **Internal ALB** – No longer needed for HTTP routing to Lambda.
+
+#### 💸 Cost Savings
+
+| Component                     | Monthly Cost ($) |
+|------------------------------|------------------|
+| Route53 (hosted zone + queries) | ~$0.90         |
+| API Gateway (1M HTTP requests) | ~$1.00          |
+| VPC Endpoint (execute-api)      | ~$7.20          |
+| Internal ALB (LCU + hourly)     | ~$18.00         |
+| **Total Savings**               | **~$27.10**     |
+
+> 📉 We can save approximately **$27/month** by eliminating public-facing components, assuming 1M public requests/month.
+
+#### 🔐 Security & Infrastructure Impact
+
+| Aspect             | Status Without Public Components                     |
+|--------------------|------------------------------------------------------|
+| **Security**        | ✅ Stronger — no public ingress, all traffic internal |
+| **Access**          | ❌ No public HTTP access (external users blocked)    |
+| **Triggering Lambda** | ✅ Still possible via: <br>• Internal SDK calls<br>• S3 events |
+| **Flexibility**     | ⚠️ Reduced — no REST/HTTP interface for external apps |
+| **Maintenance**     | ✅ Simplified — fewer endpoints and routing layers   |
+
+#### 🧠 Considerations
+
+- We must refactor any external clients or systems that depended on the public API Gateway.
+- EC2 or internal AWS services can still invoke the Lambda using AWS SDKs or event sources (like S3).
+- Ensure IAM permissions allow only authorized internal services to invoke the function.
+
+> **Conclusion**: Removing public-facing components strengthens security and reduces costs, but limits external integration. Ideal for private, event-driven, or internal service-only workloads.
