@@ -611,8 +611,9 @@ I assume that if performance is important, the program should implement or add t
 
 2. [Public access guarded by Cloudfront]()
 
+---
 
-## Things to do in initial PoC
+### K. Things to do in initial PoC
 - bump app version automatically.
 - ~~Pre-commit setup.~~
 - S3 lifecycle: Delete old objects (14 days).
