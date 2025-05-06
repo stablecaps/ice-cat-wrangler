@@ -23,7 +23,7 @@ Key components:
 - HTTP API Gateway is significantly cheaper than REST API Gateway.
 - Ideal for simple, proxy-based request routing if advanced features like request/response transformation are not required.
 
-#### 💸 Cost Comparison by Monthly Request Volume
+#### Cost Comparison by Monthly Request Volume
 
 | Monthly Requests (M) | HTTP API Gateway ($) | REST API Gateway ($) | VPC Endpoints ($) | ALB ($) | Total HTTP API ($) | Total REST API ($) | Savings ($) |
 |----------------------|----------------------|-----------------------|--------------------|---------|---------------------|----------------------|--------------|
@@ -36,13 +36,13 @@ Key components:
 > - ALB cost is estimated at $18/month based on modest usage.
 > - Lambda costs are identical in both models and not shown here.
 
-#### ✅ Why HTTP API Wins
+#### Why HTTP API Wins
 
 - 70% lower API Gateway costs for the same request volume.
 - Fully supports ALB and VPC endpoint routing.
 - No advanced REST API features required for this service (e.g., request validation, caching).
 
-#### 🔁 PrivateLink Usage (Applies to Both APIs)
+#### PrivateLink Usage (Applies to Both APIs)
 
 | VPC Endpoint Type      | Purpose                                |
 |------------------------|----------------------------------------|
@@ -150,7 +150,7 @@ If the `cat-detector` service is intended **only for internal use**, we can simp
 - **VPC Endpoint for execute-api** – Not needed if EC2 isn't calling Lambda via API Gateway.
 - **Internal ALB** – No longer needed for HTTP routing to Lambda.
 
-#### 💸 Cost Savings
+#### Cost Savings
 
 | Component                     | Monthly Cost ($) |
 |------------------------------|------------------|
@@ -160,19 +160,19 @@ If the `cat-detector` service is intended **only for internal use**, we can simp
 | Internal ALB (LCU + hourly)     | ~$18.00         |
 | **Total Savings**               | **~$27.10**     |
 
-> 📉 We can save approximately **$27/month** by eliminating public-facing components, assuming 1M public requests/month.
+> We can save approximately **$27/month** by eliminating public-facing components, assuming 1M public requests/month.
 
-#### 🔐 Security & Infrastructure Impact
+#### Security & Infrastructure Impact
 
 | Aspect             | Status Without Public Components                     |
 |--------------------|------------------------------------------------------|
-| **Security**        | ✅ Stronger — no public ingress, all traffic internal |
-| **Access**          | ❌ No public HTTP access (external users blocked)    |
-| **Triggering Lambda** | ✅ Still possible via: <br>• Internal SDK calls<br>• S3 events |
-| **Flexibility**     | ⚠️ Reduced — no REST/HTTP interface for external apps |
-| **Maintenance**     | ✅ Simplified — fewer endpoints and routing layers   |
+| **Security**        | Stronger — no public ingress, all traffic internal |
+| **Access**          | No public HTTP access (external users blocked)    |
+| **Triggering Lambda** | Still possible via: <br>• Internal SDK calls<br>• S3 events |
+| **Flexibility**     |  Reduced — no REST/HTTP interface for external apps |
+| **Maintenance**     | Simplified — fewer endpoints and routing layers   |
 
-#### 🧠 Considerations
+#### Considerations
 
 - We must refactor any external clients or systems that depended on the public API Gateway.
 - EC2 or internal AWS services can still invoke the Lambda using AWS SDKs or event sources (like S3).
