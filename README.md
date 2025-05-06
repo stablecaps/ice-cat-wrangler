@@ -605,7 +605,14 @@ I assume that if performance is important, the program should implement or add t
 
 ---
 
-## Things to do
+### J. Production infrastructure options
+
+1. [Dual public and internal locked down setup](./docs/design_prodinfra_dual_public_and_internal_locked_down_setup.md)
+
+2. [Public access guarded by Cloudfront]()
+
+
+## Things to do in initial PoC
 - bump app version automatically.
 - ~~Pre-commit setup.~~
 - S3 lifecycle: Delete old objects (14 days).
