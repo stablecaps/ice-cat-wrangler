@@ -607,9 +607,9 @@ I assume that if performance is important, the program should implement or add t
 
 ### J. Production infrastructure options
 
-1. [Dual public and internal locked down setup](./docs/design_prodinfra_dual_public_and_internal_locked_down_setup.md)
+1. [Click for Dual public and internal locked down setup](./docs/design_prodinfra_dual_public_and_internal_locked_down_setup.md)
 
-2. [Public access guarded by Cloudfront]()
+2. [Click for Public access guarded by Cloudfront]()
 
 ---
 
